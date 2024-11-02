@@ -3,11 +3,65 @@
 
 El objetivo del TFG es crear un videojuego que simula una colonia de hormigas. De lo primero que se consideró fue crear un terreno dinámico que permitiría al jugador elegir un lugar cualquiera del mapa para el nido, ya que permitiría a las hormigas excavar en cualquier sección del terreno. La creación de mapas también se simplificaría, además de permitir crear un modo de edición de mapas para los jugadores.
 
-Cubos de marcha es el algoritmo que finalmente se implementó para representar la superficie del terreno. Es un algoritmo de gráficos por computadora originalmente publicado en SIGGRAPH en 1987 por Lorensen y Cline. Se usa para crear superficies poligonales como representación de una isosuperficie de un campo escalar 3D. En concreto, dado un campo tridimensional escalar de valores numéricos en el que se encuentra un volumen, cada punto dentro del volumen teniendo un valor de 1 o mayor y cada punto fuera del volumen teniendo un valor de menos de 1; el algoritmo puede crear la superficie aproximada entre el volumen y las afueras colocando una malla de triángulos entre ellos. Este proceso es simplificado dividiendo el espacio en cubos que comparten caras, donde cada lado del cubo será cortado por la superficie si de los dos vertices que lo forman 1 se encuentra dentro del volumen y el otro fuera. Así, dado los 8 vértices del cubo, hay 256 ($2^8$) posibles combinaciones de polígonos dentro del cubo que corten los lados. 
-![[Pasted image 20241026140053.png]] Ejemplo de un cubo en el que la superficie corta los lados 2, 3 y 11
+### Funcionamiento del algoritmo de marching cubes
 
-La dificultad a la que se enfrenta el algoritmo es la gran cantidad de combinaciones posibles y la necesidad de que aquellas combinaciones conecten correctamente entre los cubos para formar la malla. Soluciona esto y obtiene una gran velocidad de cómputo al usar lookup tables en los que se guardan todas las combinaciones correctas de triangulos. La primera parte del algoritmo usa 
+Cubos de marcha es el algoritmo que finalmente se implementó para representar la superficie del terreno. Es un algoritmo de gráficos por computadora originalmente publicado en SIGGRAPH en 1987 por Lorensen y Cline. Se usa para crear superficies poligonales como representación de una isosuperficie de un campo escalar 3D. En concreto, dado un campo tridimensional escalar de valores numéricos en el que se encuentra un volumen, cada punto dentro del volumen teniendo un valor mayor o igual que la constante isolevel y cada punto fuera del volumen teniendo un valor de menos de isolevel; el algoritmo puede crear la superficie aproximada entre el volumen y las afueras colocando una malla de triángulos entre ellos. Este proceso es simplificado dividiendo el espacio en cubos que comparten caras, donde cada lado del cubo será cortado por la superficie si de los dos vertices que lo forman 1 se encuentra dentro del volumen y el otro fuera. Así, dado los 8 vértices del cubo, hay 256 ($2^8$) posibles combinaciones de polígonos dentro del cubo que corten los lados. 
+![[Pasted image 20241026140053.png]] IMG 1.1 Ejemplo de un cubo en el que la superficie corta los lados 2, 3 y 11
 
+La dificultad a la que se enfrenta el algoritmo es la gran cantidad de combinaciones posibles y la necesidad de que aquellas combinaciones conecten correctamente entre los cubos para formar la malla. Soluciona esto y obtiene una gran velocidad de cómputo al usar lookup tables en los que se guardan todas las combinaciones correctas de triángulos. Los pasos que sigue el algoritmo para formar la malla son los siguientes:
+
+1. Para cada cubo, se obtiene los ejes cortados por la isosuperficie usando los  valores de los vértices del cubo. Dado los vértices que se encuentran debajo del volumen, se obtiene un índice que se usa en la tabla de ejes para conseguir los ejes que la superficie del volumen corta. Por ejemplo, dado la imagen 1.1, el índice correspondiente sería 0000 0100 o 8. Se obtiene de la siguiente forma: 
+```
+   cubeindex = 0;
+   if (grid.val[0] < isolevel) cubeindex |= 1;
+   if (grid.val[1] < isolevel) cubeindex |= 2;
+   if (grid.val[2] < isolevel) cubeindex |= 4;
+   if (grid.val[3] < isolevel) cubeindex |= 8;
+   if (grid.val[4] < isolevel) cubeindex |= 16;
+   if (grid.val[5] < isolevel) cubeindex |= 32;
+   if (grid.val[6] < isolevel) cubeindex |= 64;
+   if (grid.val[7] < isolevel) cubeindex |= 128;
+```
+
+
+La tabla de ejes devuelve un número de 12 bits que representa cada eje del cubo. Los ejes cortados por la superficie tendrán valor 1 en la cadena, y los demás 0. Volviendo al ejemplo de la imagen 1.1, al buscar en la tabla de ejes usando el índice 8, se obtendría el número 1000 000 1100. Esto significa que los ejes cortados son el 2, el 3 y el 11 (teniendo un eje numero 0). 
+
+2. Se calculan los puntos de intersección en los ejes cortados. Esto se hace mediante interpolación linear de  base de los valores de los dos vértices que forman el eje, y permite representar con más precisión el volumen. Dado los puntos P1 y P2 que forman el eje cortado y sus valores escalares V1 y V2 respectivamente, el punto de intersección viene dado por: $P = P_1 + (isolevel - V_1)(P_2-P_1)/(V_2 - V_1)$.
+
+3. Por último, se crean las facetas formadas por las posiciones por las que la isosuperficie corta a los cubos. Se usa una segunda tabla, llamada tabla de triángulos, que contiene un array de números para cada posible combinación de facetas en un cubo. Cada array contiene para cada triángulo de esa combinación los ejes en los que se encuentran los puntos que forman dicho triángulo. Cada array contiene a lo sumo 5 triángulos, por lo que cada array tiene una longitud de 15 + 1 números (el último se usa para indicar cuando acaba el array). Los primeros 3 números del array indican el primero triangulo, los segundo 3 el segundo triángulo, etc. El algoritmo sigue creando facetas de triangulo dado un array hasta que se encuentra con un valor -1. El índice ya obtenido en el primer paso del algoritmo se usa también en esta tabla. 
+
+Siguiendo el ejemplo anterior, el índice 8 en la tabla de triángulos apunta a el array {3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}.
+
+El pseudocódigo del algoritmo sería:
+```
+mallaTriangulos <- empty
+Para cada cubo:
+	índice <- obtenerIndice(cubo.vértices)
+	ejes <- tablaEjes[índice]
+	Para cada eje en ejes:
+		P1 <- eje.P1; V1 <- cubo.valor(P1)
+		P2 <- eje.P2; V2 <- cubo.valor(P2)
+		eje.puntoCorte <- P1 + (isolevel - V1)(P2 - P1)/(V2 - V1)
+	T <- tablaTriángulos[índice]
+	Para i en [0..4]
+		si T[i*3] == -1
+			BREAK
+		P1 <- eje[T[i*3]]
+		P2 <- eje[T[i*3 + 1]]
+		P3 <- eje[T[i*3 + 2]]
+		mallaTriangulo.añadirTriangulo({P1, P2, P3})
+```
+
+### Implementación del marching cubes
+
+Originalmente se implementó el marching cubes como tal para generar todo el terreno del mapa. Sin embargo, nada mas testear el funcionamiento resultó que calcular y generar la malla tridimensional entera cada vez que se editara 1 parte del mapa era demasiado carga de cómputo. Además, visualizar constantemente el mapa entero podría suponer una exigencia demasiado grande al GPU. Por eso se optó a dividir el terreno en partes equitativas pequeñas y renderizarlos juntos en el juego. Estas partes se denominan chunks, es decir, pedazos de terreno. 
+![[Pasted image 20241101214625.png]]
+
+La gran mayoría de del código relevante a la creación del terreno de marching cubes por tanto se encuentra dentro de la clase de C# denominada Chunk. Los valores predeterminados, como la cantidad de chunks que se usan para formar el mapa y las dimensiones X, Y y Z de los chunks se encuentran en la clase WorldGen, encargado de la creación de los objetos Chunk.
+
+
+En el script, se implementó como en la imagen im 1.2. La función GetCubeConfig recibe un array de los valores de los vértices en orden y devuelve el índice correspondiente.
+![[Pasted image 20241028125506.png]]  
 ## Obtención de assets
 
 Los modelos 3d se obtuvieron online, ya que crearlos desde cero seria una carga de trabajo digno para un TFG aparte.  Algunos modelos si fueron editados en blender para crear distintas versiones, como por ejemplo la hormiga reina a partir de la hormiga base.

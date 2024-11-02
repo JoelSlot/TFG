@@ -62,13 +62,13 @@ public class chunk
 
     
 
-    int GetCubeConfig(float[] cube)
+    int GetCubeConfig(float[] cubeVertices)
     {
 
         int configIndex = 0;
         for (int i = 0; i < 8; i++)
         {
-            if (cube[i] > isolevel)
+            if (cubeVertices[i] > isolevel)
                 configIndex |= 1 << i;
         }
 
@@ -82,13 +82,13 @@ public class chunk
 
         //sample terrain values at each corner of the cube
 
-        float[] cube = new float[8];
+        float[] cubeVertices = new float[8];
         for (int i = 0; i < 8; i++)
         {
-            cube[i] = father.SampleTerrain(position + GameData.CornerTable[i]);
+            cubeVertices[i] = father.SampleTerrain(position + GameData.CornerTable[i]);
         }
 
-        int configIndex = GetCubeConfig(cube);
+        int configIndex = GetCubeConfig(cubeVertices);
 
         //There are no triangles, we won't draw it
         if (configIndex == 0 || configIndex == 255) return;
@@ -121,8 +121,6 @@ public class chunk
 
                 //calculate their difference
                 float difference = vert2val - vert1val;
-
-
                 if (difference == 0)
                     difference = isolevel;
                 else

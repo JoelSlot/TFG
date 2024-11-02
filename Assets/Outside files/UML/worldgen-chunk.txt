@@ -1,0 +1,48 @@
+@startuml
+class WorldGen {
+{static} float isolevel
+{static} x_dim: int
+{static} y_dim: int
+{static} z_dim: int
+{static} chunk_x_dim: int
+{static} chunk_y_dim: int
+{static} chunk_z_dim: int
+{static} terrainMap: float[ , , ]
+chunks: Dictionary<Vector3Int, chunk>
++ GenerateChunks()
++ SampleTerrain(point: Vector3Int): float
++ EditTerrain(points: List<Vector3Int>, val: List<float>, add: bool)
++ LoadMap()
++ SaveMap()
+
+}
+
+note right of WorldGen::GenerateChunksFACKE
+a
+end note
+
+class chunk{
+{static} x_dim: int
+{static} y_dim: int
+{static} z_dim: int
+vertices: List<Vector3>
+triangles: List<int>
+WorldGen: WorldGen*
+chunkPosition: Vector3Int
+chunkObject: GameObject
+meshFilter: MeshFilter
+meshCollider: MeshCollider
+meshRenderer: MeshRenderer
++ chunk(_position: Vector3Int, WorldGen)
++ getCubeConfig(cube: float[]): int
++ marchCube(position: Vector3Int)
++ ClearMeshData()
++ CreateMeshData()
++ BuildMesh()
++ Destroy()
+}
+
+WorldGen --> "0..X" chunk : generates
+
+
+@enduml
