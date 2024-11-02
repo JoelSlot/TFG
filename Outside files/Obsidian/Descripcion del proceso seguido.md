@@ -54,11 +54,17 @@ Para cada cubo:
 
 ### Implementación del marching cubes
 
-Originalmente se implementó el marching cubes como tal para generar todo el terreno del mapa. Sin embargo, nada mas testear el funcionamiento resultó que calcular y generar la malla tridimensional entera cada vez que se editara 1 parte del mapa era demasiado carga de cómputo. Además, visualizar constantemente el mapa entero podría suponer una exigencia demasiado grande al GPU. Por eso se optó a dividir el terreno en partes equitativas pequeñas y renderizarlos juntos en el juego. Estas partes se denominan chunks, es decir, pedazos de terreno. 
-![[Pasted image 20241101214625.png]]
+El terreno como malla de triángulos se representa en unity como un objeto Mesh. Los datos del objeto mesh que se crea en unity se adjunta a un objeto mediante el componente MeshFilter. Si se quiere mostrar el mesh, el objeto también necesita un componente MeshRenderer. Por ultimo, ya que se quiere tener a las hormigas caminando  por el mesh, se necesita poder collisionar con él, por lo que el objeto también usa un componente MeshCollider.
 
-La gran mayoría de del código relevante a la creación del terreno de marching cubes por tanto se encuentra dentro de la clase de C# denominada Chunk. Los valores predeterminados, como la cantidad de chunks que se usan para formar el mapa y las dimensiones X, Y y Z de los chunks se encuentran en la clase WorldGen, encargado de la creación de los objetos Chunk.
+Originalmente se implementó el marching cubes como tal para generar todo el terreno del mapa. Sin embargo, al observar su funcionamiento quedó claro que calcular y generar la malla tridimensional entera cada vez que se editara 1 parte del mapa era demasiado carga de cómputo. Además, visualizar constantemente el mapa entero podría suponer una exigencia demasiado grande al GPU. Por eso se optó a dividir el terreno en partes equitativas pequeñas y renderizarlos juntos en el juego. Estas partes se denominan chunks, es decir, pedazos de terreno. Gracias a estos chunks, al editar partes del mapa solo hace falta recargar las piezas de la malla afectadas por este cambio.
 
+Cada chunk contiene sus propios datos relevantes al pedazo de terreno que representan, como sus dimensiones y su posición. También tiene asociado los componentes necesarios para gestionar su porción de la malla: El MeshFilter para crear y gestionarlo, el MeshRenderer para poder visualizarlo, y el MeshCollider para que pueda tener colisiones. Contiene un puntero al objeto WorldGen que lo creó para poder obtener datos relevantes al mapa del terreno. Lo más importante que obtiene del WorldGen es el acceso su objeto terrainMap: representa todos los valores de la cuadrícula tridimensional que se usan en el algoritmo de MarchingCubes para crear la malla. La lista de vértices y triángulos que forman la malla son generados mediante la función MarchCube.
+ ![[Pasted image 20241102163303.png]]Imagen: Las clases chunk y WorldGen con los atributos y funciones relevantes a la creación y gestión del mapa
+
+Además del campo escalar que forma el mapa, los otros datos como la cantidad de chunks que se usan para formar el mapa y las dimensiones X, Y y Z de los chunks también se encuentran en la clase WorldGen, encargado de la creación de los objetos Chunk. Guarda los chunks en un diccionario, asociandolos a su posición relativa dentro del mapa. Sus funciones son las siguientes:
+
+- GenerateChunk()
+	Genera todos los objetos chunk necesarios para
 
 En el script, se implementó como en la imagen im 1.2. La función GetCubeConfig recibe un array de los valores de los vértices en orden y devuelve el índice correspondiente.
 ![[Pasted image 20241028125506.png]]  
@@ -156,19 +162,20 @@ Cuando la hormiga se encuentra muerta, en vez de no mover se creó una animació
 
 ### Movimiento
 
-Antes de cargar el modelo de la hormiga en el juego vamos a crear un sistema de movimiento usando un cubo simple con un rigidbody aplicado para las colisiones.
+Antes de cargar el modelo de la hormiga en el juego se creó un sistema de movimiento usando un cubo simple con un rigidbody aplicado para las colisiones.
 ![[Pasted image 20240911133252.png]]
 ![[Pasted image 20240911133037.png]]
-La esfera azul clara indica el centro de masa del rigidbody. De esta forma, si la "hormiga" se encuentra bocaabajo rotará hasta alinearse con el suelo.
+La esfera azul clara indica el centro de masa del rigidbody. De esta forma, si la "hormiga" se encuentra bocaabajo rotará hasta alinearse con el suelo. Esto es importante para evitar que agentes de hormigas puedan quedarse pillado en el mapa.
 
-Es importante denotar que habrán 2 estados principales en los que se puede encontrar la hormiga: En el suelo (grounded) o en el aire (falling). Esto lo hacemos porque queremos que la hormiga sea capaz de escalar paredes y techos sin que la gravedad haga que se caiga. El vector de fuerza de gravedad solo se aplicará a la hormiga si no está con los pies en alguna superficie (en el estado falling).
+Para gestionar el movimiento de la hormiga en el entorno, se le asignaron dos estados generales posibles: el de estar en una superficie (grounded) y el de estar cayendo (falling). El vector de fuerza de gravedad solo se aplicaría a la hormiga al no estar con los pies en alguna superficie (en el estado falling).
 
-Para decidir si se encuentra en el estado grounded o falling, usamos un raycast corto desde la parte de abajo de la hormiga hacia abajo. Si toca una superficie, consideramos que se encuentra en el suelo y el vector de gravedad será desactivada hasta dejar de detectar la superficie.
+Para decidir si se encuentra en el estado grounded o falling, el agente tiene un raycast corto desde la parte de abajo de la hormiga hacia fuera. Si toca una superficie, se considera que se encuentra en el suelo y el vector de gravedad será desactivada hasta dejar de detectar la superficie.
 
-Queremos que la hormiga se mueva agarrado a la superficie en la que se encuentra, para que no se separe y se caiga. En vez de que la hormiga se mueva hacia donde mira, proyectaremos esa dirección sobre el plano en el que se encuentra usando la función Vector3.ProjectOnPlane.
+Despues de programar que la hormiga no se cayera al estar en estado grounded, hubo que implementar su movimiento. Debió moverse acorde a la superficie para no separarse y caerse. Por lo tanto, en vez de que la hormiga se moviera hacia donde mirara, se decidió hacer que se desplazara acorde al vector de su dirección proyectada sobre la superficie del suelo. Para ello se usó la función Vector3.ProjectOnPlane.
 
-![[Pasted image 20240913124828.png]]
-Escribimos un simple código para mover la hormiga en la dirección del vector proyectado al pulsar la tecla de flecha hacia arriba. Nos proporciona movimiento aceptable en terreno plano, pero nos topamos con problemas al subir por elevaciones. Para solucionar esto creamos mas raycasts en los extremos de la hormiga.
+![[Pasted image 20240913124828.png]] Vector de movimiento resultante de proyectar la dirección sobre la superficie en la que se encuentra (amarillo)
+
+Se escribió un simple código para mover la hormiga en la dirección del vector proyectado al pulsar la tecla de flecha hacia arriba. Proporcionó movimiento aceptable en terreno plano, pero nos mostraba problemas al subir por elevaciones. Para solucionar esto creamos mas raycasts en los extremos de la hormiga.
 ![[Pasted image 20240913124538.png]]
 ### Pathfinding
 

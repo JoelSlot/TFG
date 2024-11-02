@@ -39,19 +39,27 @@ public class WorldGen : MonoBehaviour
         CreateNavMesh();
     }
 
+    /*
+     * 
+     */
     public void GenerateChunks() 
     {
-
-        for (int x = 0;  x < world_x; x++) {
-            for (int z = 0; z < world_z; z++) {
-                Vector3Int newPos = new Vector3Int(x * chunk_x_dim, 0, z * chunk_z_dim);
-                chunks.Add(newPos, new chunk(newPos, this));
-                chunks[newPos].chunkObject.transform.SetParent(transform);
-                chunks[newPos].chunkObject.layer = 6;
+        //Itera sobre todas las secciones de tamaño de chunk del mapa
+        for (int x = 0;  x < num_chunks_x; x++) {
+            for (int y = 0; y < num_chunks_y; y++) {
+                for (int z = 0; z < num_chunks_z; z++) { 
+                    //Obtiene posición del chunk
+                    Vector3Int newPos = new Vector3Int(x * chunk_x_dim, y * chunk_y_dim, z * chunk_z_dim);
+                    //Añade nuevo chunk y su posición al diccionario
+                    chunks.Add(newPos, new chunk(newPos, this));
+                    //aplica transformación de WorldGen al chunk y situa chunk en capa 6.
+                    chunks[newPos].chunkObject.transform.SetParent(transform);
+                    chunks[newPos].chunkObject.layer = 6;
+                }
             }
         }
 
-        Debug.Log(string.Format("{0} by {1} world generated", world_x, world_z));
+        Debug.Log(string.Format("{0} by {1} by {2} world generated", num_chunks_x, num_chunks_y, num_chunks_z));
 
     }
 
@@ -61,14 +69,14 @@ public class WorldGen : MonoBehaviour
      */
     public void PopulateTerrainMap()
     {
-
+        //Itera sobre todos los puntos del campo escalar
         for (int x = 0; x < x_dim + 1; x++)
         {
             for (int y = 0; y < y_dim + 1; y++)
             {
                 for (int z = 0; z < z_dim + 1; z++)
                 {
-                    if (z == 0 || z == z_dim + 1 || x == 0 || x == x_dim + 1)
+                    if (z == 0 || z == z_dim || x == 0 || x == x_dim )
                         terrainMap[x, y, z] = 1f;
                     else if (y < 10)
                         terrainMap[x, y, z] = 0f;
@@ -123,7 +131,7 @@ public class WorldGen : MonoBehaviour
         //check what chunks it affects
         foreach (Vector3Int point in h)
         {
-            chunks[point].CreateMeshData();
+            chunks[point].createMeshData();
         }
 
     }
@@ -143,7 +151,7 @@ public class WorldGen : MonoBehaviour
             }
         }
         if (changed)
-            CreateMeshData();
+            createMeshData();
 
     }
     */
@@ -180,8 +188,9 @@ public class WorldGen : MonoBehaviour
         }
 
 
-        world_x = Mathf.FloorToInt(x_dim / chunk_x_dim);
-        world_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
+        num_chunks_x = Mathf.FloorToInt(x_dim / chunk_x_dim);
+        num_chunks_y = Mathf.FloorToInt(y_dim / chunk_y_dim);
+        num_chunks_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
 
         foreach (var item in chunks.Values)
         {
