@@ -68,6 +68,10 @@ Además del campo escalar que forma el mapa, los otros datos como la cantidad de
 
 En el script, se implementó como en la imagen im 1.2. La función GetCubeConfig recibe un array de los valores de los vértices en orden y devuelve el índice correspondiente.
 ![[Pasted image 20241028125506.png]]  
+
+### Arreglo error de grietas
+
+
 ## Obtención de assets
 
 Los modelos 3d se obtuvieron online, ya que crearlos desde cero seria una carga de trabajo digno para un TFG aparte.  Algunos modelos si fueron editados en blender para crear distintas versiones, como por ejemplo la hormiga reina a partir de la hormiga base.

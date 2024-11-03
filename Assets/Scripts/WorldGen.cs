@@ -36,18 +36,20 @@ public class WorldGen : MonoBehaviour
         num_chunks_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
         PopulateTerrainMap();
         GenerateChunks();
-        CreateNavMesh();
     }
 
     /*
      * 
      */
-    public void GenerateChunks() 
+    public void GenerateChunks()
     {
         //Itera sobre todas las secciones de tamaño de chunk del mapa
-        for (int x = 0;  x < num_chunks_x; x++) {
-            for (int y = 0; y < num_chunks_y; y++) {
-                for (int z = 0; z < num_chunks_z; z++) { 
+        for (int x = 0; x < num_chunks_x; x++)
+        {
+            for (int y = 0; y < num_chunks_y; y++)
+            {
+                for (int z = 0; z < num_chunks_z; z++)
+                {
                     //Obtiene posición del chunk
                     Vector3Int newPos = new Vector3Int(x * chunk_x_dim, y * chunk_y_dim, z * chunk_z_dim);
                     //Añade nuevo chunk y su posición al diccionario
@@ -76,7 +78,7 @@ public class WorldGen : MonoBehaviour
             {
                 for (int z = 0; z < z_dim + 1; z++)
                 {
-                    if (z == 0 || z == z_dim || x == 0 || x == x_dim )
+                    if (z == 0 || z == z_dim || x == 0 || x == x_dim)
                         terrainMap[x, y, z] = 1f;
                     else if (y < 10)
                         terrainMap[x, y, z] = 0f;
@@ -91,7 +93,7 @@ public class WorldGen : MonoBehaviour
 
     }
 
-    
+
     public void EditTerrain(List<Vector3Int> points, List<float> val, bool add)
     {
         var h = new HashSet<Vector3Int>();
@@ -108,7 +110,7 @@ public class WorldGen : MonoBehaviour
                     terrainMap[points[i].x, points[i].y, points[i].z] = 0f;
                 if (terrainMap[points[i].x, points[i].y, points[i].z] > 1)
                     terrainMap[points[i].x, points[i].y, points[i].z] = 1f;
-                h.Add(new Vector3Int((points[i].x / chunk_x_dim) * chunk_x_dim, 0, (points[i].z / chunk_z_dim ) * chunk_z_dim));
+                h.Add(new Vector3Int((points[i].x / chunk_x_dim) * chunk_x_dim, 0, (points[i].z / chunk_z_dim) * chunk_z_dim));
                 bool x_0 = false;
                 //mirar si está justo entre dos chunks en x y no al principio
                 if (points[i].x % chunk_x_dim == 0 && points[i].x != 0)
@@ -131,7 +133,7 @@ public class WorldGen : MonoBehaviour
         //check what chunks it affects
         foreach (Vector3Int point in h)
         {
-            chunks[point].createMeshData();
+            chunks[point].CreateMeshData();
         }
 
     }
@@ -158,6 +160,10 @@ public class WorldGen : MonoBehaviour
     public float SampleTerrain(Vector3Int point)
     {
         return terrainMap[point.x, point.y, point.z];
+    }
+    public float SampleTerrain(Vector3 point)
+    {
+        return terrainMap[Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.y), Mathf.FloorToInt(point.z)];
     }
 
     public void LoadMap()
@@ -213,7 +219,8 @@ public class WorldGen : MonoBehaviour
         {
             for (int y = 0; y < y_dim + 1; y++)
             {
-                for (int z = 0; z < z_dim + 1; z++) {
+                for (int z = 0; z < z_dim + 1; z++)
+                {
                     writer.Write(" " + terrainMap[x, y, z].ToString());
                 }
             }

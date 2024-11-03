@@ -1,189 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.Progress;
 
-public class chunk
+public class GameData : MonoBehaviour
 {
 
-    List<Vector3> vertices = new List<Vector3>();
-    List<int> triangles = new List<int>();
-
-    WorldGen worldGen;
-
-    public GameObject chunkObject;
-    MeshFilter meshFilter;
-    MeshCollider meshCollider;
-    MeshRenderer meshRenderer;
-
-    Vector3Int chunkPosition;
-
-
-    int x_dim { get { return WorldGen.chunk_x_dim; } }
-    int y_dim { get { return WorldGen.chunk_y_dim; } }
-    int z_dim { get { return WorldGen.chunk_z_dim; } }
-    float isolevel { get { return WorldGen.isolevel; } }
-
-
-
-
-    //index of configuration to use from the TriangleTable list
-    int cubeindex;
-
     // Start is called before the first frame update
-    public chunk(Vector3Int _position, WorldGen dad)
+    void Start()
     {
-        chunkObject = new GameObject();
-        chunkPosition = _position;
-        chunkObject.name = string.Format("Chunk {0} {1}", _position.x, _position.z);
-        //chunkObject.transform.position = chunkPosition;
-        worldGen = dad;
-
-        meshFilter = chunkObject.AddComponent<MeshFilter>();
-        meshCollider = chunkObject.AddComponent<MeshCollider>();
-        meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-        //set mesh material
-        meshRenderer.material = worldGen.GetComponent<MeshRenderer>().material;
-        //not sure if relevant
-        chunkObject.transform.tag = "Terrain";
-
-        CreateMeshData();
-
+        
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        
-
     }
-
-    
-
-    //Función que ejecuta el proceso de marching cubes para un cubo dado su posición
-    void MarchCube(Vector3Int position)
-    {
-
-        //Conseguir valores de los vértices del cubo
-        float[] cubeVertices = new float[8];
-        for (int i = 0; i < 8; i++)
-        {
-            cubeVertices[i] = worldGen.SampleTerrain(position + cornerTable[i]);
-        }
-
-        //Obtener el índice que se usa en las tablas de ejes y triángulos
-        int configIndex = 0;
-        for (int i = 0; i < 8; i++)
-        {
-            if (cubeVertices[i] > isolevel)
-                configIndex |= 1 << i;
-        }
-
-        //Si la malla no pasa por el cubo salimos de la función
-        if (configIndex == 0 || configIndex == 255) return;
-
-        int edgeIndex = 0;
-        //Iteramos para cada uno de los 5 posibles triángulos
-        for (int i = 0; i < 5; i++)
-        {
-
-            //Iteramos sobre cada vértice del triángulo
-            for (int p = 0; p < 3; p++)
-            {
-
-                //Obtener el siguiente índice del array en la tabla de triángulos
-                int indice = triangleTable[configIndex, edgeIndex];
-
-                //Si no quedan triángulos en el array dejamos de iterar
-                if (indice == -1) return;
-
-                //Obtener los dos vértices que forman el eje y sus valores
-                Vector3 vert1pos = position + cornerTable[edgeIndexes[indice, 0]];
-                Vector3 vert2pos = position + cornerTable[edgeIndexes[indice, 1]];
-                float vert1val = worldGen.SampleTerrain(vert1pos);
-                float vert2val = worldGen.SampleTerrain(vert2pos);
-
-                //Calcular punto del eje que se corta usando interpolación linear
-                Vector3 vertPosition = vert1pos + (isolevel - vert1val) * (vert2pos - vert1pos) / (vert2val - vert1val);
-                
-                //Guardar los vértices que forman el triángulo en la malla.
-                vertices.Add(vertPosition);
-                triangles.Add(vertices.Count - 1);
-                edgeIndex++;
-
-            }
-
-        }
-
-    }
-
-
-   
-    void ClearMeshData()
-    {
-
-        vertices.Clear();
-        triangles.Clear();
-
-    }
-
-    public void CreateMeshData()
-    {
-
-        ClearMeshData();
-
-        for (int x = 0; x < x_dim; x++)
-        {
-            for (int z = 0; z < z_dim; z++)
-            {
-                for (int y = 0; y < y_dim; y++)
-                {
-
-                    MarchCube(new Vector3Int(x + chunkPosition.x, y + chunkPosition.y, z + chunkPosition.z));
-                    
-                }
-            }
-            
-        }
-
-        BuildMesh();
-
-    }
-
-
-    void BuildMesh()
-    {
-
-        Mesh mesh = new Mesh();
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.RecalculateNormals();
-        meshFilter.mesh = mesh;
-        meshCollider.sharedMesh = mesh;
-    }
-
-    //Destruye todos los gameobjects incluidos en el chunk.
-    public void Destroy()
-    {
-        UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshFilter>());
-        UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshCollider>());
-        UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshRenderer>());
-        UnityEngine.Object.DestroyImmediate(chunkObject);
-    }
-    /*
-    public WorldGen WorldGena
-    {
-        get => default;
-        set
-        {
-        }
-    }*/
 
     //tabla de esquinas: las 8 esquinas del cubo
-    public static Vector3Int[] cornerTable = new Vector3Int[8]
+    public static Vector3Int[] CornerTable = new Vector3Int[8]
     {
         new Vector3Int(0, 0, 0),
         new Vector3Int(1, 0, 0),
@@ -195,15 +30,15 @@ public class chunk
         new Vector3Int(0, 1, 1)
     };
 
-    //tabla de ejes. Para cada eje los índices de los vértices que lo forman.
-    public static int[,] edgeIndexes = new int[12, 2] {
+    //tabla de ejes.
+    public static int[,] EdgeIndexes = new int[12, 2] {
 
         {0, 1}, { 1, 2}, { 3, 2}, {0, 3}, { 4, 5}, {5, 6}, {7, 6}, { 4, 7}, {0, 4}, { 1, 5}, { 2, 6}, { 3, 7}
 
     };
 
     //Configuraciones: las distintas combinaciones de triángulos.
-    public static int[,] triangleTable = new int[,]
+    public static int[,] TriangleTable = new int[,]
     {
 
         {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
@@ -464,5 +299,7 @@ public class chunk
         {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
 
     };
+
+
 
 }

@@ -1,24 +1,20 @@
 {
   "main": {
-    "id": "1d12b745e85e980b",
+    "id": "14d4de8e5c109fc9",
     "type": "split",
     "children": [
       {
-        "id": "1ae07e3c5023594b",
+        "id": "55f41f782ba665f2",
         "type": "tabs",
         "children": [
           {
-            "id": "a4919b2e482bfc11",
+            "id": "1c4b0199e659fc5c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Descripcion del proceso seguido.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Descripcion del proceso seguido"
+              "title": "New tab"
             }
           }
         ]
@@ -27,15 +23,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "9b459e3e7a2c21fa",
+    "id": "b5ca2803c7212b84",
     "type": "split",
     "children": [
       {
-        "id": "1bba76349bd8a8a8",
+        "id": "ab8b0b59ba149499",
         "type": "tabs",
         "children": [
           {
-            "id": "ebe97d3ee7e73ef0",
+            "id": "8d20916d3f697136",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -47,7 +43,7 @@
             }
           },
           {
-            "id": "928710d0f4f3f310",
+            "id": "453c8eb7903c4e9f",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -64,7 +60,7 @@
             }
           },
           {
-            "id": "e501e5fedbdd16de",
+            "id": "7d8e386e72d69c2b",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -73,29 +69,26 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 300
   },
   "right": {
-    "id": "2b50ebdb5a359242",
+    "id": "1393262208913444",
     "type": "split",
     "children": [
       {
-        "id": "c993c7499796bd85",
+        "id": "d02a9615a3625ec3",
         "type": "tabs",
         "children": [
           {
-            "id": "c957b2c3f21209ef",
+            "id": "494426980b530b9a",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Descripcion del proceso seguido.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -105,25 +98,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Descripcion del proceso seguido"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "e380b0a296587269",
+            "id": "45632bff198d35fc",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Descripcion del proceso seguido.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Descripcion del proceso seguido"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "28739ebc663a842d",
+            "id": "e16592e5e477705e",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -136,22 +128,20 @@
             }
           },
           {
-            "id": "82ad13ad206c6a38",
+            "id": "c35056b2f7f82494",
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {
-                "file": "Descripcion del proceso seguido.md"
-              },
+              "state": {},
               "icon": "lucide-list",
-              "title": "Outline of Descripcion del proceso seguido"
+              "title": "Outline"
             }
           }
         ]
       }
     ],
     "direction": "horizontal",
-    "width": 200,
+    "width": 300,
     "collapsed": true
   },
   "left-ribbon": {
@@ -164,47 +154,6 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "a4919b2e482bfc11",
-  "lastOpenFiles": [
-    "Pasted image 20241103140614.png",
-    "Animacion de una pata de la hormiga.png.meta",
-    "Implementación de las acciones.md.meta",
-    "Features.md.meta",
-    "Pasted image 20241028123800.png.meta",
-    "Pasted image 20240913124828.png.meta",
-    "Implementación de mapas, missiones y retos.md.meta",
-    "Pasted image 20241025132257.png.meta",
-    "Pasted image 20240916174614.png.meta",
-    "Pasted image 20240916184531.png.meta",
-    "Thorax IK stiffness.png.meta",
-    "Pasted image 20241102163303.png",
-    "Pasted image 20241101214625.png",
-    "Pasted image 20241028125506.png",
-    "Pasted image 20241028123800.png",
-    "Pasted image 20241026140053.png",
-    "Pasted image 20241025132335.png",
-    "Pasted image 20241025132257.png",
-    "Pasted image 20241025132043.png",
-    "Creación de animaciones.md",
-    "Descripcion del proceso seguido.md",
-    "Development.md",
-    "Implementación de las acciones.md",
-    "Development tasks.md",
-    "Features.md",
-    "Thorax IK stiffness.png",
-    "Sobreponer antena y caminar.png",
-    "Creación de IA.md",
-    "Creación y obtención de assets.md",
-    "Untitled.canvas",
-    "Descripción del TFG.md",
-    "Implementación de mapas, missiones y retos.md",
-    "Optimización de rendimiento.md",
-    "UI del juego.md",
-    "Controles y cámara de jugador.md",
-    "Control del nido.md",
-    "Control de las hormigas.md",
-    "Implementación de ciclo de vida de hormigas.md",
-    "create a link.md",
-    "Welcome.md"
-  ]
+  "active": "1c4b0199e659fc5c",
+  "lastOpenFiles": []
 }

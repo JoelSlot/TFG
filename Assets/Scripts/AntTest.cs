@@ -12,29 +12,52 @@ using System;
 public class AntTest : MonoBehaviour
 {
 
-    public GameObject Cube;
+    public GameObject Ant;
     public Rigidbody Rigidbody;
     public float speed = 0;
     public float turn = 1;
-    public Boolean grounded = false;
+    //el animador
+    private Animator Animator;
+
+    public float speed_per_second = 1;
+    public float degrees_per_second = 45;
 
 
     // Start is called before the first frame update
     void Start()
     {
         Physics.gravity = new Vector3(0, -3.0F, 0);
-        Rigidbody = Cube.GetComponent<Rigidbody>();
+        Rigidbody = Ant.GetComponent<Rigidbody>();
+        Animator = Ant.GetComponent<Animator>();
+        Debug.Log(Animator);
+        Animator.SetBool("walking", false);
+        Animator.SetBool("grounded", true);
+        Animator.enabled = true;
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        if (Input.GetKey(KeyCode.UpArrow)) speed = 0.01f;
-        else speed = 0f;
-        if (Input.GetKey(KeyCode.LeftArrow)) turn = -0.2f;
-        else if (Input.GetKey(KeyCode.RightArrow)) turn = 0.2f;
-        else turn = 0;
+        Debug.Log("its " + 0.01f / Time.deltaTime);
+
+        Animator.SetFloat("walking speed", 0.01f / Time.deltaTime);
+
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            speed = speed_per_second * Time.deltaTime;
+            Animator.SetBool("walking", true);
+        }
+        else
+        {
+            speed = 0f;
+            Animator.SetBool("walking", false);
+        }
+        if (Input.GetKey(KeyCode.LeftArrow)) Animator.SetInteger("turning", -1);
+        else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
+        else Animator.SetInteger("turning", 0);
+
+        turn = Animator.GetInteger("turning") * degrees_per_second * Time.deltaTime;
 
         Color hitColor;
         int numHits = 0;
@@ -42,22 +65,31 @@ public class AntTest : MonoBehaviour
 
         float[] xPos = {0.25f, -0.25f, 0.25f, -0.25f, 0};
         float[] zPos = {0.25f, -0.25f, -0.25f, 0.25f, 0};
+        float yPos = 0.5f;
 
         for (int i = 0; i < xPos.Length; i++) {
-            if (Physics.Raycast(getRelativePos(xPos[i], 0, zPos[i]), Cube.transform.rotation * new Vector3(0, -0.8f, 0), out RaycastHit hit, 1))
+            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Ant.transform.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 1))
             {
                 hitColor = Color.red;
                 numHits++;
                 normalMedian += hit.normal;
             }
             else hitColor = Color.blue;
-            Debug.DrawLine(getRelativePos(xPos[i], 0, zPos[i]), getRelativePos(xPos[i], -0.8f, zPos[i]), hitColor);
+            Debug.DrawLine(getRelativePos(xPos[i], yPos, zPos[i]), getRelativePos(xPos[i], yPos - 0.8f, zPos[i]), hitColor);
         }
 
-        if (numHits > 2) grounded = true; else grounded = false;
+        //REMEMBER TO COMMENT HOW YOU CHANGED FROM LOCAL BOOL TO THE ANIMATOR ONE
+        if (numHits > 2)
+        {
+            Animator.SetBool("grounded", true);
+        }
+        else
+        {
+            Animator.SetBool("grounded", false);
+        }
         if (numHits != 0) normalMedian /= numHits;
 
-        if (grounded)
+        if (Animator.GetBool("grounded"))
         {
             //Rigidbody.velocity = Vector3.zero;
             Rigidbody.angularVelocity = Vector3.zero;
@@ -83,9 +115,9 @@ public class AntTest : MonoBehaviour
             hitColor = Color.blue;
             Physics.gravity = new Vector3(0, -3.0F, 0);
         }
-        
 
 
+        //Debug.Log("Walking: " + Animator.GetBool("walking") + ", falling: " + Animator.GetBool("falling"));
 
 
 
@@ -93,7 +125,7 @@ public class AntTest : MonoBehaviour
 
     public Vector3 getRelativePos(float x, float y, float z)
     {
-        return Cube.transform.position + Cube.transform.rotation * new Vector3(x, y, z);
+        return Rigidbody.position + Ant.transform.rotation * new Vector3(x, y, z);
     } 
 
     
