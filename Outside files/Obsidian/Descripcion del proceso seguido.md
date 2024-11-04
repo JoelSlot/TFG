@@ -69,9 +69,6 @@ Además del campo escalar que forma el mapa, los otros datos como la cantidad de
 En el script, se implementó como en la imagen im 1.2. La función GetCubeConfig recibe un array de los valores de los vértices en orden y devuelve el índice correspondiente.
 ![[Pasted image 20241028125506.png]]  
 
-### Arreglo error de grietas
-
-
 ## Obtención de assets
 
 Los modelos 3d se obtuvieron online, ya que crearlos desde cero seria una carga de trabajo digno para un TFG aparte.  Algunos modelos si fueron editados en blender para crear distintas versiones, como por ejemplo la hormiga reina a partir de la hormiga base.
@@ -177,10 +174,33 @@ Para decidir si se encuentra en el estado grounded o falling, el agente tiene un
 
 Despues de programar que la hormiga no se cayera al estar en estado grounded, hubo que implementar su movimiento. Debió moverse acorde a la superficie para no separarse y caerse. Por lo tanto, en vez de que la hormiga se moviera hacia donde mirara, se decidió hacer que se desplazara acorde al vector de su dirección proyectada sobre la superficie del suelo. Para ello se usó la función Vector3.ProjectOnPlane.
 
-![[Pasted image 20240913124828.png]] Vector de movimiento resultante de proyectar la dirección sobre la superficie en la que se encuentra (amarillo)
+ Vector de movimiento resultante de proyectar la dirección sobre la superficie en la que se encuentra (amarillo)
 
-Se escribió un simple código para mover la hormiga en la dirección del vector proyectado al pulsar la tecla de flecha hacia arriba. Proporcionó movimiento aceptable en terreno plano, pero nos mostraba problemas al subir por elevaciones. Para solucionar esto creamos mas raycasts en los extremos de la hormiga.
-![[Pasted image 20240913124538.png]]
+Se escribió un simple código para mover la hormiga en la dirección del vector proyectado al pulsar la tecla de flecha hacia arriba. Proporcionó movimiento aceptable en terreno plano, pero mostraba problemas al subir por elevaciones. Debido a su gran rigidbody, al subir por elevaciones el raycast se alegaría demasiado de la superficie del terreno, poniendolo en modo falling y dejando inamovible el agente. Para solucionar esto se añadieron más raycasts a los extremos de la hormiga, con el objetivo de siempre poder sentir parte de la superficie sobre la que se encontraría el agente.
+ imagen a): ejemplo de una situación en la que el agente no puede "ver" el terreno debido a una elevación
+![[Raycast Collage.png]]
+Al tener más raycasts, se necesitaba gestionar cuantas harían falta que sintieran el terreno para que el agente entrara en el estado grounded y se pudiera mover. Se decidió inicialmente 3 de los 5. La proyección del vector de movimiento se hacía sobre el plano resultante de la media de los planos del terreno que los raycasts vieran. Si dos raycasts chocan con el mismo plano, ese plano cuenta como dos, era la fórmula. Esto permitió al agente subir cuestas con más facilidad, pero no evitó que se quedara pillado del todo (im b). Se probó disminuir los raycasts activados necesarios a solo 2 para el modo grounded, lo cual dificultaba aún más que se quedara pillado pero no lo evitaba del todo. (im c: solo un raycast ve el terreno).
+![[RaycastExample 1.png]] Imagen F: trayecto del agente sobre superficies inclinadas sin un corrector de dirección.
+
+El siguiente problema que hubo que solucionar fue el de mantener el agente sobre las superficies no planas al moverse por ellas. Como podemos ver en la imagen F, en el pirmer caso de subir una cuesta, el agente se mueve con la cuesta ya que 
+
+ Imagen b): el agente en modo cayendo debido a solo dos raycasts viendo el suelo (rojo)
+-  1 raycast failed and why
+-  multiple raycasts gave mediocre success.
+- Attempt to solve the issue of not following terrain direction
+	- make up direction of agent the medium of the normals under it
+	- Problem: abrupt changes in direction jerks the agent around and doesn't allow it to scale walls and uneven terrain properly.
+- smaller rigidbody allows better navigation and rarely gets stuck
+	- Smaller than edges
+- Problem: ant detaches from rounded surfaces
+	- Solution: make it move towards the surface
+	- causes it to twitch and clip
+	- Solution 2: add gravity
+	- problem: too slow, detaches ant if its too fast on rounded surface
+	- Solution 3: use addforce instead, solves most problems
+
+
+
 ### Pathfinding
 
 Las hormigas deben poder volver al nido y salir de ella en busca de comida. En la naturaleza esto lo hacen mediante pheromonas. La gran mayoria de hormigas al explorar dejan un camino de pheromonas por donde pasan, que pueden usar para volver. Hormigas exploradores crearán un camino de pheromonas especiales hacia el nido al encontrar comida, que otros trabajadores usarán ([source](https://resjournals.onlinelibrary.wiley.com/doi/10.1111/j.1365-3032.2008.00658.x#:~:text=The%20process%20of%20creating%20a,that%20are%20not%20always%20understood.)). Inicialmente quisa usar pathfinding para simular este comportamiento pero ya que se encuentra todo en un espacio 3D dinámico, es dificil implementar un pathfinding tradicional. Tras informarme sobre muchos métodos de buscacaminos en 3D (INSERTAR SOURCES POSIBLES) me di cuenta de que sería mucho más simple y realista imitar el sistema de pheromonas que usan las hormigas. Usando simples vectores, las hormigas se acercarán a distintas fuentes de olor y serán capaz es de seguir caminos largos y complejos. 

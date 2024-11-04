@@ -73,13 +73,11 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "2b50ebdb5a359242",
@@ -166,6 +164,12 @@
   },
   "active": "a4919b2e482bfc11",
   "lastOpenFiles": [
+    "RaycastExample 1.png",
+    "RaycastExample.png",
+    "Raycast Collage.png",
+    "Pasted image 20241103175350.png",
+    "Pasted image 20241103174337.png",
+    "Pasted image 20241103172439.png",
     "Pasted image 20241103140614.png",
     "Animacion de una pata de la hormiga.png.meta",
     "Implementación de las acciones.md.meta",
@@ -181,18 +185,12 @@
     "Pasted image 20241101214625.png",
     "Pasted image 20241028125506.png",
     "Pasted image 20241028123800.png",
-    "Pasted image 20241026140053.png",
-    "Pasted image 20241025132335.png",
-    "Pasted image 20241025132257.png",
-    "Pasted image 20241025132043.png",
     "Creación de animaciones.md",
     "Descripcion del proceso seguido.md",
     "Development.md",
     "Implementación de las acciones.md",
     "Development tasks.md",
     "Features.md",
-    "Thorax IK stiffness.png",
-    "Sobreponer antena y caminar.png",
     "Creación de IA.md",
     "Creación y obtención de assets.md",
     "Untitled.canvas",

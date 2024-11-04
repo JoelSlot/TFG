@@ -327,18 +327,18 @@ GameObject:
   - component: {fileID: 195614299}
   - component: {fileID: 195614298}
   - component: {fileID: 195614297}
-  - component: {fileID: 195614300}
   - component: {fileID: 195614301}
   - component: {fileID: 195614302}
   - component: {fileID: 195614303}
   - component: {fileID: 195614304}
+  - component: {fileID: 195614305}
   m_Layer: 0
   m_Name: Ant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &195614297
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -406,24 +406,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &195614300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 195614295}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1812f384e33766843aa3c3239775f78a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Ant: {fileID: 195614295}
-  Rigidbody: {fileID: 0}
-  speed: 10
-  turn: 0
-  speed_per_second: 2
-  degrees_per_second: 45
 --- !u!136 &195614301
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -443,10 +425,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.7615433
-  m_Height: 1.3313246
+  m_Radius: 0.4636731
+  m_Height: 0.6656451
   m_Direction: 2
-  m_Center: {x: 0, y: -0.0065488815, z: 0.0045166016}
+  m_Center: {x: 0, y: -0.028616428, z: -0.0024015903}
 --- !u!54 &195614302
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -509,6 +491,25 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &195614305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 195614295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d45c001cd0e78f4d900f03067f2331c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Ant: {fileID: 195614295}
+  Rigidbody: {fileID: 195614302}
+  speed: 0
+  turn: 1
+  speed_per_second: 22.5
+  degrees_per_second: 45
+  grounded: 0
 --- !u!1001 &611622508
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -560,6 +561,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 52666bb7682889146ab33363ab3d9106, type: 3}
       propertyPath: m_Name
       value: AntFull
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 52666bb7682889146ab33363ab3d9106, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
