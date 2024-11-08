@@ -169,6 +169,7 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKey(key))
                 moveInput += dir;
         }
+        //Add wasd movement
         AddMovement(KeyCode.W, Vector3.forward);
         AddMovement(KeyCode.S, Vector3.back);
         AddMovement(KeyCode.D, Vector3.right);
@@ -188,11 +189,43 @@ public class FlyCamera : MonoBehaviour
 
     void PlayingMode()
     {
-
         if (Input.GetMouseButton(1))
             rotateAllowed = true;
-        else rotateAllowed = false;
+        else
+        {
+            rotateAllowed = false;
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector3 clickPos;
+                if (clickObject(out clickPos))
+                {
+                    Debug.DrawLine(clickPos, transform.position, Color.red, 100000);
+                }
 
+            }
+                
+        }
+
+
+    }
+
+
+    bool clickObject(out Vector3 position)
+    {
+        //get mouse position with a set distance from screen
+        Vector3 mousePos = Input.mousePosition;
+        mousePos.z = 100f;
+        mousePos = Camera.main.ScreenToWorldPoint(mousePos);
+        //create a ray and raycast it
+        Debug.DrawRay(transform.position, mousePos - transform.position, Color.blue);
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000))
+        {
+            position = hit.point;
+            return true;
+        }
+        position = default;
+        return false;
     }
 
 }
