@@ -19,3 +19,7 @@ Hay que simular también la comunicación entre las hormigas. Esto se hace princ
 - Clasificación de caminos según sus recompensas
 
 Duración estimada de 2 semanas.
+
+
+## Planificación inicial de la estructura
+

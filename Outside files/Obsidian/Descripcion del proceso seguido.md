@@ -30,7 +30,7 @@ La tabla de ejes devuelve un número de 12 bits que representa cada eje del cubo
 
 3. Por último, se crean las facetas formadas por las posiciones por las que la isosuperficie corta a los cubos. Se usa una segunda tabla, llamada tabla de triángulos, que contiene un array de números para cada posible combinación de facetas en un cubo. Cada array contiene para cada triángulo de esa combinación los ejes en los que se encuentran los puntos que forman dicho triángulo. Cada array contiene a lo sumo 5 triángulos, por lo que cada array tiene una longitud de 15 + 1 números (el último se usa para indicar cuando acaba el array). Los primeros 3 números del array indican el primero triangulo, los segundo 3 el segundo triángulo, etc. El algoritmo sigue creando facetas de triangulo dado un array hasta que se encuentra con un valor -1. El índice ya obtenido en el primer paso del algoritmo se usa también en esta tabla. 
 
-Siguiendo el ejemplo anterior, el índice 8 en la tabla de triángulos apunta a el array {3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}.
+Siguiendo el ejemplo anterior, el índice 8 en la tabla de triángulos apunta a el array {3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}. 
 
 El pseudocódigo del algoritmo sería:
 ```
@@ -67,8 +67,8 @@ Además del campo escalar que forma el mapa, los otros datos como la cantidad de
 	Genera todos los objetos chunk necesarios para
 
 En el script, se implementó como en la imagen im 1.2. La función GetCubeConfig recibe un array de los valores de los vértices en orden y devuelve el índice correspondiente.
-![[Pasted image 20241028125506.png]]  
-
+  
+NOT FINISHED GET UR ASS BACK ON THIS
 ## Obtención de assets
 
 Los modelos 3d se obtuvieron online, ya que crearlos desde cero seria una carga de trabajo digno para un TFG aparte.  Algunos modelos si fueron editados en blender para crear distintas versiones, como por ejemplo la hormiga reina a partir de la hormiga base.
@@ -180,13 +180,21 @@ Se escribió un simple código para mover la hormiga en la dirección del vector
  imagen a): ejemplo de una situación en la que el agente no puede "ver" el terreno debido a una elevación
 ![[Raycast Collage.png]]
 Al tener más raycasts, se necesitaba gestionar cuantas harían falta que sintieran el terreno para que el agente entrara en el estado grounded y se pudiera mover. Se decidió inicialmente 3 de los 5. La proyección del vector de movimiento se hacía sobre el plano resultante de la media de los planos del terreno que los raycasts vieran. Si dos raycasts chocan con el mismo plano, ese plano cuenta como dos, era la fórmula. Esto permitió al agente subir cuestas con más facilidad, pero no evitó que se quedara pillado del todo (im b). Se probó disminuir los raycasts activados necesarios a solo 2 para el modo grounded, lo cual dificultaba aún más que se quedara pillado pero no lo evitaba del todo. (im c: solo un raycast ve el terreno).
+
+Otro obstáculo fue tener que encontrar una forma de hacer que la dirección en la que miraba el agente fuera perpendicular al terreno. El agente podría acabar mirando en una dirección diagonal en respecto al terreno, lo que podia causar que se separase de ella al moverse por superficies curvadas. Esto no mostraba ser un problema demasiado grande en el caso de moverse por superficies cóncavas (F 1), pero destacaba más en superficies convexas (F 2). Se intentó arreglar esto cambiando la dirección del agente según el terreno sobre el que se encontraba. La dirección hacia arriba del agente se ajustó a la de la media de los normales de los terrenos que detectaran los raycasts. Esto permitió al agente mover a velocidades más rápidas sin desconectarse del terreno, pero causaba problemas al subir cuestas y caminar por terrenos irregulares: su cambio de dirección repentino causaba que los extremos del agente podrían chocar con el terreno y separar a la hormiga de ella.
+
+Otra dificultad con el método de ajustar según las normales del terreno fue que los raycasts podian detectar terrenos con orientaciones muy distintas, lo que causaba cambios bruscos en su dirección. Su nueva orientación a su vez detectaría otros terrenos, por lo que cambiaría de nuevo bruscamente de dirección en el siguiente frame. A veces el agente se quedaría pillado cambiandose continuamente de una dirección a otra. Para remediar este problema, se intentó acercar los raycasts. Si su distancia no fuera mayor a la longitud media de los ejes de los triángulos del terreno no debería poder detectar más de 2 distintas en cada dirección. Esto evitó que se quedara pilaldo cambiando de dirección, pero volvió a causar que el agente se quedara pillado en superficies cóncavas.
+
 ![[RaycastExample 1.png]] Imagen F: trayecto del agente sobre superficies inclinadas sin un corrector de dirección.
 
-El siguiente problema que hubo que solucionar fue el de mantener el agente sobre las superficies no planas al moverse por ellas. Como podemos ver en la imagen F, en el pirmer caso de subir una cuesta, el agente se mueve con la cuesta ya que 
+Se decidió en un compromiso final: reducir el tamaño del rigidbody del agente (im e). Con esto se sacrificó cierto realismo, ya que ahora los los extremos de los modelos de las hormigas podrían atravesar el terreno más fácilmente. Sin embargo, en cuanto a funcionalidad solucionó tanto el problema del agente quedándose pillado en superficies convexas como el problema del agente quedándose pillado en superficies irregulares al ajustar su dirección.
 
- Imagen b): el agente en modo cayendo debido a solo dos raycasts viendo el suelo (rojo)
--  1 raycast failed and why
--  multiple raycasts gave mediocre success.
+Hubo un problema principal más que solucionar: el de mantener el agente sobre las superficies convexas al moverse por ellas a mayores velocidades. Como podemos ver en la imagen F, en el primer caso de subir una cuesta, la cuesta misma ayuda a corregir la dirección del agente a cualquier velocidad. En el segundo caso, el objeto eventualmente se separa del terreno si el agente se mueve lo suficientemente rápido, pero debido a la gravedad en estado falling cae hasta detectar de nuevo el terreno. En el último caso, donde un agente intenta subir una cuesta curvada desde debajo del terreno, al dejar de detectar el terreno cae hacia abajo. El ajuste de su dirección mejoró el problema, pero no evitaba que el agente se alejara del terreno.
+
+Hubo que encontrar una forma de hacer que el agente se acercara al terreno sobre el que se situaba. Se intentó hacer esto de tres modos. La inicial fue ir ajustando la posición del agente manualmente para moverlo hacia el terreno. Esto provocaba problemas con 
+
+NOT FINISHED PLS DO THIS SOON!!!
+
 - Attempt to solve the issue of not following terrain direction
 	- make up direction of agent the medium of the normals under it
 	- Problem: abrupt changes in direction jerks the agent around and doesn't allow it to scale walls and uneven terrain properly.
@@ -204,6 +212,11 @@ El siguiente problema que hubo que solucionar fue el de mantener el agente sobre
 ### Pathfinding
 
 Las hormigas deben poder volver al nido y salir de ella en busca de comida. En la naturaleza esto lo hacen mediante pheromonas. La gran mayoria de hormigas al explorar dejan un camino de pheromonas por donde pasan, que pueden usar para volver. Hormigas exploradores crearán un camino de pheromonas especiales hacia el nido al encontrar comida, que otros trabajadores usarán ([source](https://resjournals.onlinelibrary.wiley.com/doi/10.1111/j.1365-3032.2008.00658.x#:~:text=The%20process%20of%20creating%20a,that%20are%20not%20always%20understood.)). Inicialmente quisa usar pathfinding para simular este comportamiento pero ya que se encuentra todo en un espacio 3D dinámico, es dificil implementar un pathfinding tradicional. Tras informarme sobre muchos métodos de buscacaminos en 3D (INSERTAR SOURCES POSIBLES) me di cuenta de que sería mucho más simple y realista imitar el sistema de pheromonas que usan las hormigas. Usando simples vectores, las hormigas se acercarán a distintas fuentes de olor y serán capaz es de seguir caminos largos y complejos. 
+
+
+### Implementación de las feromonas
+
+Inicialmente se hicieron tests para ver la viabilidad de el sistema de feromonas.
 
 ## Modelo de larva
 

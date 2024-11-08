@@ -16,6 +16,8 @@ public class AntTest : MonoBehaviour
     public Rigidbody Rigidbody;
     public float speed = 0;
     public float turn = 1;
+    public float tiltSpeed = 10;
+    public float sep = 0.35f;
     //el animador
     private Animator Animator;
 
@@ -36,16 +38,12 @@ public class AntTest : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-
-        Debug.Log("its " + 0.01f / Time.deltaTime);
-
-        Animator.SetFloat("walking speed", 0.01f / Time.deltaTime);
 
         if (Input.GetKey(KeyCode.UpArrow))
         {
-            speed = speed_per_second * Time.deltaTime;
+            speed = speed_per_second * Time.fixedDeltaTime;
             Animator.SetBool("walking", true);
         }
         else
@@ -57,29 +55,31 @@ public class AntTest : MonoBehaviour
         else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
         else Animator.SetInteger("turning", 0);
 
-        turn = Animator.GetInteger("turning") * degrees_per_second * Time.deltaTime;
+        turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
 
         Color hitColor;
         int numHits = 0;
         Vector3 normalMedian = Vector3.zero;
-
-        float[] xPos = {0.25f, -0.25f, 0.25f, -0.25f, 0};
-        float[] zPos = {0.25f, -0.25f, -0.25f, 0.25f, 0};
+        //El orden de los raycasts es importante. Son atras derecha -> atras izquierda -> delante izquierda -> delante derecha -> centro
+        float[] xPos = {sep, -sep, -sep, sep, 0};
+        float[] zPos = {-sep, -sep, sep, sep, 0};
         float yPos = 0.5f;
+        Boolean[] rayCastHits = { false, false, false, false, false};
 
         for (int i = 0; i < xPos.Length; i++) {
-            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Ant.transform.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 1))
+            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 1))
             {
                 hitColor = Color.red;
                 numHits++;
                 normalMedian += hit.normal;
+                rayCastHits[i] = true;
             }
             else hitColor = Color.blue;
-            Debug.DrawLine(getRelativePos(xPos[i], yPos, zPos[i]), getRelativePos(xPos[i], yPos - 0.8f, zPos[i]), hitColor);
+            Debug.DrawRay(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
         }
 
         //REMEMBER TO COMMENT HOW YOU CHANGED FROM LOCAL BOOL TO THE ANIMATOR ONE
-        if (numHits > 2)
+        if (numHits > 0)
         {
             Animator.SetBool("grounded", true);
         }
@@ -97,25 +97,45 @@ public class AntTest : MonoBehaviour
             Rigidbody.AddForce(-normalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
             Physics.gravity = Vector3.zero;
 
-            //Rigidbody.rotation = Quaternion.FromToRotation(Vector3.up, normalMedian);
+            Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
+            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
 
-            Rigidbody.rotation *= Quaternion.Euler(0, turn, 0);
+            //Cuando la hormiga no detecta terreno con su raycast principal, es rotado hacia el terreno según los raycasts que aun detectan superficies
+            if (!rayCastHits[4])
+            {
+                float xRotation = 0;
+                float zRotation = 0;
+                if (rayCastHits[0] && !rayCastHits[1]) zRotation += tiltSpeed * 0.5f;
+                if (rayCastHits[1] && !rayCastHits[0]) zRotation -= tiltSpeed * 0.5f;
+                if (rayCastHits[1] && !rayCastHits[2]) xRotation += tiltSpeed * 0.5f;
+                if (rayCastHits[2] && !rayCastHits[1]) xRotation -= tiltSpeed * 0.5f;
+                if (rayCastHits[2] && !rayCastHits[3]) zRotation -= tiltSpeed * 0.5f;
+                if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.5f;
+                if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.5f;
+                if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.5f;
+                deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
+                Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+            }
+
+            //Rigidbody.rotation *= Quaternion.Euler(0, turn, 0);
 
             Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, normalMedian);
 
             Rigidbody.position = Rigidbody.position + proyectedVector * speed;
 
+
             //Debug.DrawLine(centerHit.point, centerHit.point + normalMedian, Color.yellow);
-            
+
             //Stop the ant from moving and rotating on its own
-            
+
         }
-        else 
+        //Si no está grounded
+        else
         {
             hitColor = Color.blue;
             Physics.gravity = new Vector3(0, -3.0F, 0);
         }
-
+        
 
         //Debug.Log("Walking: " + Animator.GetBool("walking") + ", falling: " + Animator.GetBool("falling"));
 
@@ -126,9 +146,7 @@ public class AntTest : MonoBehaviour
     public Vector3 getRelativePos(float x, float y, float z)
     {
         return Rigidbody.position + Ant.transform.rotation * new Vector3(x, y, z);
-    } 
-
-    
+    }
 
     /*
     static public bool ArcCast(Vector3 center, Quaternion rotation, float xAngle, float yAngle, float radius, int resolution, int parts, LayerMask layer, out RaycastHit hit)

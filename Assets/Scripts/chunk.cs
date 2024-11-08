@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using static UnityEditor.Progress;
 
@@ -84,6 +85,12 @@ public class chunk
         //Si la malla no pasa por el cubo salimos de la función
         if (configIndex == 0 || configIndex == 255) return;
 
+        void OnDrawGizmosSelected()
+        {
+            Gizmos.color = new Color(1, 0, 0, 0.5f);
+            Vector3 cubeCenter = new Vector3((float)(position.x) + 0.5f, (float)(position.y) + 0.5f, (float)(position.z) + 0.5f);
+            Gizmos.DrawWireCube(cubeCenter, new Vector3(1, 1, 1));
+        }
         int edgeIndex = 0;
         //Iteramos para cada uno de los 5 posibles triángulos
         for (int i = 0; i < 5; i++)
