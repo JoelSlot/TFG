@@ -82,26 +82,24 @@ public class chunk
                 configIndex |= 1 << i;
         }
 
+        
+
         //Si la malla no pasa por el cubo salimos de la función
         if (configIndex == 0 || configIndex == 255) return;
 
-        void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(1, 0, 0, 0.5f);
-            Vector3 cubeCenter = new Vector3((float)(position.x) + 0.5f, (float)(position.y) + 0.5f, (float)(position.z) + 0.5f);
-            Gizmos.DrawWireCube(cubeCenter, new Vector3(1, 1, 1));
-        }
-        int edgeIndex = 0;
+        Debug.DrawLine(position - new Vector3(0.1f, 0.1f, 0.1f), position + new Vector3(0.1f, 0.1f, 0.1f), Color.green, 1000000);
+
+        int arrayIndex = 0;
         //Iteramos para cada uno de los 5 posibles triángulos
         for (int i = 0; i < 5; i++)
         {
-
+            
             //Iteramos sobre cada vértice del triángulo
             for (int p = 0; p < 3; p++)
             {
-
+                
                 //Obtener el siguiente índice del array en la tabla de triángulos
-                int indice = triangleTable[configIndex, edgeIndex];
+                int indice = triangleTable[configIndex, arrayIndex];
 
                 //Si no quedan triángulos en el array dejamos de iterar
                 if (indice == -1) return;
@@ -118,7 +116,7 @@ public class chunk
                 //Guardar los vértices que forman el triángulo en la malla.
                 vertices.Add(vertPosition);
                 triangles.Add(vertices.Count - 1);
-                edgeIndex++;
+                arrayIndex++;
 
             }
 

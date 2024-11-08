@@ -18,6 +18,7 @@ public class AntTest : MonoBehaviour
     public float turn = 1;
     public float tiltSpeed = 10;
     public float sep = 0.35f;
+    public bool controlled = true;
     //el animador
     private Animator Animator;
 

@@ -21,7 +21,7 @@ public class FlyCamera : MonoBehaviour
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
-    static bool Focused
+    static bool rotateAllowed
     {
         get => UnityEngine.Cursor.lockState == CursorLockMode.Locked;
         set
@@ -33,10 +33,13 @@ public class FlyCamera : MonoBehaviour
 
     void OnEnable()
     {
-        if (focusOnEnable) Focused = true;
+        if (focusOnEnable) rotateAllowed = true;
     }
 
-    void OnDisable() => Focused = false;
+    void OnDisable()
+    {
+        rotateAllowed = false;
+    }
 
     private void Start()
     {
@@ -46,40 +49,56 @@ public class FlyCamera : MonoBehaviour
 
     void Update()
     {
-        // Input
-        if (Focused)
-        {
-            if (MainMenu.GameSettings.gameMode == 0)
-                FlyingCameraUpdateInput();
-            //to return to main menu
-            if (Input.GetKeyDown(KeyCode.Z))
-                SceneManager.LoadSceneAsync(0);
-        }
 
-        else if (Input.GetMouseButtonDown(0))
-            Focused = true;
+        //Mouse controls depending on game mode
+        if (MainMenu.GameSettings.gameMode == 0)
+            MapBuildingMode();
+        else
+            PlayingMode();
 
-        // Physics
-        velocity = Vector3.Lerp(velocity, Vector3.zero, dampingCoefficient * Time.deltaTime);
-        transform.position += velocity * Time.deltaTime;
+        //to return to main menu
+        if (Input.GetKeyDown(KeyCode.Z))
+            SceneManager.LoadSceneAsync(0);
+        //Keys to load/save map
+        if (Input.GetKeyDown(KeyCode.L))
+            WG.LoadMap();
+        if (Input.GetKeyDown(KeyCode.O))
+            WG.SaveMap();
+        //Move the camera
+        CameraMovement();
+        // Leave cursor lock
+        if (Input.GetKeyDown(KeyCode.Escape))
+            rotateAllowed = false;
+        if (Input.GetMouseButtonDown(0))
+            rotateAllowed = true;
+
+        
     }
 
-    void FlyingCameraUpdateInput()
+    void CameraMovement()
     {
         // Position
         velocity += GetAccelerationVector() * Time.deltaTime;
 
         // Rotation
-        Vector2 mouseDelta = lookSensitivity * new Vector2(Input.GetAxis("Mouse X"), -Input.GetAxis("Mouse Y"));
-        Quaternion rotation = transform.rotation;
-        Quaternion horiz = Quaternion.AngleAxis(mouseDelta.x, Vector3.up);
-        Quaternion vert = Quaternion.AngleAxis(mouseDelta.y, Vector3.right);
-        transform.rotation = horiz * rotation * vert;
+        if (rotateAllowed)
+        { 
+            Vector2 mouseDelta = lookSensitivity * new Vector2(Input.GetAxis("Mouse X"), -Input.GetAxis("Mouse Y"));
+            Quaternion rotation = transform.rotation;
+            Quaternion horiz = Quaternion.AngleAxis(mouseDelta.x, Vector3.up);
+            Quaternion vert = Quaternion.AngleAxis(mouseDelta.y, Vector3.right);
+            transform.rotation = horiz * rotation * vert;
+        }
+        // Physics
+        velocity = Vector3.Lerp(velocity, Vector3.zero, dampingCoefficient * Time.deltaTime);
+        transform.position += velocity * Time.deltaTime;
 
-        // Leave cursor lock
-        if (Input.GetKeyDown(KeyCode.Escape))
-            Focused = false;
+        
+    }
 
+    void MapBuildingMode()
+    {
+        
         //adjust sphere
         sphere.transform.position = Camera.main.transform.position + Camera.main.transform.forward * sphereDistance;
         if (sphere.transform.localScale.x != sphereScale)
@@ -117,6 +136,7 @@ public class FlyCamera : MonoBehaviour
 
         }
 
+        //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (UnityEngine.Cursor.lockState == CursorLockMode.Locked)
@@ -135,11 +155,7 @@ public class FlyCamera : MonoBehaviour
         if (Input.mouseScrollDelta.y < 0)
             sphereScale -= 0.1f;
 
-        //Keys to load/save map
-        if (Input.GetKeyDown(KeyCode.L))
-            WG.LoadMap();
-        if (Input.GetKeyDown(KeyCode.O))
-            WG.SaveMap();
+        
 
         
     }
@@ -147,23 +163,36 @@ public class FlyCamera : MonoBehaviour
     Vector3 GetAccelerationVector()
     {
         Vector3 moveInput = default;
-
+        //function to simplify code
         void AddMovement(KeyCode key, Vector3 dir)
         {
             if (Input.GetKey(key))
                 moveInput += dir;
         }
-
         AddMovement(KeyCode.W, Vector3.forward);
         AddMovement(KeyCode.S, Vector3.back);
         AddMovement(KeyCode.D, Vector3.right);
         AddMovement(KeyCode.A, Vector3.left);
+        //We want the horizontal movement to take into acount local direction but ignore y movement
+        moveInput = transform.TransformVector(moveInput);
+        moveInput.y = 0;
+        //Up and down movement globally
         AddMovement(KeyCode.Space, Vector3.up);
         AddMovement(KeyCode.LeftControl, Vector3.down);
-        Vector3 direction = transform.TransformVector(moveInput.normalized);
-
+        Vector3 direction = moveInput.normalized;
+            
         if (Input.GetKey(KeyCode.LeftShift))
             return direction * (acceleration * accSprintMultiplier); // "sprinting"
         return direction * acceleration; // "walking"
     }
+
+    void PlayingMode()
+    {
+
+        if (Input.GetMouseButton(1))
+            rotateAllowed = true;
+        else rotateAllowed = false;
+
+    }
+
 }
