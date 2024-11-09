@@ -87,7 +87,8 @@ public class chunk
         //Si la malla no pasa por el cubo salimos de la función
         if (configIndex == 0 || configIndex == 255) return;
 
-        Debug.DrawLine(position - new Vector3(0.1f, 0.1f, 0.1f), position + new Vector3(0.1f, 0.1f, 0.1f), Color.green, 1000000);
+        //Debug.DrawLine(position - new Vector3(-0.1f, 0.9f, 0.1f), position + new Vector3(0.1f, 1.1f, -0.1f), Color.green, 1000000);
+        //Debug.DrawLine(position + new Vector3(0.1f, 0.9f, -0.1f), position + new Vector3(-0.1f, 1.1f, 0.1f), Color.green, 1000000);
 
         int arrayIndex = 0;
         //Iteramos para cada uno de los 5 posibles triángulos

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -199,7 +200,11 @@ public class FlyCamera : MonoBehaviour
                 Vector3 clickPos;
                 if (clickObject(out clickPos))
                 {
-                    Debug.DrawLine(clickPos, transform.position, Color.red, 100000);
+                    Vector3 cubeVertice = NearestSurfacePoint(clickPos);
+                    //dibujamos la linea
+                    Debug.DrawLine(cubeVertice, clickPos, Color.green, 100000);
+                    Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
+
                 }
 
             }
@@ -226,6 +231,50 @@ public class FlyCamera : MonoBehaviour
         }
         position = default;
         return false;
+    }
+
+    //en esta funcion se miran todos los vertices del cubo que contienen el punto hit, por los que se iteran
+    //usando los bits de un num de 3 bits
+    Vector3 NearestSurfacePoint(Vector3 hit)
+    {
+        //Mathf ceil or floor function
+        float MCF(float value, int it, int bitPos)
+        {
+            if ((it & (1 << bitPos)) != 0)//Si el bit num bitPos es 1, devolvemos floor
+                return Mathf.Floor(value);
+            else return Mathf.Ceil(value);//sino ceil
+        }
+
+        int FlipBit(int value, int bitPos)
+        {
+            return value ^ (1 << bitPos);
+        }
+        Vector3 nearest = hit;
+        float distance = 10f; //no vertex can be further than 2, but 10 just in case
+
+        //Miramos todos los vértices del cubo, y nos quedamos con el más cercano que cumple:
+        // - Está fuera del terreno, para que la hormiga pueda llegar
+        // - Es adjacente a un punto dentro del terreno, para que no esté demasiado lejos de la superficie como para que no llegue la hormiga
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 cubeCorner = new Vector3(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente vértice del cubo que contiene el punto
+            if (WG.IsAboveSurface(cubeCorner))
+                if (Vector3.Distance(hit, cubeCorner) < distance) //Si la distancia del vértice alpunto es menor que el escogido más cercano hasta ahora
+                {
+                    for (int j = 0; j < 3; j++)//miramos todos los vértices del cubo conectados al actual
+                    {
+                        int i2 = FlipBit(i, j);//Representación binaria del siguiente vértice adjacente
+                        Vector3 adjacentCorner = new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)); //siguiente vértice adjacente
+                        if (!WG.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los vértices está debajo de la superficie podemos tomar este vértice
+                        {
+                            nearest = cubeCorner ;
+                            distance = Vector3.Distance(hit, cubeCorner);
+                        }
+
+                    }
+                }
+        }
+        return nearest;
     }
 
 }

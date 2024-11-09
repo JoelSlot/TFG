@@ -167,6 +167,14 @@ public class WorldGen : MonoBehaviour
     {
         return terrainMap[Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.y), Mathf.FloorToInt(point.z)];
     }
+    public bool IsAboveSurface(Vector3 point)
+    {
+        return !(isolevel > SampleTerrain(point));
+    }
+    public bool IsAboveSurface(Vector3Int point)
+    {
+        return (!(isolevel > SampleTerrain(point)));
+    }
 
     public void LoadMap()
     {
