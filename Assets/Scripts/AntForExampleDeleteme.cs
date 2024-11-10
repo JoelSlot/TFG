@@ -92,9 +92,7 @@ public class AntForExampleDeleteme : MonoBehaviour
             Rigidbody.position = Rigidbody.position + proyectedVector * speed;
 
             //Debug.DrawLine(centerHit.point, centerHit.point + normalMedian, Color.yellow);
-
             //Stop the ant from moving and rotating on its own
-
         }
         else
         {

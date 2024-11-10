@@ -16,13 +16,13 @@ public class MainMenu : MonoBehaviour
     public void StartMapBuilder()
     {
         GameSettings.gameMode = 0;
-        SceneManager.LoadSceneAsync("MapBuilder");
+        SceneManager.LoadSceneAsync("Map");
     }
 
     public void StartMapTester()
     {
         GameSettings.gameMode = 1;
-        SceneManager.LoadSceneAsync("MapBuilder");
+        SceneManager.LoadSceneAsync("Map");
     }
 
     public void QuitGame()

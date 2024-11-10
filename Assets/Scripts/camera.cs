@@ -22,6 +22,8 @@ public class FlyCamera : MonoBehaviour
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
+    public GameObject pheromone; //Base pheromone that will be copied
+
     static bool rotateAllowed
     {
         get => UnityEngine.Cursor.lockState == CursorLockMode.Locked;
@@ -204,7 +206,9 @@ public class FlyCamera : MonoBehaviour
                     //dibujamos la linea
                     Debug.DrawLine(cubeVertice, clickPos, Color.green, 100000);
                     Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
-
+                    GameObject newPheromone = Instantiate(pheromone, cubeVertice, Quaternion.identity);
+                    newPheromone.SetActive(true);
+                    pheromone.GetComponent<Pheromone>().pathPos += 1;
                 }
 
             }

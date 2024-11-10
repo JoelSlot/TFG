@@ -18,7 +18,15 @@ public class AntTest : MonoBehaviour
     public float turn = 1;
     public float tiltSpeed = 10;
     public float sep = 0.35f;
-    public bool controlled = true;
+
+    enum AIState
+    {
+        Exploring,
+        Following,
+        Controlled
+    }
+
+    private AIState state = AIState.Following;
     //el animador
     private Animator Animator;
 
@@ -42,20 +50,9 @@ public class AntTest : MonoBehaviour
     void FixedUpdate()
     {
 
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            speed = speed_per_second * Time.fixedDeltaTime;
-            Animator.SetBool("walking", true);
-        }
-        else
-        {
-            speed = 0f;
-            Animator.SetBool("walking", false);
-        }
-        if (Input.GetKey(KeyCode.LeftArrow)) Animator.SetInteger("turning", -1);
-        else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
-        else Animator.SetInteger("turning", 0);
-
+        if (state == AIState.Controlled) catchInputs();
+        else AIMovement();
+        
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
 
         Color hitColor;
@@ -99,7 +96,7 @@ public class AntTest : MonoBehaviour
             Physics.gravity = Vector3.zero;
 
             Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
-            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
             //Cuando la hormiga no detecta terreno con su raycast principal, es rotado hacia el terreno según los raycasts que aun detectan superficies
             if (!rayCastHits[4])
@@ -117,17 +114,8 @@ public class AntTest : MonoBehaviour
                 deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
                 Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
             }
-
-            //Rigidbody.rotation *= Quaternion.Euler(0, turn, 0);
-
-            Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, normalMedian);
-
-            Rigidbody.position = Rigidbody.position + proyectedVector * speed;
-
-
-            //Debug.DrawLine(centerHit.point, centerHit.point + normalMedian, Color.yellow);
-
-            //Stop the ant from moving and rotating on its own
+            Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, normalMedian); //Project movement over terrain
+            Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
 
         }
         //Si no está grounded
@@ -148,6 +136,91 @@ public class AntTest : MonoBehaviour
     {
         return Rigidbody.position + Ant.transform.rotation * new Vector3(x, y, z);
     }
+
+
+    void catchInputs() {
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            speed = speed_per_second * Time.fixedDeltaTime;
+            Animator.SetBool("walking", true);
+        }
+        else
+        {
+            speed = 0f;
+            Animator.SetBool("walking", false);
+        }
+        if (Input.GetKey(KeyCode.LeftArrow)) Animator.SetInteger("turning", -1);
+        else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
+        else Animator.SetInteger("turning", 0);
+    }
+
+
+
+    public GameObject pheromone = null;
+
+    public bool noPheromone()
+    {
+        if (pheromone == null) return true;
+        else return false;
+    }
+
+    public void SensePheromone(GameObject newPheromone)
+    {
+        if (pheromone == null) pheromone = newPheromone;
+        else if (pheromone.GetComponent<Pheromone>().pathPos < newPheromone.GetComponent<Pheromone>().pathPos)
+            pheromone = newPheromone;
+    }
+
+    void AIMovement() {
+
+        if (state == AIState.Following)
+        {
+            if (pheromone != null)
+                FollowPheromone(pheromone);
+            else
+            {
+                Animator.SetInteger("turning", 0);
+                speed = 0f;
+                Animator.SetBool("walking", false);
+            }
+        }
+    }
+
+    //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre él.
+    //Dependiendo de donde se encuentra en el plano ajustar la dirección y decidir si moverse hacia delante.
+    void FollowPheromone(GameObject pheromone)
+    {
+        Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(pheromone.transform.position);
+        float yDist = pherRel.y;
+        pherRel.y = 0;
+        float angle = Vector3.Angle(Vector3.forward, pherRel);
+        float distance = Vector3.Distance(pheromone.transform.position, Rigidbody.transform.position);
+        Debug.Log(distance);
+
+        if (angle > 10 && distance > 1f)
+        {
+            if (pherRel.x > 0) Animator.SetInteger("turning", 1);
+            else Animator.SetInteger("turning", -1);
+        }
+        else Animator.SetInteger("turning", 0);
+
+        if ((pherRel.z > 0.8 || yDist > 1) && distance > 0.3f)
+        {
+            speed = speed_per_second * Time.fixedDeltaTime;
+            Animator.SetBool("walking", true);
+        }
+        else
+        {
+            speed = 0f;
+            Animator.SetBool("walking", false);
+        }
+
+
+
+        //Plane horPlane = new Plane(transform.up.normalized, transform.position); //Obtener el plano horizontal de la hormiga
+        //Vector3 objective = horPlane.ClosestPointOnPlane(pheromone.transform.position); //proyectar la posicion de la pheromona sobre el plano.
+    }
+
 
     /*
     static public bool ArcCast(Vector3 center, Quaternion rotation, float xAngle, float yAngle, float radius, int resolution, int parts, LayerMask layer, out RaycastHit hit)

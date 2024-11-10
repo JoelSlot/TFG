@@ -218,6 +218,8 @@ Las hormigas deben poder volver al nido y salir de ella en busca de comida. En l
 
 Inicialmente se hicieron tests para ver la viabilidad de el sistema de feromonas. Se necesitaba una forma de asegurar que una hormiga pudiera moverse hacia las feromonas que detectara y a que distancia esto era viable. Como representar las feromonas en el entorno también fue una cuestión que debió ser contestado. El primer paso fue 
 
+
+
 ## Modelo de larva
 
 
