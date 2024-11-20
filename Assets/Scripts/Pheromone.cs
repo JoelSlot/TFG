@@ -17,19 +17,5 @@ public class Pheromone : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        int layerId = 7;
-        int layerMask = 1 << layerId;
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius, layerMask);
-        for (int i = 0; i < hitColliders.Length; i++){
-            Collider hitCollider = hitColliders[i];
-
-            if (hitCollider != null)
-            {
-
-                hitCollider.GetComponent<AntTest>().SensePheromone(gameObject);
-
-            }
-            //Do some stuff here
-        }
     }
 }

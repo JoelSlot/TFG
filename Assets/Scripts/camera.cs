@@ -200,7 +200,8 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetMouseButtonDown(0))
             {
                 Vector3 clickPos;
-                if (clickObject(out clickPos))
+                int clickLayer = (1 << 6);
+                if (clickObject(clickLayer, out clickPos))
                 {
                     Vector3 cubeVertice = NearestSurfacePoint(clickPos);
                     //dibujamos la linea
@@ -219,7 +220,7 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    bool clickObject(out Vector3 position)
+    bool clickObject(int layer, out Vector3 position)
     {
         //get mouse position with a set distance from screen
         Vector3 mousePos = Input.mousePosition;
@@ -228,7 +229,7 @@ public class FlyCamera : MonoBehaviour
         //create a ray and raycast it
         Debug.DrawRay(transform.position, mousePos - transform.position, Color.blue);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000))
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000, layer))
         {
             position = hit.point;
             return true;

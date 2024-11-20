@@ -14,6 +14,7 @@ public class AntTest : MonoBehaviour
 
     public GameObject Ant;
     public Rigidbody Rigidbody;
+    public BoxCollider PherSenseRange;
     public float speed = 0;
     public float turn = 1;
     public float tiltSpeed = 10;
@@ -40,6 +41,7 @@ public class AntTest : MonoBehaviour
         Physics.gravity = new Vector3(0, -3.0F, 0);
         Rigidbody = Ant.GetComponent<Rigidbody>();
         Animator = Ant.GetComponent<Animator>();
+        PherSenseRange = Ant.GetComponent<BoxCollider>();
         Debug.Log(Animator);
         Animator.SetBool("walking", false);
         Animator.SetBool("grounded", true);
@@ -164,12 +166,6 @@ public class AntTest : MonoBehaviour
         else return false;
     }
 
-    public void SensePheromone(GameObject newPheromone)
-    {
-        if (pheromone == null) pheromone = newPheromone;
-        else if (pheromone.GetComponent<Pheromone>().pathPos < newPheromone.GetComponent<Pheromone>().pathPos)
-            pheromone = newPheromone;
-    }
 
     void AIMovement() {
 
@@ -221,6 +217,20 @@ public class AntTest : MonoBehaviour
         //Vector3 objective = horPlane.ClosestPointOnPlane(pheromone.transform.position); //proyectar la posicion de la pheromona sobre el plano.
     }
 
+
+
+
+    private void OnTriggerStay(Collider collider)
+    {
+        GameObject newPheromone = collider.gameObject;
+        if (newPheromone != null)
+        {
+            if (pheromone == null) pheromone = newPheromone;
+            else if (pheromone.GetComponent<Pheromone>().pathPos < newPheromone.GetComponent<Pheromone>().pathPos)
+                pheromone = newPheromone;
+        }
+
+    }
 
     /*
     static public bool ArcCast(Vector3 center, Quaternion rotation, float xAngle, float yAngle, float radius, int resolution, int parts, LayerMask layer, out RaycastHit hit)
