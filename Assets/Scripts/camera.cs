@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using static UnityEditor.PlayerSettings;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -23,6 +24,7 @@ public class FlyCamera : MonoBehaviour
     float sphereScale = 1f;
 
     public GameObject pheromone; //Base pheromone that will be copied
+    int pathId;
 
     static bool rotateAllowed
     {
@@ -48,6 +50,8 @@ public class FlyCamera : MonoBehaviour
     {
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
+
+        pathId = pheromone.GetComponent<Pheromone>().getNextPathId();
     }
 
     void Update()
@@ -190,6 +194,8 @@ public class FlyCamera : MonoBehaviour
         return direction * acceleration; // "walking"
     }
 
+    int pathPos = 0;
+
     void PlayingMode()
     {
         if (Input.GetMouseButton(1))
@@ -199,17 +205,15 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
             if (Input.GetMouseButtonDown(0))
             {
-                Vector3 clickPos;
-                int clickLayer = (1 << 6);
-                if (clickObject(clickLayer, out clickPos))
+                int clickLayer = (1 << 6); //terrain layer
+                if (clickObject(clickLayer, out RaycastHit hit))
                 {
-                    Vector3 cubeVertice = NearestSurfacePoint(clickPos);
+                    Vector3Int cubeVertice = NearestSurfacePoint(hit.point);
                     //dibujamos la linea
-                    Debug.DrawLine(cubeVertice, clickPos, Color.green, 100000);
-                    Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
-                    GameObject newPheromone = Instantiate(pheromone, cubeVertice, Quaternion.identity);
-                    newPheromone.SetActive(true);
-                    pheromone.GetComponent<Pheromone>().pathPos += 1;
+                    //Debug.DrawLine(cubeVertice, hit.point, Color.green, 100000);
+                    //Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
+                    if (pheromone.GetComponent<Pheromone>().PlacePheromone(pheromone, cubeVertice, Quaternion.identity, pathId, pathPos, out GameObject pher))
+                        pathPos++;
                 }
 
             }
@@ -220,34 +224,32 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    bool clickObject(int layer, out Vector3 position)
+    bool clickObject(int layer, out RaycastHit hit)
     {
         //get mouse position with a set distance from screen
         Vector3 mousePos = Input.mousePosition;
         mousePos.z = 100f;
         mousePos = Camera.main.ScreenToWorldPoint(mousePos);
         //create a ray and raycast it
-        Debug.DrawRay(transform.position, mousePos - transform.position, Color.blue);
+        //Debug.DrawRay(transform.position, mousePos - transform.position, Color.blue);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000, layer))
+        if (Physics.Raycast(ray, out hit, 1000, layer))
         {
-            position = hit.point;
             return true;
         }
-        position = default;
         return false;
     }
 
     //en esta funcion se miran todos los vertices del cubo que contienen el punto hit, por los que se iteran
     //usando los bits de un num de 3 bits
-    Vector3 NearestSurfacePoint(Vector3 hit)
+    Vector3Int NearestSurfacePoint(Vector3 hit)
     {
         //Mathf ceil or floor function
-        float MCF(float value, int it, int bitPos)
+        int MCF(float value, int it, int bitPos)
         {
             if ((it & (1 << bitPos)) != 0)//Si el bit num bitPos es 1, devolvemos floor
-                return Mathf.Floor(value);
-            else return Mathf.Ceil(value);//sino ceil
+                return Mathf.FloorToInt(value);
+            else return Mathf.CeilToInt(value);//sino ceil
         }
 
         int FlipBit(int value, int bitPos)
@@ -262,7 +264,7 @@ public class FlyCamera : MonoBehaviour
         // - Es adjacente a un punto dentro del terreno, para que no esté demasiado lejos de la superficie como para que no llegue la hormiga
         for (int i = 0; i < 8; i++)
         {
-            Vector3 cubeCorner = new Vector3(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente vértice del cubo que contiene el punto
+            Vector3Int cubeCorner = new Vector3Int(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente vértice del cubo que contiene el punto
             if (WG.IsAboveSurface(cubeCorner))
                 if (Vector3.Distance(hit, cubeCorner) < distance) //Si la distancia del vértice alpunto es menor que el escogido más cercano hasta ahora
                 {
@@ -279,7 +281,7 @@ public class FlyCamera : MonoBehaviour
                     }
                 }
         }
-        return nearest;
+        return new Vector3Int(Mathf.FloorToInt(nearest.x), Mathf.FloorToInt(nearest.y), Mathf.FloorToInt(nearest.z));
     }
 
 }

@@ -199,7 +199,7 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -228,9 +228,14 @@ MonoBehaviour:
   turn: 0
   tiltSpeed: 20
   sep: 0.2
+  origPheromone: {fileID: 1505364012}
+  placedPheromone: {fileID: 0}
+  followingPheromone: {fileID: 0}
+  Pheromone: {fileID: 0}
+  followingForwards: 1
+  state: 1
   speed_per_second: 2
   degrees_per_second: 42
-  pheromone: {fileID: 0}
 --- !u!65 &6207861
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -241,7 +246,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 247
@@ -250,8 +255,29 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.06, y: 1.43, z: 4.45}
-  m_Center: {x: 0, y: 0.76, z: 0.93}
+  m_Size: {x: 4.56, y: 1.92, z: 5.31}
+  m_Center: {x: 0, y: 0.76, z: 0.33}
+--- !u!65 &6207863
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6207855}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 247
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.56, y: 3.76, z: 1.8}
+  m_Center: {x: 0, y: 0.99, z: 2.15}
 --- !u!1 &35091244
 GameObject:
   m_ObjectHideFlags: 0
@@ -809,6 +835,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 52666bb7682889146ab33363ab3d9106, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6207861}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 52666bb7682889146ab33363ab3d9106, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6207863}
   m_SourcePrefab: {fileID: 100100000, guid: 52666bb7682889146ab33363ab3d9106, type: 3}
 --- !u!1 &705507993
 GameObject:
@@ -1121,7 +1150,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1505364013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1134,8 +1163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2091d97aa9b3e849847eba82ad60cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 25.47
-  pathPos: 0
+  pos: {x: 0, y: 0, z: 0}
 --- !u!23 &1505364015
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1196,7 +1224,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1505364012}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 8.528, y: 14.583, z: 12.097}
   m_LocalScale: {x: 0.28, y: 0.28, z: 0.28}
   m_ConstrainProportionsScale: 1
@@ -1228,7 +1256,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 14
   m_CollisionDetection: 1
 --- !u!65 &1505364019
 BoxCollider:
@@ -1366,5 +1394,5 @@ SceneRoots:
   - {fileID: 1164272994}
   - {fileID: 35091246}
   - {fileID: 195614299}
-  - {fileID: 611622508}
   - {fileID: 1505364017}
+  - {fileID: 611622508}

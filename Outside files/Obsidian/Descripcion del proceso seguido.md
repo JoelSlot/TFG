@@ -219,7 +219,12 @@ Las hormigas deben poder volver al nido y salir de ella en busca de comida. En l
 Inicialmente se hicieron tests para ver la viabilidad de el sistema de feromonas. Se necesitaba una forma de asegurar que una hormiga pudiera moverse hacia las feromonas que detectara y a que distancia esto era viable. Como representar las feromonas en el entorno también fue una cuestión que debió ser contestado. El primer paso fue 
 
 
-
+Problems seen and resolved (or attempted to):
+- Al moverse por un valle, la hormiga al entrar habrá visto un nodo que al entrar se le queda perpendicularmente arriba. Al no tener distancia horizontal a él no sabe que hacer y se queda quieto
+-- Solución: En la función FollowPheromone mirar si está demasiado lejos horizontalmente. En caso de que sí, escoger de nuevo pheromona a seguir de los actuales visibles.
+- Problema: Hormiga llega a nodo pheromona y no ve el siguiente porque está demasiado alta.
+-- Solución: Añadir boxcollider más vertical en la parte delantera de la hormiga.
+- Problema: Hormiga ve el siguiente nodo, pero se encuentra demasiado vertical y decide coger uno nuevo de las que ve, loopea infinitamente.
 ## Modelo de larva
 
 
