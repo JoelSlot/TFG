@@ -83,7 +83,7 @@ public class AntTest : MonoBehaviour
         else AIMovement();
 
         //Deciding and executing the placement of a new pheromone node.
-        Vector3 p = Ant.transform.position + Ant.transform.up.normalized;
+        Vector3 p = Ant.transform.position + Ant.transform.up.normalized/2;
         Vector3Int newPherPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
         if (Animator.GetBool("walking") && newPherPos != prevPherPos && state == AIState.Controlled) //For now only placed when controlled
         {
