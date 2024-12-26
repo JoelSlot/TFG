@@ -220,8 +220,8 @@ Inicialmente se hicieron tests para ver la viabilidad de el sistema de feromonas
 
 
 Problems seen and resolved (or attempted to):
-- Al moverse por un valle, la hormiga al entrar habrá visto un nodo que al entrar se le queda perpendicularmente arriba. Al no tener distancia horizontal a él no sabe que hacer y se queda quieto
-- Solución: En la función FollowPheromone mirar si está demasiado lejos horizontalmente. En caso de que sí, escoger de nuevo pheromona a seguir de los actuales visibles.
+- Al moverse por un valle, la hormiga al entrar habrá visto un nodo que al entrar se le queda perpendicularmente arriba/abajo. Al no tener distancia horizontal a él no sabe que hacer y se queda quieto
+- Solución: En la función FollowPheromone mirar si está demasiado lejos verticalmente. En caso de que sí, escoger de nuevo una pheromona a seguir elegiendo entre los actuales visibles.
 - Problema: Hormiga llega a nodo pheromona y no ve el siguiente porque está demasiado alta.
 - Solución: Añadir boxcollider más vertical en la parte delantera de la hormiga.
 - Problema: Hormiga ve el siguiente nodo, pero se encuentra demasiado vertical y decide coger uno nuevo de las que ve, loopea infinitamente.
@@ -230,6 +230,10 @@ TO do TODAY:
 - get the pictures of the thingy AND in here: ant trying to reach thing above him
 - ant not seeing the next node (need to remove colliderbox 2 for that one)
 ![[Pheromone issue- not going up, infinitely reselecting.png]]
+
+
+
+
 ## Modelo de larva
 
 
@@ -242,3 +246,6 @@ https://sketchfab.com/3d-models/larva-14877198919544f5b43cef3e86e7b89f
 
 ![[Pasted image 20241025132335.png]]
 
+## Aditional changes
+
+- Added an outline to the ant object. This will be used when selecting one, remember to add this information to the corresponding section. This used the free public asses Quick Outline.

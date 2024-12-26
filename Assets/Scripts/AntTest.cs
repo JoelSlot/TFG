@@ -13,6 +13,7 @@ public class AntTest : MonoBehaviour
 {
 
     public GameObject Ant;
+
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
     public float speed = 0;
@@ -139,7 +140,7 @@ public class AntTest : MonoBehaviour
             Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
             Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
-            //Cuando la hormiga no detecta terreno con su raycast principal, es rotado hacia el terreno según los raycasts que aun detectan superficies
+            //Cuando la hormiga no detecta terreno con su raycast principal, es rotado hacia el terreno segï¿½n los raycasts que aun detectan superficies
             if (!rayCastHits[4])
             {
                 float xRotation = 0;
@@ -159,7 +160,7 @@ public class AntTest : MonoBehaviour
             Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
 
         }
-        //Si no está grounded
+        //Si no estï¿½ grounded
         else
         {
             hitColor = Color.blue;
@@ -220,8 +221,8 @@ public class AntTest : MonoBehaviour
         Animator.SetBool("walking", true);
     }
 
-    //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre él.
-    //Dependiendo de donde se encuentra en el plano ajustar la dirección y decidir si moverse hacia delante.
+    //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre ï¿½l.
+    //Dependiendo de donde se encuentra en el plano ajustar la direcciï¿½n y decidir si moverse hacia delante.
     void FollowPheromone(GameObject pheromone)
     {
         Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(pheromone.transform.position); //relative position of the pheromone to the ant
@@ -230,12 +231,12 @@ public class AntTest : MonoBehaviour
         float angle = Vector3.Angle(Vector3.forward, pherRel);
         float distance = pherRel.magnitude;
 
-        if (distance < Mathf.Abs(yDist) && Mathf.Abs(yDist) > 1.5f) //Si el nodo se encuentra más lejos verticalmente que horizontalmente, asumimos que no se sabe llegar y reseleccionamos nodo
+        if (distance < Mathf.Abs(yDist) && Mathf.Abs(yDist) > 1.5f) //Si el nodo se encuentra mï¿½s lejos verticalmente que horizontalmente, asumimos que no se sabe llegar y reseleccionamos nodo
         {
 
             followingPheromone = null;
             ConsiderPheromones();
-            if (followingPheromone == null) state = AIState.Controlled; //Esto deberá ser exploring cuando ese sea arreglado ese estado
+            if (followingPheromone == null) state = AIState.Controlled; //Esto deberï¿½ ser exploring cuando ese sea arreglado ese estado
             return;
         }
 
@@ -284,10 +285,10 @@ public class AntTest : MonoBehaviour
             {
                 if (followId == -1) //If there is not specific ID being followed by the ant it picks one
                 {
-                    followingPheromone = newPheromone; //Seleccionamos el nodo actual como el que se seguirá
+                    followingPheromone = newPheromone; //Seleccionamos el nodo actual como el que se seguirï¿½
                     (int, int, int) pathData = pherScript.GetNewestPath(); //Obtenemos el paso del camino mas reciente guardado en el nodo
                     followId = pathData.Item1; //Guardamos la ID del camino para seguirlo
-                    followPos = pathData.Item2; //Guardamos la posición en el camino del nodo
+                    followPos = pathData.Item2; //Guardamos la posiciï¿½n en el camino del nodo
                     Debug.Log("new followId: " + followId + ", followPos: " + followPos); 
                 }
                 else //If there is a specific Id being followed with the following pheromone being null, we look for one with the matchin id
