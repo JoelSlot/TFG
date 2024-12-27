@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
+using pheromoneClass;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -23,7 +24,7 @@ public class FlyCamera : MonoBehaviour
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
-    public GameObject pheromone; //Base pheromone that will be copied
+    public GameObject pheromoneNode; //Base pheromone that will be copied
     int pathId;
 
     static bool rotateAllowed
@@ -51,7 +52,7 @@ public class FlyCamera : MonoBehaviour
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
 
-        pathId = pheromone.GetComponent<Pheromone>().getNextPathId();
+        pathId = pheromoneNode.GetComponent<PheromoneNode>().getNextPathId();
     }
 
     void Update()
@@ -212,8 +213,8 @@ public class FlyCamera : MonoBehaviour
                     //dibujamos la linea
                     //Debug.DrawLine(cubeVertice, hit.point, Color.green, 100000);
                     //Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
-                    if (pheromone.GetComponent<Pheromone>().PlacePheromone(pheromone, cubeVertice, Quaternion.identity, pathId, pathPos, out GameObject pher))
-                        pathPos++;
+                    //if (pheromoneNode.GetComponent<Pheromone>().PlacePheromone(pheromoneNode, cubeVertice, Quaternion.identity, pathId, pathPos, out GameObject pher))
+                    //    pathPos++;
                 }
 
             }
@@ -259,20 +260,20 @@ public class FlyCamera : MonoBehaviour
         Vector3 nearest = hit;
         float distance = 10f; //no vertex can be further than 2, but 10 just in case
 
-        //Miramos todos los vértices del cubo, y nos quedamos con el más cercano que cumple:
-        // - Está fuera del terreno, para que la hormiga pueda llegar
-        // - Es adjacente a un punto dentro del terreno, para que no esté demasiado lejos de la superficie como para que no llegue la hormiga
+        //Miramos todos los vï¿½rtices del cubo, y nos quedamos con el mï¿½s cercano que cumple:
+        // - Estï¿½ fuera del terreno, para que la hormiga pueda llegar
+        // - Es adjacente a un punto dentro del terreno, para que no estï¿½ demasiado lejos de la superficie como para que no llegue la hormiga
         for (int i = 0; i < 8; i++)
         {
-            Vector3Int cubeCorner = new Vector3Int(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente vértice del cubo que contiene el punto
+            Vector3Int cubeCorner = new Vector3Int(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente vï¿½rtice del cubo que contiene el punto
             if (WG.IsAboveSurface(cubeCorner))
-                if (Vector3.Distance(hit, cubeCorner) < distance) //Si la distancia del vértice alpunto es menor que el escogido más cercano hasta ahora
+                if (Vector3.Distance(hit, cubeCorner) < distance) //Si la distancia del vï¿½rtice alpunto es menor que el escogido mï¿½s cercano hasta ahora
                 {
-                    for (int j = 0; j < 3; j++)//miramos todos los vértices del cubo conectados al actual
+                    for (int j = 0; j < 3; j++)//miramos todos los vï¿½rtices del cubo conectados al actual
                     {
-                        int i2 = FlipBit(i, j);//Representación binaria del siguiente vértice adjacente
-                        Vector3 adjacentCorner = new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)); //siguiente vértice adjacente
-                        if (!WG.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los vértices está debajo de la superficie podemos tomar este vértice
+                        int i2 = FlipBit(i, j);//Representaciï¿½n binaria del siguiente vï¿½rtice adjacente
+                        Vector3 adjacentCorner = new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)); //siguiente vï¿½rtice adjacente
+                        if (!WG.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los vï¿½rtices estï¿½ debajo de la superficie podemos tomar este vï¿½rtice
                         {
                             nearest = cubeCorner ;
                             distance = Vector3.Distance(hit, cubeCorner);

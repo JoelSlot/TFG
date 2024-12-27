@@ -7,6 +7,7 @@ using static UnityEngine.ParticleSystem;
 using UnityEngine.Rendering;
 using static UnityEditor.Experimental.GraphView.GraphView;
 using System;
+using pheromoneClass;
 
 
 public class AntTest : MonoBehaviour
@@ -23,14 +24,11 @@ public class AntTest : MonoBehaviour
 
     //Variables for pheromone paths
     private int pathId = -1; //Id that path being created
-    private int pathPos = -1; //Position of path being created
-    private int followId = -1; //Id of path being followed
-    private int followPos = -1; //position of path being followed
     private UnityEngine.Quaternion prevUpAngle; //Previous angle of pheromone
     public GameObject origPheromone;
-    public GameObject placedPheromone = null;
-    public GameObject followingPheromone = null;
-    public Pheromone Pheromone; //the script file of the original pheromone that will be used to access functions.
+    public Pheromone placedPheromone = null;
+    public Pheromone followingPheromone = null;
+    public PheromoneNode PheromoneNode; //the script file of the original pheromone that will be used to access functions.
     public bool followingForwards = true;
     private Vector3Int prevPherPos; //position of previously placed pheromone
 
@@ -60,7 +58,7 @@ public class AntTest : MonoBehaviour
         Animator.SetBool("walking", false);
         Animator.SetBool("grounded", true);
         Animator.enabled = true;
-        Pheromone = origPheromone.GetComponent<Pheromone>();
+        PheromoneNode = origPheromone.GetComponent<PheromoneNode>();
         Vector3 p = Ant.transform.position + Ant.transform.up.normalized;
         prevPherPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
     }
@@ -89,10 +87,9 @@ public class AntTest : MonoBehaviour
         if (Animator.GetBool("walking") && newPherPos != prevPherPos && state == AIState.Controlled) //For now only placed when controlled
         {
             prevPherPos = newPherPos;
-            if (placedPheromone == null) pathId = Pheromone.getNextPathId(); //we get the next path id for this new path
-            if (Pheromone.PlacePheromone(origPheromone, prevPherPos, Ant.transform.rotation, pathId, pathPos, out placedPheromone))
-                pathPos++;
-            Debug.Log(pathPos);
+            if (placedPheromone == null) pathId = PheromoneNode.getNextPathId(); //we get the next path id for this new path
+            if (PheromoneNode.PlacePheromone(origPheromone, newPherPos, pathId, placedPheromone, out Pheromone newPheromone))
+                placedPheromone = newPheromone;
         }
         
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
@@ -160,7 +157,7 @@ public class AntTest : MonoBehaviour
             Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
 
         }
-        //Si no est� grounded
+        //Si no esta grounded
         else
         {
             hitColor = Color.blue;
@@ -193,15 +190,17 @@ public class AntTest : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftArrow)) Animator.SetInteger("turning", -1);
         else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
         else Animator.SetInteger("turning", 0);
+
+        if (Input.GetKeyDown(KeyCode.DownArrow) && placedPheromone != null) placedPheromone.showPath(false);
     }
 
     void AIMovement() {
 
         if (state == AIState.Following)
         {
-            ConsiderPheromones();
+            if (followingPheromone == null) SensePheromones();
             if (followingPheromone != null)
-                FollowPheromone(followingPheromone);
+                FollowPheromone();
             else
             {
                 Animator.SetInteger("turning", 0);
@@ -223,24 +222,21 @@ public class AntTest : MonoBehaviour
 
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
-    void FollowPheromone(GameObject pheromone)
+    void FollowPheromone()
     {
-        Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(pheromone.transform.position); //relative position of the pheromone to the ant
+        if (followingPheromone == null)
+        {
+            speed = 0f;
+            Animator.SetBool("walking", false);
+            return;
+        }
+        Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(followingPheromone.pos); //relative position of the pheromone to the ant
         float yDist = pherRel.y; 
         pherRel.y = 0; //We remove the y angle
         float angle = Vector3.Angle(Vector3.forward, pherRel);
         float distance = pherRel.magnitude;
 
-        if (distance < Mathf.Abs(yDist) && Mathf.Abs(yDist) > 1.5f) //Si el nodo se encuentra m�s lejos verticalmente que horizontalmente, asumimos que no se sabe llegar y reseleccionamos nodo
-        {
-
-            followingPheromone = null;
-            ConsiderPheromones();
-            if (followingPheromone == null) state = AIState.Controlled; //Esto deber� ser exploring cuando ese sea arreglado ese estado
-            return;
-        }
-
-        if (angle > 10 && distance > 1f)
+        if (angle > 10 && distance >= 0.8f)
         {
             if (pherRel.x > 0) Animator.SetInteger("turning", 1);
             else Animator.SetInteger("turning", -1);
@@ -252,6 +248,15 @@ public class AntTest : MonoBehaviour
             speed = speed_per_second * Time.fixedDeltaTime;
             Animator.SetBool("walking", true);
         }
+        else if (distance < 1f)
+        {
+            Pheromone nextPheromone;
+            if (followingForwards && followingPheromone.getNext(out nextPheromone))
+                followingPheromone = nextPheromone;
+            else if (!followingForwards && followingPheromone.getPrevious(out nextPheromone))
+                followingPheromone = nextPheromone;
+            
+        }
         else
         {
             speed = 0f;
@@ -262,67 +267,21 @@ public class AntTest : MonoBehaviour
         //Vector3 objective = horPlane.ClosestPointOnPlane(pheromone.transform.position); //proyectar la posicion de la pheromona sobre el plano.
     }
 
-
-    List<GameObject> detectedPheromones = new List<GameObject>();
-
-    private void OnTriggerEnter(Collider other)
+    private void SensePheromones() 
     {
-        detectedPheromones.Add(other.gameObject);
-        //Debug.Log("Size: " + detectedPheromones.Count);
-    }
+        int layerMask = 1 << 8;
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 4, layerMask);
+        for (int i = 0; i < hitColliders.Length; i++){
+            Collider hitCollider = hitColliders[i];
 
-    private void OnTriggerExit(Collider other)
-    {
-        detectedPheromones.Remove(other.gameObject);
-    }
-
-    private void ConsiderPheromones() 
-    {
-        foreach (GameObject newPheromone in detectedPheromones)
-        {
-            Pheromone pherScript = newPheromone.GetComponent<Pheromone>();
-            if (followingPheromone == null)
+            if (hitCollider != null)
             {
-                if (followId == -1) //If there is not specific ID being followed by the ant it picks one
-                {
-                    followingPheromone = newPheromone; //Seleccionamos el nodo actual como el que se seguir�
-                    (int, int, int) pathData = pherScript.GetNewestPath(); //Obtenemos el paso del camino mas reciente guardado en el nodo
-                    followId = pathData.Item1; //Guardamos la ID del camino para seguirlo
-                    followPos = pathData.Item2; //Guardamos la posici�n en el camino del nodo
-                    Debug.Log("new followId: " + followId + ", followPos: " + followPos); 
-                }
-                else //If there is a specific Id being followed with the following pheromone being null, we look for one with the matchin id
-                //this is essentially a soft reset for when the ant is stuck (pher above or below ant can be avoided by calling this after setting the followed to null)
-                {
-                    if (pherScript.ContainsPathId(followId, out int pos))
-                    {
-                        followingPheromone = newPheromone;
-                        followPos = pherScript.pathIds[pos].Item2;
-                    }
-                }
-            }
-            else
-            {
-                if (pherScript.ContainsPathId(followId, out int pos))
-                {
-                    //Debug.Log("My pos: " + pathPos + ", its pos: " + pherScript.pathIds[pos].Item2);
-                    if ((followingForwards && pherScript.pathIds[pos].Item2 > followPos) || (!followingForwards && pherScript.pathIds[pos].Item2 < followPos) || followPos == -1)
-                    {
-                        followingPheromone = newPheromone;
-                        followPos = pherScript.pathIds[pos].Item2;
-                        Debug.Log("new followId: " + followId + ", followPos: " + followPos);
-                    }
-                }
-                //else Debug.Log("Nope");
+                PheromoneNode sensedNode = hitCollider.GetComponent<PheromoneNode>();
+                followingPheromone = sensedNode.GetNewestPheromone();
+                return;
             }
         }
-        if (followingPheromone == null && detectedPheromones.Count > 0) 
-        {
-            followId = -1;
-            ConsiderPheromones();
-        }
-
-
+        
     }
 
     /*

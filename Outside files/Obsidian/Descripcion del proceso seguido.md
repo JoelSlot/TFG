@@ -226,6 +226,8 @@ Problems seen and resolved (or attempted to):
 - Solución: Añadir boxcollider más vertical en la parte delantera de la hormiga.
 - Problema: Hormiga ve el siguiente nodo, pero se encuentra demasiado vertical y decide coger uno nuevo de las que ve, loopea infinitamente.
 
+Add that there used to be an idea to have the pheromone nodes have a facing direction that the ant would use to face the right direction before advancing. Not a bad idea actually.
+
 TO do TODAY: 
 - get the pictures of the thingy AND in here: ant trying to reach thing above him
 - ant not seeing the next node (need to remove colliderbox 2 for that one)

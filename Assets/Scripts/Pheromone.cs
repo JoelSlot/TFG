@@ -1,90 +1,69 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-
-public class Pheromone : MonoBehaviour
+namespace pheromoneClass
 {
-    public List<(int, int, int)> pathIds = new List<(int, int, int)>(); //Ids, pathpos and age of pheromones placed here
-    public Vector3Int pos;
 
-    static Dictionary<Vector3Int, Pheromone> pherDictionary = new Dictionary<Vector3Int, Pheromone>();
-    static int nextPathId = 0;
-
-    // Start is called before the first frame update
-    void Start()
+    public class Pheromone
     {
-        
-    }
+        public int pathId;
+        public int age;
+        public Vector3Int pos;
+        public Pheromone previous;
+        public Pheromone next;
 
-    // Update is called once per frame
-    void Update()
-    {
+        public Pheromone(int pathId, Pheromone previous, Vector3Int pos){
+            this.pathId = pathId;
+            this.previous = previous;
+            previous.next = this;
+            this.pos = pos;
+            age = 100;
+        }
 
-    }
+        public Pheromone(int pathId, Vector3Int pos){
+            this.pathId = pathId;
+            previous = null;
+            this.pos = pos;
+            age = 100;
+        }
 
-    public int getNextPathId()
-    {
-        return nextPathId++;
-    }
+        //Obtiene la siguiente pheromona del camino.
+        //Si este no existe, devuelve falso.
+        //Si existe, la retorna mediante out y devuelve falso
+        public bool getNext(out Pheromone next){
+            next = this.next;
+            if (this.next == null) return false;
+            return true;
+        }
+        //Obtiene la previa pheromona del camino.
+        //Si este no existe, devuelve falso.
+        //Si existe, la retorna mediante out y devuelve falso
+        public bool getPrevious(out Pheromone prev){
+            prev = this.previous;
+            if (this.previous == null) return false;
+            return true;
+        }
+        //El deconstructor se asegura que los nodos siguiente y previo, 
+        //si le tienen a él mismo como previo y siguiente respectivamente,
+        //se pongan a null
+        ~Pheromone(){
+            if (previous != null) if (previous.next == this) previous.next = null;
+            if (next != null) if (next.previous == this) next.previous = null;
+        }
 
-    public bool ContainsPathId(int pathId, out int pos)
-    {
-        for (int i = 0; i < pathIds.Count; i++) //iterates over all pheromone ids in the pos, and if it finds the given one it sets its age to 100
-        {
-            if (pathIds[i].Item1 == pathId)
+        public void showPath(bool reachedStart){
+            if (previous == null) reachedStart = true;
+            if (reachedStart){
+                if (next != null)
+                {
+                    Debug.DrawLine(pos, next.pos, Color.green, 100000);
+                    next.showPath(true);
+                }
+                return;
+            }
+            else
             {
-                pos = i;
-                return true;
+                previous.showPath(false);
             }
         }
-        pos = -1;
-        return false;
+
     }
-
-    public (int, int, int) GetNewestPath()
-    {
-        (int, int, int) youngest = pathIds[0];
-        for (int i = 1; i < pathIds.Count; i++) //iterates over all pheromone ids in the pos, and if it finds the given one it sets its age to 100
-        {
-
-            if (pathIds[i].Item3 < youngest.Item3)
-            {
-                youngest = pathIds[i];
-            }
-        }
-        return youngest;
-    }
-
-    //Places or updates a pheromone node. returns true if the path was new to the coordinate, false if it updated an existing one with the same step
-    public bool PlacePheromone(GameObject pheromone, Vector3Int pos, Quaternion direction, int pathId, int pathPos, out GameObject outPheromone)
-    {
-        if (pherDictionary.ContainsKey(pos)) //if the pos already has a pheromone object, the data is added to the existing one
-        {
-            outPheromone = pherDictionary[pos].gameObject;
-            if (pherDictionary[pos].ContainsPathId(pathId, out int Id)) //the pheromone already has that path, it is updated
-            {
-                int prevPathPos = pherDictionary[pos].pathIds[Id].Item2;
-                pherDictionary[pos].pathIds[Id] = (pathId, pathPos, 0);
-                return false;
-            }
-            pherDictionary[pos].pathIds.Add((pathId, pathPos, 0)); //The path is new to the pheromone and is added
-        }
-        else // a new pheromone object is instantiated, copying the original
-        {
-            outPheromone = Instantiate(pheromone, pos, direction);
-            outPheromone.SetActive(true);
-            Pheromone script = outPheromone.GetComponent<Pheromone>();
-            script.pathIds = new List<(int, int, int)>
-            {
-                (pathId, pathPos, 0)
-            };
-            script.pos = pos;
-            pherDictionary.Add(pos, script);
-            outPheromone.name = "Pheromone " + pathId + " " + pathPos;
-        }
-        Debug.Log("Created pheromone node with pathId: " + pathId + ", pos: " + pathPos);
-        return true;
-    }
-
 }
