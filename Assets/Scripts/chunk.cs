@@ -63,18 +63,18 @@ public class chunk
 
     
 
-    //Función que ejecuta el proceso de marching cubes para un cubo dado su posición
+    //Funciï¿½n que ejecuta el proceso de marching cubes para un cubo dado su posiciï¿½n
     void MarchCube(Vector3Int position)
     {
 
-        //Conseguir valores de los vértices del cubo
+        //Conseguir valores de los vï¿½rtices del cubo
         float[] cubeVertices = new float[8];
         for (int i = 0; i < 8; i++)
         {
-            cubeVertices[i] = worldGen.SampleTerrain(position + cornerTable[i]);
+            cubeVertices[i] = WorldGen.SampleTerrain(position + cornerTable[i]);
         }
 
-        //Obtener el índice que se usa en las tablas de ejes y triángulos
+        //Obtener el ï¿½ndice que se usa en las tablas de ejes y triï¿½ngulos
         int configIndex = 0;
         for (int i = 0; i < 8; i++)
         {
@@ -84,37 +84,37 @@ public class chunk
 
         
 
-        //Si la malla no pasa por el cubo salimos de la función
+        //Si la malla no pasa por el cubo salimos de la funciï¿½n
         if (configIndex == 0 || configIndex == 255) return;
 
         //Debug.DrawLine(position - new Vector3(-0.1f, 0.9f, 0.1f), position + new Vector3(0.1f, 1.1f, -0.1f), Color.green, 1000000);
         //Debug.DrawLine(position + new Vector3(0.1f, 0.9f, -0.1f), position + new Vector3(-0.1f, 1.1f, 0.1f), Color.green, 1000000);
 
         int arrayIndex = 0;
-        //Iteramos para cada uno de los 5 posibles triángulos
+        //Iteramos para cada uno de los 5 posibles triï¿½ngulos
         for (int i = 0; i < 5; i++)
         {
             
-            //Iteramos sobre cada vértice del triángulo
+            //Iteramos sobre cada vï¿½rtice del triï¿½ngulo
             for (int p = 0; p < 3; p++)
             {
                 
-                //Obtener el siguiente índice del array en la tabla de triángulos
+                //Obtener el siguiente ï¿½ndice del array en la tabla de triï¿½ngulos
                 int indice = triangleTable[configIndex, arrayIndex];
 
-                //Si no quedan triángulos en el array dejamos de iterar
+                //Si no quedan triï¿½ngulos en el array dejamos de iterar
                 if (indice == -1) return;
 
-                //Obtener los dos vértices que forman el eje y sus valores
+                //Obtener los dos vï¿½rtices que forman el eje y sus valores
                 Vector3 vert1pos = position + cornerTable[edgeIndexes[indice, 0]];
                 Vector3 vert2pos = position + cornerTable[edgeIndexes[indice, 1]];
-                float vert1val = worldGen.SampleTerrain(vert1pos);
-                float vert2val = worldGen.SampleTerrain(vert2pos);
+                float vert1val = WorldGen.SampleTerrain(vert1pos);
+                float vert2val = WorldGen.SampleTerrain(vert2pos);
 
-                //Calcular punto del eje que se corta usando interpolación linear
+                //Calcular punto del eje que se corta usando interpolaciï¿½n linear
                 Vector3 vertPosition = vert1pos + (isolevel - vert1val) * (vert2pos - vert1pos) / (vert2val - vert1val);
                 
-                //Guardar los vértices que forman el triángulo en la malla.
+                //Guardar los vï¿½rtices que forman el triï¿½ngulo en la malla.
                 vertices.Add(vertPosition);
                 triangles.Add(vertices.Count - 1);
                 arrayIndex++;
@@ -201,14 +201,14 @@ public class chunk
         new Vector3Int(0, 1, 1)
     };
 
-    //tabla de ejes. Para cada eje los índices de los vértices que lo forman.
+    //tabla de ejes. Para cada eje los ï¿½ndices de los vï¿½rtices que lo forman.
     public static int[,] edgeIndexes = new int[12, 2] {
 
         {0, 1}, { 1, 2}, { 3, 2}, {0, 3}, { 4, 5}, {5, 6}, {7, 6}, { 4, 7}, {0, 4}, { 1, 5}, { 2, 6}, { 3, 7}
 
     };
 
-    //Configuraciones: las distintas combinaciones de triángulos.
+    //Configuraciones: las distintas combinaciones de triï¿½ngulos.
     public static int[,] triangleTable = new int[,]
     {
 

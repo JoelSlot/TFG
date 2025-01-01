@@ -44,18 +44,18 @@ public class WorldGen : MonoBehaviour
      */
     public void GenerateChunks()
     {
-        //Itera sobre todas las secciones de tamaño de chunk del mapa
+        //Itera sobre todas las secciones de tamaï¿½o de chunk del mapa
         for (int x = 0; x < num_chunks_x; x++)
         {
             for (int y = 0; y < num_chunks_y; y++)
             {
                 for (int z = 0; z < num_chunks_z; z++)
                 {
-                    //Obtiene posición del chunk
+                    //Obtiene posiciï¿½n del chunk
                     Vector3Int newPos = new Vector3Int(x * chunk_x_dim, y * chunk_y_dim, z * chunk_z_dim);
-                    //Añade nuevo chunk y su posición al diccionario
+                    //Aï¿½ade nuevo chunk y su posiciï¿½n al diccionario
                     chunks.Add(newPos, new chunk(newPos, this));
-                    //aplica transformación de WorldGen al chunk y situa chunk en capa 6.
+                    //aplica transformaciï¿½n de WorldGen al chunk y situa chunk en capa 6.
                     chunks[newPos].chunkObject.transform.SetParent(transform);
                     chunks[newPos].chunkObject.layer = 6;
                 }
@@ -113,7 +113,7 @@ public class WorldGen : MonoBehaviour
                     terrainMap[points[i].x, points[i].y, points[i].z] = 1f;
                 h.Add(new Vector3Int((points[i].x / chunk_x_dim) * chunk_x_dim, 0, (points[i].z / chunk_z_dim) * chunk_z_dim));
                 bool x_0 = false;
-                //mirar si está justo entre dos chunks en x y no al principio
+                //mirar si estï¿½ justo entre dos chunks en x y no al principio
                 if (points[i].x % chunk_x_dim == 0 && points[i].x != 0)
                 {
                     x_0 = true;
@@ -159,21 +159,46 @@ public class WorldGen : MonoBehaviour
 
     }
     */
-    public float SampleTerrain(Vector3Int point)
+    public static float SampleTerrain(Vector3Int point)
     {
         return terrainMap[point.x, point.y, point.z];
     }
-    public float SampleTerrain(Vector3 point)
+    public static float SampleTerrain(Vector3 point)
     {
         return terrainMap[Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.y), Mathf.FloorToInt(point.z)];
     }
-    public bool IsAboveSurface(Vector3 point)
+    public static bool IsAboveSurface(Vector3 point)
     {
         return !(isolevel > SampleTerrain(point));
     }
-    public bool IsAboveSurface(Vector3Int point)
+    public static bool IsAboveSurface(Vector3Int point)
     {
-        return (!(isolevel > SampleTerrain(point)));
+        return !(isolevel > SampleTerrain(point));
+    }
+    public static Vector3 SurfaceDirection(Vector3Int point)
+    {
+        if (!IsAboveSurface(point)) return Vector3.up;
+        Vector3 direction = new Vector3(0,0,0);
+        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z))) direction.x -=1;
+        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z))) direction.x +=1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z))) direction.y -=1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z))) direction.y +=1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z-1))) direction.z -=1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z+1))) direction.z +=1;
+        if (!(direction.x == 0 && direction.y == 0 && direction.z == 0)) return direction.normalized;
+        if (!IsAboveSurface(new Vector3(point.x-1, point.y-1, point.z))) {direction.x -=1; direction.y -=1;}
+        if (!IsAboveSurface(new Vector3(point.x-1, point.y+1, point.z))) {direction.x -=1; direction.y +=1;}
+        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z-1))) {direction.x -=1; direction.z -=1;}
+        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z+1))) {direction.x -=1; direction.z +=1;}
+        if (!IsAboveSurface(new Vector3(point.x+1, point.y-1, point.z))) {direction.x +=1; direction.y -=1;}
+        if (!IsAboveSurface(new Vector3(point.x+1, point.y+1, point.z))) {direction.x +=1; direction.y +=1;}
+        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z-1))) {direction.x +=1; direction.z -=1;}
+        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z+1))) {direction.x +=1; direction.z +=1;}
+        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z-1))) {direction.y -=1; direction.z -=1;}
+        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z+1))) {direction.y -=1; direction.z +=1;}
+        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z-1))) {direction.y +=1; direction.z -=1;}
+        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z+1))) {direction.y +=1; direction.z +=1;}
+        return direction.normalized;
     }
 
     public void LoadMap()

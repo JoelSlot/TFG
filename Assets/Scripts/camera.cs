@@ -266,14 +266,14 @@ public class FlyCamera : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             Vector3Int cubeCorner = new Vector3Int(MCF(hit.x, i, 0), MCF(hit.y, i, 1), MCF(hit.z, i, 2));//obtener siguiente v�rtice del cubo que contiene el punto
-            if (WG.IsAboveSurface(cubeCorner))
+            if (WorldGen.IsAboveSurface(cubeCorner))
                 if (Vector3.Distance(hit, cubeCorner) < distance) //Si la distancia del v�rtice alpunto es menor que el escogido m�s cercano hasta ahora
                 {
                     for (int j = 0; j < 3; j++)//miramos todos los v�rtices del cubo conectados al actual
                     {
                         int i2 = FlipBit(i, j);//Representaci�n binaria del siguiente v�rtice adjacente
                         Vector3 adjacentCorner = new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)); //siguiente v�rtice adjacente
-                        if (!WG.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los v�rtices est� debajo de la superficie podemos tomar este v�rtice
+                        if (!WorldGen.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los v�rtices est� debajo de la superficie podemos tomar este v�rtice
                         {
                             nearest = cubeCorner ;
                             distance = Vector3.Distance(hit, cubeCorner);

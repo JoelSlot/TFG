@@ -7,10 +7,8 @@ using pheromoneClass;
 
 public class PheromoneNode : MonoBehaviour
 {
-
     public List<Pheromone> pherList = new List<Pheromone>(); //Pheromones placed here
     public Vector3Int pos;
-
     static Dictionary<Vector3Int, PheromoneNode> pherDictionary = new Dictionary<Vector3Int, PheromoneNode>();
     static int nextPathId = 0;
 
@@ -68,18 +66,20 @@ public class PheromoneNode : MonoBehaviour
                 outPheromone.age += 10;
                 return false;
             }
-            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos);
-            else outPheromone = new Pheromone(pathId, pos);
+            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos, pherDictionary[pos].transform.forward);
+            else outPheromone = new Pheromone(pathId, pos, pherDictionary[pos].transform.forward);
             pherDictionary[pos].pherList.Add(outPheromone); //The path is new to the pheromone and is added
         }
         else // a new pheromone object is instantiated, copying the original
         {
-            GameObject newNode = Instantiate(OrigNode, pos, Quaternion.identity); // we create a new node gameobject
+            Vector3 direction = WorldGen.SurfaceDirection(pos);
+            GameObject newNode = Instantiate(OrigNode, pos, Quaternion.Euler(direction)); // we create a new node gameobject
+            Debug.DrawRay(pos, direction, Color.green, 10000);
             newNode.SetActive(true); //Activa el objeto
             PheromoneNode newNodeScript = newNode.GetComponent<PheromoneNode>();//Obtiene el script, la clase del nuevo gameobject
             newNodeScript.pherList = new List<Pheromone>(); //Inicializamos la lista
-            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos); //Si la feromona previa no es nula crea pheromona nueva con él como último
-            else outPheromone = new Pheromone(pathId, pos);//Si es nula, crea feromona sin previa
+            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos, direction); //Si la feromona previa no es nula crea pheromona nueva con él como último
+            else outPheromone = new Pheromone(pathId, pos, direction);//Si es nula, crea feromona sin previa
             newNodeScript.pherList.Add(outPheromone); // Añade la feromona nueva a la lista de los del nodo nuevo
             newNodeScript.pos = pos; //Actualiza pos del nodo nuevo
             pherDictionary.Add(pos, newNodeScript); // Añade nodo al diccionario global
@@ -89,10 +89,43 @@ public class PheromoneNode : MonoBehaviour
         return true;
     }
 
-    public void showPath(int pathId){
-        if (this.HasPheromone(pathId, out Pheromone pheromone)){
-            pheromone.showPath(false);
+    //Places an aux pheromone. A simple pheromone whose previous and next are both the given pheromone. 
+    public Pheromone PlaceAux(GameObject OrigNode, Vector3Int pos, Pheromone lastStepped)
+    {
+        Pheromone outPheromone;
+        if (pherDictionary.ContainsKey(pos)) //if the pos already has a pheromone object, the data is added to the existing one
+        {
+            if (pherDictionary[pos].HasPheromone(lastStepped.pathId, out outPheromone)) //the pheromone already has that path, it is updated
+            {
+                outPheromone.age += 10;
+                return outPheromone;
+            }
+            outPheromone = new Pheromone(lastStepped.pathId, pos, pherDictionary[pos].transform.forward);
+            outPheromone.SetNext(lastStepped);
+            outPheromone.SetPrevious(lastStepped);
+            outPheromone.aux = true;
+            pherDictionary[pos].pherList.Add(outPheromone); //The path is new to the pheromone and is added
         }
+        else // a new pheromone object is instantiated, copying the original
+        {
+            Vector3 direction = WorldGen.SurfaceDirection(pos);
+            GameObject newNode = Instantiate(OrigNode, pos, Quaternion.Euler(direction)); // we create a new node gameobject
+            newNode.SetActive(true); //Activa el objeto
+            Debug.DrawRay(pos, direction, Color.green, 10000);
+            PheromoneNode newNodeScript = newNode.GetComponent<PheromoneNode>();//Obtiene el script, la clase del nuevo gameobject
+            newNodeScript.pherList = new List<Pheromone>(); //Inicializamos la lista
+            outPheromone = new Pheromone(lastStepped.pathId, pos, direction); //Se crea la nueva feromona
+            outPheromone.SetNext(lastStepped);
+            outPheromone.SetPrevious(lastStepped);
+            outPheromone.aux = true;
+            newNodeScript.pherList.Add(outPheromone); // Añade la feromona nueva a la lista de los del nodo nuevo
+            newNodeScript.pos = pos; //Actualiza pos del nodo nuevo
+            pherDictionary.Add(pos, newNodeScript); // Añade nodo al diccionario global
+            newNode.name = "Pheromone " + lastStepped.pathId + " " + pos; //cambia nombre del nodo
+        }
+        Debug.Log("Created aux pheromone node with pathId: " + lastStepped.pathId + ", pos: " + pos);
+        return outPheromone;
     }
+
 
 }

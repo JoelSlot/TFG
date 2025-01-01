@@ -28,23 +28,26 @@ public class AntTest : MonoBehaviour
     public GameObject origPheromone;
     public Pheromone placedPheromone = null;
     public Pheromone followingPheromone = null;
+    public Pheromone lastSteppedPheromone = null;
     public PheromoneNode PheromoneNode; //the script file of the original pheromone that will be used to access functions.
-    public bool followingForwards = true;
-    private Vector3Int prevPherPos; //position of previously placed pheromone
+    public bool followingForwards = false;
+    private Vector3Int Pos; //position of previously placed pheromone
+    public int stucktimer = 0;
 
     public enum AIState
     {
         Exploring,
         Following,
-        Controlled
+        Controlled,
+        Passive
     }
 
     public AIState state = AIState.Following;
     //el animador
     private Animator Animator;
 
-    public float speed_per_second = 1;
-    public float degrees_per_second = 45;
+    public float speed_per_second = 2f;
+    public float degrees_per_second = 67.5f;
 
 
     // Start is called before the first frame update
@@ -60,7 +63,7 @@ public class AntTest : MonoBehaviour
         Animator.enabled = true;
         PheromoneNode = origPheromone.GetComponent<PheromoneNode>();
         Vector3 p = Ant.transform.position + Ant.transform.up.normalized;
-        prevPherPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
+        Pos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
     }
 
     private void Update()
@@ -76,21 +79,30 @@ public class AntTest : MonoBehaviour
     void FixedUpdate()
     {
         
-
         //Behaviour based on AI state
         if (state == AIState.Controlled) catchInputs();
         else AIMovement();
 
         //Deciding and executing the placement of a new pheromone node.
         Vector3 p = Ant.transform.position + Ant.transform.up.normalized/2;
-        Vector3Int newPherPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
-        if (Animator.GetBool("walking") && newPherPos != prevPherPos && state == AIState.Controlled) //For now only placed when controlled
+        Vector3Int newPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
+        if (Animator.GetBool("walking") && newPos != Pos && WorldGen.IsAboveSurface(newPos)) //Only place when in new spot
         {
-            prevPherPos = newPherPos;
-            if (placedPheromone == null) pathId = PheromoneNode.getNextPathId(); //we get the next path id for this new path
-            if (PheromoneNode.PlacePheromone(origPheromone, newPherPos, pathId, placedPheromone, out Pheromone newPheromone))
-                placedPheromone = newPheromone;
+            if (state == AIState.Controlled)
+            {
+                if (placedPheromone == null) pathId = PheromoneNode.getNextPathId(); //we get the next path id for this new path
+                if (PheromoneNode.PlacePheromone(origPheromone, newPos, pathId, placedPheromone, out Pheromone newPheromone))
+                    placedPheromone = newPheromone; //Make that an if for your picture
+            }
+            //else if (state == AIState.Following && followingPheromone != null) //Se está siguiendo una pheromona
+            //{
+            //    if (lastSteppedPheromone != null && lastSteppedPheromone.pathId == followingPheromone.pathId) //Si 
+            //    {
+            //        lastSteppedPheromone = PheromoneNode.PlaceAux(origPheromone, newPos, lastSteppedPheromone);
+            //    }
+            //}
         }
+        Pos = newPos;
         
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
 
@@ -101,7 +113,7 @@ public class AntTest : MonoBehaviour
         float[] xPos = {sep, -sep, -sep, sep, 0};
         float[] zPos = {-sep, -sep, sep, sep, 0};
         float yPos = 0.5f;
-        Boolean[] rayCastHits = { false, false, false, false, false};
+        bool[] rayCastHits = { false, false, false, false, false};
 
         for (int i = 0; i < xPos.Length; i++) {
             if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 1))
@@ -191,7 +203,7 @@ public class AntTest : MonoBehaviour
         else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
         else Animator.SetInteger("turning", 0);
 
-        if (Input.GetKeyDown(KeyCode.DownArrow) && placedPheromone != null) placedPheromone.showPath(false);
+        if (Input.GetKeyDown(KeyCode.DownArrow) && placedPheromone != null) placedPheromone.ShowPath(false);
     }
 
     void AIMovement() {
@@ -206,11 +218,16 @@ public class AntTest : MonoBehaviour
                 Animator.SetInteger("turning", 0);
                 speed = 0f;
                 Animator.SetBool("walking", false);
+                state = AIState.Controlled;
             }
         }
         else if (state == AIState.Exploring)
         {
             RandomMovement();
+        }
+        else if (state == AIState.Passive)
+        {
+            state = AIState.Controlled;
         }
     }
 
@@ -224,47 +241,62 @@ public class AntTest : MonoBehaviour
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
     void FollowPheromone()
     {
+        //Si no hay pheromona que seguir, la hormiga se queda quieta
         if (followingPheromone == null)
         {
             speed = 0f;
             Animator.SetBool("walking", false);
             return;
         }
+
+        //Obtenemos los datos de distancia hacia la pheromona
         Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(followingPheromone.pos); //relative position of the pheromone to the ant
-        float yDist = pherRel.y; 
-        pherRel.y = 0; //We remove the y angle
-        float angle = Vector3.Angle(Vector3.forward, pherRel);
         float distance = pherRel.magnitude;
+        float yDist = pherRel.y - 0.5f; 
+        pherRel.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
+        float horAngle = Vector3.Angle(Vector3.forward, pherRel);
+        float horDistance = pherRel.magnitude;
 
-        if (angle > 10 && distance >= 0.8f)
-        {
-            if (pherRel.x > 0) Animator.SetInteger("turning", 1);
-            else Animator.SetInteger("turning", -1);
-        }
-        else Animator.SetInteger("turning", 0);
+        float minAngle = 30f;
 
-        if (pherRel.z > 0.8 && distance > 0.3f)
+        if (Pos == followingPheromone.pos || (Vector3.Angle(-Ant.transform.up, followingPheromone.surfaceDir) < 10 && distance < 3 && !followingPheromone.IsEnd(followingForwards)))//Si la pheromona se encuentra cerca
         {
-            speed = speed_per_second * Time.fixedDeltaTime;
-            Animator.SetBool("walking", true);
+
+            SetWalking(false);
+            Debug.Log("Made it to pheromone");
+            if (followingForwards && followingPheromone.GetNext(out Pheromone nextPher))
+            {
+                followingPheromone = nextPher;
+                FollowPheromone();
+            }
+            else if (!followingForwards && followingPheromone.GetPrevious(out nextPher))
+            {
+                followingPheromone = nextPher;
+                FollowPheromone();
+            }
+            else
+            {
+                followingPheromone = null;
+                state = AIState.Passive;
+            }
+
         }
-        else if (distance < 1f)
+        else // Si la pheromona no se encuentra cerca de la hormiga
         {
-            Pheromone nextPheromone;
-            if (followingForwards && followingPheromone.getNext(out nextPheromone))
-                followingPheromone = nextPheromone;
-            else if (!followingForwards && followingPheromone.getPrevious(out nextPheromone))
-                followingPheromone = nextPheromone;
             
-        }
-        else
-        {
-            speed = 0f;
-            Animator.SetBool("walking", false);
+            //Decidir si girar
+            if (horAngle > 5)
+            {
+                if (pherRel.x > 0) TurnRight();
+                else TurnLeft();
+            }
+            else DontTurn();
+
+            //Decidir si avanzar
+            if (pherRel.z > 0 && horAngle < minAngle) SetWalking(true);
+            else SetWalking(false);
         }
 
-        //Plane horPlane = new Plane(transform.up.normalized, transform.position); //Obtener el plano horizontal de la hormiga
-        //Vector3 objective = horPlane.ClosestPointOnPlane(pheromone.transform.position); //proyectar la posicion de la pheromona sobre el plano.
     }
 
     private void SensePheromones() 
@@ -282,6 +314,31 @@ public class AntTest : MonoBehaviour
             }
         }
         
+    }
+
+    private void SetWalking(bool walk){
+        if (walk)
+        {
+            speed = speed_per_second * Time.fixedDeltaTime;
+            Animator.SetBool("walking", true);
+        }
+        else
+        {
+            speed = 0f;
+            Animator.SetBool("walking", false);
+        }
+    }
+
+    private void TurnRight(){
+        Animator.SetInteger("turning", 1);
+    }
+
+    private void TurnLeft(){
+        Animator.SetInteger("turning", -1);
+    }
+
+    private void DontTurn(){
+        Animator.SetInteger("turning", 0);
     }
 
     /*
