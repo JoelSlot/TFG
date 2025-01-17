@@ -66,7 +66,11 @@ public class PheromoneNode : MonoBehaviour
                 outPheromone.age += 10;
                 return false;
             }
-            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos, pherDictionary[pos].transform.forward);
+            if (prevPheromone != null)
+            {
+                outPheromone = new Pheromone(pathId, prevPheromone, pos, pherDictionary[pos].transform.forward);
+                prevPheromone.SetNext(outPheromone); //Añadir nueva pheromona a la previa como siguiente
+            }
             else outPheromone = new Pheromone(pathId, pos, pherDictionary[pos].transform.forward);
             pherDictionary[pos].pherList.Add(outPheromone); //The path is new to the pheromone and is added
         }
@@ -78,7 +82,10 @@ public class PheromoneNode : MonoBehaviour
             newNode.SetActive(true); //Activa el objeto
             PheromoneNode newNodeScript = newNode.GetComponent<PheromoneNode>();//Obtiene el script, la clase del nuevo gameobject
             newNodeScript.pherList = new List<Pheromone>(); //Inicializamos la lista
-            if (prevPheromone != null) outPheromone = new Pheromone(pathId, prevPheromone, pos, direction); //Si la feromona previa no es nula crea pheromona nueva con él como último
+            if (prevPheromone != null){
+                outPheromone = new Pheromone(pathId, prevPheromone, pos, direction); //Si la feromona previa no es nula crea pheromona nueva con él como último
+                prevPheromone.SetNext(outPheromone); //Añadir nueva pheromona a la previa como siguiente
+            } 
             else outPheromone = new Pheromone(pathId, pos, direction);//Si es nula, crea feromona sin previa
             newNodeScript.pherList.Add(outPheromone); // Añade la feromona nueva a la lista de los del nodo nuevo
             newNodeScript.pos = pos; //Actualiza pos del nodo nuevo

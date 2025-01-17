@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
 using pheromoneClass;
+using NUnit.Framework.Constraints;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -24,8 +25,14 @@ public class FlyCamera : MonoBehaviour
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
-    public GameObject pheromoneNode; //Base pheromone that will be copied
     int pathId;
+
+    public enum obj { None, Ant, Grub}
+    public GameObject Ant; //Base ant that will be copied
+    public GameObject pheromoneNode; //Base pheromone that will be copied
+    //public GameObject Grub; //Base grub that will be copied
+    public obj objectMode = obj.None;
+    public AntTest SelectedAnt;
 
     static bool rotateAllowed
     {
@@ -63,7 +70,6 @@ public class FlyCamera : MonoBehaviour
             MapBuildingMode();
         else
             PlayingMode();
-
         //to return to main menu
         if (Input.GetKeyDown(KeyCode.Z))
             SceneManager.LoadSceneAsync(0);
@@ -79,8 +85,19 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
         if (Input.GetMouseButtonDown(0))
             rotateAllowed = true;
-
+        if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
+        if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
+        { 
+            if (SelectedAnt.state != AntTest.AIState.Controlled) SelectedAnt.state = AntTest.AIState.Controlled;
+            else SelectedAnt.state = AntTest.AIState.Passive;
+        }
         
+    }
+
+    void FixedUpdate()
+    {
+        if (SelectedAnt != null) antInputs();
     }
 
     void CameraMovement()
@@ -206,15 +223,36 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
             if (Input.GetMouseButtonDown(0))
             {
-                int clickLayer = (1 << 6); //terrain layer
-                if (clickObject(clickLayer, out RaycastHit hit))
+                if (objectMode == obj.None)
                 {
-                    Vector3Int cubeVertice = NearestSurfacePoint(hit.point);
-                    //dibujamos la linea
-                    //Debug.DrawLine(cubeVertice, hit.point, Color.green, 100000);
-                    //Debug.DrawLine(cubeVertice, transform.position, Color.red, 100000);
-                    //if (pheromoneNode.GetComponent<Pheromone>().PlacePheromone(pheromoneNode, cubeVertice, Quaternion.identity, pathId, pathPos, out GameObject pher))
-                    //    pathPos++;
+                    int clickLayer = (1 << 7); //capa de hormigas
+                    if (clickObject(clickLayer, out RaycastHit hit))
+                    {
+                        if (SelectedAnt != null) if (SelectedAnt.state == AntTest.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<AntTest>()) SelectedAnt.state = AntTest.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                        SelectedAnt = hit.transform.gameObject.GetComponent<AntTest>();
+                    }
+                }
+                else 
+                {
+                    int clickLayer = (1 << 6); //terrain layer
+                    if (clickObject(clickLayer, out RaycastHit hit))
+                    {
+                        switch (objectMode)
+                        {
+                            case obj.Ant:
+                                if (SelectedAnt != null) if (SelectedAnt.state == AntTest.AIState.Controlled) SelectedAnt.state = AntTest.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                                GameObject newAnt = Instantiate(Ant, hit.point, Quaternion.Euler(hit.normal)); 
+                                newAnt.layer = 7;
+                                newAnt.SetActive(true);
+                                SelectedAnt = newAnt.GetComponent<AntTest>();
+                                break;
+                            case obj.Grub:
+                                break;
+                            default:
+                                Debug.Log("No valid object mode when clicked");
+                            break;
+                        }
+                    }
                 }
 
             }
@@ -285,4 +323,19 @@ public class FlyCamera : MonoBehaviour
         return new Vector3Int(Mathf.FloorToInt(nearest.x), Mathf.FloorToInt(nearest.y), Mathf.FloorToInt(nearest.z));
     }
 
+
+    void antInputs() {
+        if (SelectedAnt.state != AntTest.AIState.Controlled) return;
+        if (Input.GetKey(KeyCode.UpArrow))          SelectedAnt.SetWalking(true);
+        else                                        SelectedAnt.SetWalking(false);
+        if (Input.GetKey(KeyCode.LeftArrow))        SelectedAnt.TurnLeft();
+        else if (Input.GetKey(KeyCode.RightArrow))  SelectedAnt.TurnRight();
+        else                                        SelectedAnt.DontTurn();
+
+        if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
+    }
+
+
 }
+
+

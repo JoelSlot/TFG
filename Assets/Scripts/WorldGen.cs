@@ -81,8 +81,10 @@ public class WorldGen : MonoBehaviour
                 {
                     if (z == 0 || z == z_dim || x == 0 || x == x_dim)
                         terrainMap[x, y, z] = 1f;
+                    else if (y == 10)
+                        terrainMap[x, y, z] = 0.3f;
                     else if (y < 10)
-                        terrainMap[x, y, z] = 0f;
+                        terrainMap[x,y,z] = 0f;
                     else
                         terrainMap[x, y, z] = 1f;
                 }

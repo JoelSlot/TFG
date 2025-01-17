@@ -30,7 +30,7 @@ public class AntTest : MonoBehaviour
     public Pheromone followingPheromone = null;
     public Pheromone lastSteppedPheromone = null;
     public PheromoneNode PheromoneNode; //the script file of the original pheromone that will be used to access functions.
-    public bool followingForwards = false;
+    private bool followingForwards = false;
     private Vector3Int Pos; //position of previously placed pheromone
     public int stucktimer = 0;
 
@@ -53,35 +53,26 @@ public class AntTest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Physics.gravity = new Vector3(0, -3.0F, 0);
-        Rigidbody = Ant.GetComponent<Rigidbody>();
-        Animator = Ant.GetComponent<Animator>();
-        PherSenseRange = Ant.GetComponent<BoxCollider>();
-        Debug.Log(Animator);
-        Animator.SetBool("walking", false);
-        Animator.SetBool("grounded", true);
-        Animator.enabled = true;
-        PheromoneNode = origPheromone.GetComponent<PheromoneNode>();
+        Physics.gravity = new Vector3(0, -3.0F, 0); //Se activa gravedad por defecto
+        Rigidbody = Ant.GetComponent<Rigidbody>(); //El rigidbody se registra
+        Animator = Ant.GetComponent<Animator>(); //El Animator se registra
+        PherSenseRange = Ant.GetComponent<BoxCollider>(); //El boxCollider se registra
+        Animator.SetBool("walking", false); //El estado por defecto no camina
+        Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
+        Animator.enabled = true; //Se habilita el animator
+        PheromoneNode = origPheromone.GetComponent<PheromoneNode>(); //Se registra el nodo pheromona original para acceder a sus funciones
         Vector3 p = Ant.transform.position + Ant.transform.up.normalized;
         Pos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            if (state == AIState.Following) state = AIState.Controlled;
-            else state = AIState.Following;
-        }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        
-        //Behaviour based on AI state
-        if (state == AIState.Controlled) catchInputs();
-        else AIMovement();
+        AIMovement();
 
         //Deciding and executing the placement of a new pheromone node.
         Vector3 p = Ant.transform.position + Ant.transform.up.normalized/2;
@@ -115,8 +106,9 @@ public class AntTest : MonoBehaviour
         float yPos = 0.5f;
         bool[] rayCastHits = { false, false, false, false, false};
 
+        int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
-            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 1))
+            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, raycastLayer))
             {
                 hitColor = Color.red;
                 numHits++;
@@ -188,26 +180,9 @@ public class AntTest : MonoBehaviour
         return Rigidbody.position + Ant.transform.rotation * new Vector3(x, y, z);
     }
 
-    void catchInputs() {
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            speed = speed_per_second * Time.fixedDeltaTime;
-            Animator.SetBool("walking", true);
-        }
-        else
-        {
-            speed = 0f;
-            Animator.SetBool("walking", false);
-        }
-        if (Input.GetKey(KeyCode.LeftArrow)) Animator.SetInteger("turning", -1);
-        else if (Input.GetKey(KeyCode.RightArrow)) Animator.SetInteger("turning", 1);
-        else Animator.SetInteger("turning", 0);
-
-        if (Input.GetKeyDown(KeyCode.DownArrow) && placedPheromone != null) placedPheromone.ShowPath(false);
-    }
-
+    int senseTimer = 0;
+    
     void AIMovement() {
-
         if (state == AIState.Following)
         {
             if (followingPheromone == null) SensePheromones();
@@ -218,7 +193,7 @@ public class AntTest : MonoBehaviour
                 Animator.SetInteger("turning", 0);
                 speed = 0f;
                 Animator.SetBool("walking", false);
-                state = AIState.Controlled;
+                state = AIState.Passive;
             }
         }
         else if (state == AIState.Exploring)
@@ -227,7 +202,13 @@ public class AntTest : MonoBehaviour
         }
         else if (state == AIState.Passive)
         {
-            state = AIState.Controlled;
+            if (senseTimer == 0)
+            {
+                SensePheromones();
+                if (followingPheromone != null) state = AIState.Following;
+            }
+            senseTimer += 1;
+            if (senseTimer > 10) senseTimer = 0;
         }
     }
 
@@ -259,25 +240,29 @@ public class AntTest : MonoBehaviour
 
         float minAngle = 30f;
 
-        if (Pos == followingPheromone.pos || (Vector3.Angle(-Ant.transform.up, followingPheromone.surfaceDir) < 10 && distance < 3 && !followingPheromone.IsEnd(followingForwards)))//Si la pheromona se encuentra cerca
+        if (Pos == followingPheromone.pos || (Vector3.Angle(-Ant.transform.up, followingPheromone.surfaceDir) < 20 && distance < 3 && !followingPheromone.IsEnd(followingForwards)))//Si la pheromona se encuentra cerca
         {
 
             SetWalking(false);
-            Debug.Log("Made it to pheromone");
-            if (followingForwards && followingPheromone.GetNext(out Pheromone nextPher))
+            if (followingPheromone.GetNext(followingForwards, out Pheromone nextPher))
             {
                 followingPheromone = nextPher;
                 FollowPheromone();
-            }
-            else if (!followingForwards && followingPheromone.GetPrevious(out nextPher))
-            {
-                followingPheromone = nextPher;
-                FollowPheromone();
+
             }
             else
-            {
-                followingPheromone = null;
-                state = AIState.Passive;
+            { // llegar al final
+                if (followingPheromone.GetNext(!followingForwards, out Pheromone prevPher)) //Si hay pheromona previa
+                {
+                    followingPheromone = prevPher;
+                    followingForwards = !followingForwards;
+                    FollowPheromone();
+                }
+                else
+                {
+                    state = AIState.Passive;
+                    followingPheromone = null;
+                }
             }
 
         }
@@ -316,7 +301,7 @@ public class AntTest : MonoBehaviour
         
     }
 
-    private void SetWalking(bool walk){
+    public void SetWalking(bool walk){
         if (walk)
         {
             speed = speed_per_second * Time.fixedDeltaTime;
@@ -329,57 +314,16 @@ public class AntTest : MonoBehaviour
         }
     }
 
-    private void TurnRight(){
+    public void TurnRight(){
         Animator.SetInteger("turning", 1);
     }
 
-    private void TurnLeft(){
+    public void TurnLeft(){
         Animator.SetInteger("turning", -1);
     }
 
-    private void DontTurn(){
+    public void DontTurn(){
         Animator.SetInteger("turning", 0);
     }
 
-    /*
-    static public bool ArcCast(Vector3 center, Quaternion rotation, float xAngle, float yAngle, float radius, int resolution, int parts, LayerMask layer, out RaycastHit hit)
-    {
-        rotation *= Quaternion.Euler(-xAngle / 2, yAngle, 0);
-
-        for (int i = 0; i < parts; i++)
-        {
-            Vector3 A = center + rotation * Vector3.forward * radius;
-            rotation *= Quaternion.Euler(-xAngle / resolution, 0, 0);
-            Vector3 B = center + rotation * Vector3.forward * radius;
-            Vector3 AB = B - A;
-
-            
-            
-            if (Physics.Raycast(A, AB, out hit, AB.magnitude * 1.001f, layer))
-            {
-                Debug.DrawLine(A, hit.point, Color.blue, Time.deltaTime);
-                return true;
-            }
-            Debug.DrawLine(A, B, Color.red, Time.deltaTime);
-        }
-
-        hit = new RaycastHit();
-        return false;
-    }
-
-    float arcXAngle = 270;
-        float arcRadius = 2.5f;
-        int arcResolution = 16;
-        int arcParts = 6;
-        int layerMask = 1 << 6;
-
-        for (int i = 1; i <= 6; i++)
-        {
-            if (ArcCast(Cube.transform.position, Cube.transform.rotation, arcXAngle,i*360f/6, arcRadius, arcResolution, arcParts, layerMask, out RaycastHit hit))
-            {
-                //Cube.transform.rotation = Quaternion.FromToRotation(Cube.transform.up, hit.normal) * Cube.transform.rotation;
-                Debug.Log("Collided");
-            }
-        }
-    */
 }

@@ -38,18 +38,23 @@ namespace pheromoneClass
         //Obtiene la siguiente pheromona del camino.
         //Si este no existe, devuelve falso.
         //Si existe, la retorna mediante out y devuelve falso
-        public bool GetNext(out Pheromone next){
-            next = this.next;
-            if (isLast) return false;
-            return true;
-        }
-        //Obtiene la previa pheromona del camino.
-        //Si este no existe, devuelve falso.
-        //Si existe, la retorna mediante out y devuelve falso
-        public bool GetPrevious(out Pheromone prev){
-            prev = this.previous;
-            if (isFirst) return false;
-            return true;
+        public bool GetNext(bool forwards, out Pheromone next){
+            if (forwards)
+            {
+                Debug.Log("getnext return true?");
+                next = this.next;
+                if (isLast) return false;
+                Debug.Log("Yes");
+                return true;
+            }
+            else
+            {
+                Debug.Log("getPREV return true?");
+                next = this.previous;
+                if (isFirst) return false;
+                Debug.Log("YES");
+                return true;
+            }
         }
         //
         public void SetNext(Pheromone next)
@@ -84,6 +89,23 @@ namespace pheromoneClass
             if (next != null) if (next.previous == this) next.SetPrevious(null);
         }
 
+
+        public void ShowPath(){
+            bool reachedStart = false;
+            if (previous == null) reachedStart = true;
+            if (reachedStart){
+                if (next != null)
+                {
+                    Debug.DrawLine(pos, next.pos, Color.green, 100000);
+                    next.ShowPath(true);
+                }
+                return;
+            }
+            else
+            {
+                previous.ShowPath(false);
+            }
+        }
         public void ShowPath(bool reachedStart){
             if (previous == null) reachedStart = true;
             if (reachedStart){
