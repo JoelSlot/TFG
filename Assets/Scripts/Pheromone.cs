@@ -41,18 +41,14 @@ namespace pheromoneClass
         public bool GetNext(bool forwards, out Pheromone next){
             if (forwards)
             {
-                Debug.Log("getnext return true?");
                 next = this.next;
                 if (isLast) return false;
-                Debug.Log("Yes");
                 return true;
             }
             else
             {
-                Debug.Log("getPREV return true?");
                 next = this.previous;
                 if (isFirst) return false;
-                Debug.Log("YES");
                 return true;
             }
         }

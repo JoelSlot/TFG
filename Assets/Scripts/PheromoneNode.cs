@@ -61,11 +61,11 @@ public class PheromoneNode : MonoBehaviour
     {
         if (pherDictionary.ContainsKey(pos)) //if the pos already has a pheromone object, the data is added to the existing one
         {
-            if (pherDictionary[pos].HasPheromone(pathId, out outPheromone)) //the pheromone already has that path, it is updated
+            /*if (pherDictionary[pos].HasPheromone(pathId, out outPheromone)) //the pheromone already has that path, it is updated
             {
                 outPheromone.age += 10;
                 return false;
-            }
+            }*/ //Commented out part that does not allow multiple pheromone with same id in the same node
             if (prevPheromone != null)
             {
                 outPheromone = new Pheromone(pathId, prevPheromone, pos, pherDictionary[pos].transform.forward);
@@ -102,11 +102,11 @@ public class PheromoneNode : MonoBehaviour
         Pheromone outPheromone;
         if (pherDictionary.ContainsKey(pos)) //if the pos already has a pheromone object, the data is added to the existing one
         {
-            if (pherDictionary[pos].HasPheromone(lastStepped.pathId, out outPheromone)) //the pheromone already has that path, it is updated
+            /*if (pherDictionary[pos].HasPheromone(lastStepped.pathId, out outPheromone)) //the pheromone already has that path, it is updated
             {
                 outPheromone.age += 10;
                 return outPheromone;
-            }
+            }*/ //commented out the section that ignores same id pheromones in the same node
             outPheromone = new Pheromone(lastStepped.pathId, pos, pherDictionary[pos].transform.forward);
             outPheromone.SetNext(lastStepped);
             outPheromone.SetPrevious(lastStepped);

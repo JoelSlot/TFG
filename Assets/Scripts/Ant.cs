@@ -105,7 +105,7 @@ public class AntTest : MonoBehaviour
         float[] zPos = {-sep, -sep, sep, sep, 0};
         float yPos = 0.5f;
         bool[] rayCastHits = { false, false, false, false, false};
-
+        float[] rayCastDist = {0f,0f,0f,0f,0f};
         int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
             if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, raycastLayer))
@@ -114,6 +114,7 @@ public class AntTest : MonoBehaviour
                 numHits++;
                 normalMedian += hit.normal;
                 rayCastHits[i] = true;
+                rayCastDist[i] = hit.distance;
             }
             else hitColor = Color.blue;
             Debug.DrawRay(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
@@ -154,6 +155,21 @@ public class AntTest : MonoBehaviour
                 if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.5f;
                 if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.5f;
                 if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.5f;
+                deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
+                Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+            }
+            else
+            {
+                float xRotation = 0;
+                float zRotation = 0;
+                if (rayCastHits[0] && rayCastHits[1] && rayCastDist[0] < rayCastDist[1]*1.5f) zRotation += tiltSpeed * 0.05f;
+                if (rayCastHits[1] && rayCastHits[0] && rayCastDist[1] < rayCastDist[0]*1.5f) zRotation -= tiltSpeed * 0.05f;
+                if (rayCastHits[1] && rayCastHits[2] && rayCastDist[1] < rayCastDist[2]*1.5f) xRotation += tiltSpeed * 0.05f;
+                if (rayCastHits[2] && rayCastHits[1] && rayCastDist[2] < rayCastDist[1]*1.5f) xRotation -= tiltSpeed * 0.05f;
+                if (rayCastHits[2] && rayCastHits[3] && rayCastDist[2] < rayCastDist[3]*1.5f) zRotation -= tiltSpeed * 0.05f;
+                if (rayCastHits[3] && rayCastHits[2] && rayCastDist[3] < rayCastDist[2]*1.5f) zRotation += tiltSpeed * 0.05f;
+                if (rayCastHits[3] && rayCastHits[0] && rayCastDist[3] < rayCastDist[0]*1.5f) xRotation -= tiltSpeed * 0.05f;
+                if (rayCastHits[0] && rayCastHits[3] && rayCastDist[0] < rayCastDist[3]*1.5f) xRotation += tiltSpeed * 0.05f;
                 deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
                 Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
             }
