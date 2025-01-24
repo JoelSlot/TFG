@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
-using pheromoneClass;
 using NUnit.Framework.Constraints;
 
 [RequireComponent(typeof(Camera))]
@@ -28,11 +27,10 @@ public class FlyCamera : MonoBehaviour
     int pathId;
 
     public enum obj { None, Ant, Grub}
-    public GameObject Ant; //Base ant that will be copied
-    public GameObject pheromoneNode; //Base pheromone that will be copied
+    public GameObject origAnt; //Base ant that will be copied
     //public GameObject Grub; //Base grub that will be copied
     public obj objectMode = obj.None;
-    public AntTest SelectedAnt;
+    public Ant SelectedAnt;
 
     static bool rotateAllowed
     {
@@ -59,7 +57,7 @@ public class FlyCamera : MonoBehaviour
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
 
-        pathId = pheromoneNode.GetComponent<PheromoneNode>().getNextPathId();
+        pathId = Pheromone.getNextPathId();
     }
 
     void Update()
@@ -87,10 +85,28 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = true;
         if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
         if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
-        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
+        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
-            if (SelectedAnt.state != AntTest.AIState.Controlled) SelectedAnt.state = AntTest.AIState.Controlled;
-            else SelectedAnt.state = AntTest.AIState.Passive;
+            if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
+            else
+            {
+                SelectedAnt.state = Ant.AIState.Passive;
+                SelectedAnt.makingTrail = false;
+                SelectedAnt.placedPheromone = null;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
+        {
+            if (SelectedAnt.state == Ant.AIState.Controlled && !SelectedAnt.makingTrail)
+            {
+                SelectedAnt.makingTrail = true;
+                SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
+            }
+            else
+            {
+                SelectedAnt.makingTrail = false;
+                SelectedAnt.placedPheromone = null;
+            }
         }
         
     }
@@ -228,8 +244,8 @@ public class FlyCamera : MonoBehaviour
                     int clickLayer = (1 << 7); //capa de hormigas
                     if (clickObject(clickLayer, out RaycastHit hit))
                     {
-                        if (SelectedAnt != null) if (SelectedAnt.state == AntTest.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<AntTest>()) SelectedAnt.state = AntTest.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                        SelectedAnt = hit.transform.gameObject.GetComponent<AntTest>();
+                        if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                        SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
                     }
                 }
                 else 
@@ -240,11 +256,11 @@ public class FlyCamera : MonoBehaviour
                         switch (objectMode)
                         {
                             case obj.Ant:
-                                if (SelectedAnt != null) if (SelectedAnt.state == AntTest.AIState.Controlled) SelectedAnt.state = AntTest.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                                GameObject newAnt = Instantiate(Ant, hit.point, Quaternion.Euler(hit.normal)); 
+                                if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                                GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
                                 newAnt.layer = 7;
                                 newAnt.SetActive(true);
-                                SelectedAnt = newAnt.GetComponent<AntTest>();
+                                SelectedAnt = newAnt.GetComponent<Ant>();
                                 break;
                             case obj.Grub:
                                 break;
@@ -325,7 +341,7 @@ public class FlyCamera : MonoBehaviour
 
 
     void antInputs() {
-        if (SelectedAnt.state != AntTest.AIState.Controlled) return;
+        if (SelectedAnt.state != Ant.AIState.Controlled) return;
         if (Input.GetKey(KeyCode.UpArrow))          SelectedAnt.SetWalking(true);
         else                                        SelectedAnt.SetWalking(false);
         if (Input.GetKey(KeyCode.LeftArrow))        SelectedAnt.TurnLeft();

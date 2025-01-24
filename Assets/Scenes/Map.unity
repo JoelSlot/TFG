@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1812f384e33766843aa3c3239775f78a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Ant: {fileID: 6207855}
+  antObj: {fileID: 6207855}
   Rigidbody: {fileID: 6207858}
   PherSenseRange: {fileID: 0}
   speed: 10
@@ -229,8 +229,10 @@ MonoBehaviour:
   tiltSpeed: 20
   sep: 0.2
   origPheromone: {fileID: 1505364012}
-  PheromoneNode: {fileID: 0}
-  followingForwards: 0
+  makingTrail: 0
+  placedPheromone: {fileID: 0}
+  followingPheromone: {fileID: 0}
+  lastSteppedPheromone: {fileID: 0}
   stucktimer: 0
   state: 1
   speed_per_second: 2
@@ -1056,8 +1058,7 @@ MonoBehaviour:
   focusOnEnable: 1
   sphere: {fileID: 1997694910}
   WG: {fileID: 35091245}
-  Ant: {fileID: 6207855}
-  pheromoneNode: {fileID: 1505364012}
+  origAnt: {fileID: 6207855}
   objectMode: 0
   SelectedAnt: {fileID: 0}
 --- !u!20 &1164272996
@@ -1122,9 +1123,9 @@ GameObject:
   - component: {fileID: 1505364017}
   - component: {fileID: 1505364016}
   - component: {fileID: 1505364015}
-  - component: {fileID: 1505364013}
   - component: {fileID: 1505364018}
   - component: {fileID: 1505364019}
+  - component: {fileID: 1505364020}
   m_Layer: 8
   m_Name: Pheromone
   m_TagString: Untagged
@@ -1132,19 +1133,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!114 &1505364013
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505364012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2091d97aa9b3e849847eba82ad60cd6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pos: {x: 0, y: 0, z: 0}
 --- !u!23 &1505364015
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1261,6 +1249,23 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1505364020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1505364012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d59682ec68ad57741aeec69f4d251bcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pathId: -1
+  age: 100
+  pos: {x: 0, y: 0, z: 0}
+  aux: 0
+  upDir: {x: 0, y: 0, z: 0}
 --- !u!1 &1997694909
 GameObject:
   m_ObjectHideFlags: 0

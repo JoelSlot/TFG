@@ -7,14 +7,12 @@ using static UnityEngine.ParticleSystem;
 using UnityEngine.Rendering;
 using static UnityEditor.Experimental.GraphView.GraphView;
 using System;
-using pheromoneClass;
 
 
-public class AntTest : MonoBehaviour
+public class Ant : MonoBehaviour
 {
 
-    public GameObject Ant;
-
+    public GameObject antObj;
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
     public float speed = 0;
@@ -23,15 +21,13 @@ public class AntTest : MonoBehaviour
     public float sep = 0.35f;
 
     //Variables for pheromone paths
-    private int pathId = -1; //Id that path being created
-    private UnityEngine.Quaternion prevUpAngle; //Previous angle of pheromone
     public GameObject origPheromone;
+    public bool makingTrail = false;
+    private UnityEngine.Quaternion prevUpAngle; //Previous angle of pheromone
     public Pheromone placedPheromone = null;
     public Pheromone followingPheromone = null;
     public Pheromone lastSteppedPheromone = null;
-    public PheromoneNode PheromoneNode; //the script file of the original pheromone that will be used to access functions.
     private bool followingForwards = false;
-    private Vector3Int Pos; //position of previously placed pheromone
     public int stucktimer = 0;
 
     public enum AIState
@@ -53,16 +49,13 @@ public class AntTest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Physics.gravity = new Vector3(0, -3.0F, 0); //Se activa gravedad por defecto
-        Rigidbody = Ant.GetComponent<Rigidbody>(); //El rigidbody se registra
-        Animator = Ant.GetComponent<Animator>(); //El Animator se registra
-        PherSenseRange = Ant.GetComponent<BoxCollider>(); //El boxCollider se registra
+        Physics.gravity = new Vector3(0, -15.0F, 0); //Se activa gravedad por defecto
+        Rigidbody = antObj.GetComponent<Rigidbody>(); //El rigidbody se registra
+        Animator = antObj.GetComponent<Animator>(); //El Animator se registra
+        PherSenseRange = antObj.GetComponent<BoxCollider>(); //El boxCollider se registra
         Animator.SetBool("walking", false); //El estado por defecto no camina
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
         Animator.enabled = true; //Se habilita el animator
-        PheromoneNode = origPheromone.GetComponent<PheromoneNode>(); //Se registra el nodo pheromona original para acceder a sus funciones
-        Vector3 p = Ant.transform.position + Ant.transform.up.normalized;
-        Pos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
     }
 
     private void Update()
@@ -74,27 +67,6 @@ public class AntTest : MonoBehaviour
     {
         AIMovement();
 
-        //Deciding and executing the placement of a new pheromone node.
-        Vector3 p = Ant.transform.position + Ant.transform.up.normalized/2;
-        Vector3Int newPos = new Vector3Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), Mathf.RoundToInt(p.z));
-        if (Animator.GetBool("walking") && newPos != Pos && WorldGen.IsAboveSurface(newPos)) //Only place when in new spot
-        {
-            if (state == AIState.Controlled)
-            {
-                if (placedPheromone == null) pathId = PheromoneNode.getNextPathId(); //we get the next path id for this new path
-                if (PheromoneNode.PlacePheromone(origPheromone, newPos, pathId, placedPheromone, out Pheromone newPheromone))
-                    placedPheromone = newPheromone; //Make that an if for your picture
-            }
-            //else if (state == AIState.Following && followingPheromone != null) //Se está siguiendo una pheromona
-            //{
-            //    if (lastSteppedPheromone != null && lastSteppedPheromone.pathId == followingPheromone.pathId) //Si 
-            //    {
-            //        lastSteppedPheromone = PheromoneNode.PlaceAux(origPheromone, newPos, lastSteppedPheromone);
-            //    }
-            //}
-        }
-        Pos = newPos;
-        
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
 
         Color hitColor;
@@ -135,7 +107,6 @@ public class AntTest : MonoBehaviour
         {
             //Rigidbody.velocity = Vector3.zero;
             Rigidbody.angularVelocity = Vector3.zero;
-            hitColor = Color.red;
             Rigidbody.AddForce(-normalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
             Physics.gravity = Vector3.zero;
 
@@ -147,14 +118,14 @@ public class AntTest : MonoBehaviour
             {
                 float xRotation = 0;
                 float zRotation = 0;
-                if (rayCastHits[0] && !rayCastHits[1]) zRotation += tiltSpeed * 0.5f;
-                if (rayCastHits[1] && !rayCastHits[0]) zRotation -= tiltSpeed * 0.5f;
-                if (rayCastHits[1] && !rayCastHits[2]) xRotation += tiltSpeed * 0.5f;
-                if (rayCastHits[2] && !rayCastHits[1]) xRotation -= tiltSpeed * 0.5f;
-                if (rayCastHits[2] && !rayCastHits[3]) zRotation -= tiltSpeed * 0.5f;
-                if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.5f;
-                if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.5f;
-                if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.5f;
+                if (rayCastHits[0] && !rayCastHits[1]) zRotation += tiltSpeed * 0.7f;
+                if (rayCastHits[1] && !rayCastHits[0]) zRotation -= tiltSpeed * 0.7f;
+                if (rayCastHits[1] && !rayCastHits[2]) xRotation += tiltSpeed * 0.7f;
+                if (rayCastHits[2] && !rayCastHits[1]) xRotation -= tiltSpeed * 0.7f;
+                if (rayCastHits[2] && !rayCastHits[3]) zRotation -= tiltSpeed * 0.7f;
+                if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.7f;
+                if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.7f;
+                if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.7f;
                 deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
                 Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
             }
@@ -162,14 +133,14 @@ public class AntTest : MonoBehaviour
             {
                 float xRotation = 0;
                 float zRotation = 0;
-                if (rayCastHits[0] && rayCastHits[1] && rayCastDist[0] < rayCastDist[1]*1.5f) zRotation += tiltSpeed * 0.05f;
-                if (rayCastHits[1] && rayCastHits[0] && rayCastDist[1] < rayCastDist[0]*1.5f) zRotation -= tiltSpeed * 0.05f;
-                if (rayCastHits[1] && rayCastHits[2] && rayCastDist[1] < rayCastDist[2]*1.5f) xRotation += tiltSpeed * 0.05f;
-                if (rayCastHits[2] && rayCastHits[1] && rayCastDist[2] < rayCastDist[1]*1.5f) xRotation -= tiltSpeed * 0.05f;
-                if (rayCastHits[2] && rayCastHits[3] && rayCastDist[2] < rayCastDist[3]*1.5f) zRotation -= tiltSpeed * 0.05f;
-                if (rayCastHits[3] && rayCastHits[2] && rayCastDist[3] < rayCastDist[2]*1.5f) zRotation += tiltSpeed * 0.05f;
-                if (rayCastHits[3] && rayCastHits[0] && rayCastDist[3] < rayCastDist[0]*1.5f) xRotation -= tiltSpeed * 0.05f;
-                if (rayCastHits[0] && rayCastHits[3] && rayCastDist[0] < rayCastDist[3]*1.5f) xRotation += tiltSpeed * 0.05f;
+                if (rayCastHits[0] && rayCastHits[1] && rayCastDist[0] < rayCastDist[1]*1.8f) zRotation += tiltSpeed * 0.1f;
+                if (rayCastHits[1] && rayCastHits[0] && rayCastDist[1] < rayCastDist[0]*1.8f) zRotation -= tiltSpeed * 0.1f;
+                if (rayCastHits[1] && rayCastHits[2] && rayCastDist[1] < rayCastDist[2]*1.8f) xRotation += tiltSpeed * 0.1f;
+                if (rayCastHits[2] && rayCastHits[1] && rayCastDist[2] < rayCastDist[1]*1.8f) xRotation -= tiltSpeed * 0.1f;
+                if (rayCastHits[2] && rayCastHits[3] && rayCastDist[2] < rayCastDist[3]*1.8f) zRotation -= tiltSpeed * 0.1f;
+                if (rayCastHits[3] && rayCastHits[2] && rayCastDist[3] < rayCastDist[2]*1.5f) zRotation += tiltSpeed * 0.1f;
+                if (rayCastHits[3] && rayCastHits[0] && rayCastDist[3] < rayCastDist[0]*1.8f) xRotation -= tiltSpeed * 0.1f;
+                if (rayCastHits[0] && rayCastHits[3] && rayCastDist[0] < rayCastDist[3]*1.8f) xRotation += tiltSpeed * 0.1f;
                 deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
                 Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
             }
@@ -180,20 +151,31 @@ public class AntTest : MonoBehaviour
         //Si no esta grounded
         else
         {
-            hitColor = Color.blue;
-            Physics.gravity = new Vector3(0, -3.0F, 0);
+            Physics.gravity = new Vector3(0, -15.0F, 0);
         }
         
 
         //Debug.Log("Walking: " + Animator.GetBool("walking") + ", falling: " + Animator.GetBool("falling"));
 
-
+        
+        //Deciding and executing the placement of a new pheromone node.
+        if (makingTrail)
+        {
+            float distance = Vector3.Distance(placedPheromone.pos, antObj.transform.position);
+            if (Animator.GetBool("walking") && ( distance > 3 || ( distance > 0.5 && Vector3.Angle(placedPheromone.upDir, antObj.transform.up) > 30))) //Only place when in new spot
+            {
+                if (state == AIState.Controlled)
+                {
+                    placedPheromone = Pheromone.PlacePheromone(origPheromone, antObj.transform.position, antObj.transform.up, placedPheromone);
+                }
+            }
+        }
 
     }
 
     public Vector3 getRelativePos(float x, float y, float z)
     {
-        return Rigidbody.position + Ant.transform.rotation * new Vector3(x, y, z);
+        return Rigidbody.position + antObj.transform.rotation * new Vector3(x, y, z);
     }
 
     int senseTimer = 0;
@@ -246,17 +228,11 @@ public class AntTest : MonoBehaviour
             return;
         }
 
-        //Obtenemos los datos de distancia hacia la pheromona
-        Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(followingPheromone.pos); //relative position of the pheromone to the ant
-        float distance = pherRel.magnitude;
-        float yDist = pherRel.y - 0.5f; 
-        pherRel.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
-        float horAngle = Vector3.Angle(Vector3.forward, pherRel);
-        float horDistance = pherRel.magnitude;
+        float distance = Vector3.Magnitude(followingPheromone.pos - antObj.transform.position);
+        float neededUpAngle = 35f;
+        float upAngle = Vector3.Angle(antObj.transform.up, followingPheromone.upDir);
 
-        float minAngle = 30f;
-
-        if (Pos == followingPheromone.pos || (Vector3.Angle(-Ant.transform.up, followingPheromone.surfaceDir) < 20 && distance < 3 && !followingPheromone.IsEnd(followingForwards)))//Si la pheromona se encuentra cerca
+        if ((distance < 3 && !followingPheromone.IsEnd(followingForwards) && upAngle < neededUpAngle/2) || (distance < 1f && distance > 0.1f && upAngle < neededUpAngle) || (distance <= 0.1f))//Si la pheromona se encuentra cerca
         {
 
             SetWalking(false);
@@ -280,23 +256,56 @@ public class AntTest : MonoBehaviour
                     followingPheromone = null;
                 }
             }
-
+            return;
         }
-        else // Si la pheromona no se encuentra cerca de la hormiga
+
+
+        Vector3 objective = followingPheromone.pos;
+        /*if (Vector3.Distance(antObj.transform.position, objective) < 0.5f && upAngle > neededUpAngle)
         {
             
-            //Decidir si girar
-            if (horAngle > 5)
+            if (Vector3.Dot(objective - antObj.transform.position, followingPheromone.upDir) < 0) //si se miran los vectores
             {
-                if (pherRel.x > 0) TurnRight();
-                else TurnLeft();
+                objective = followingPheromone.pos + (followingPheromone.upDir*-100);
+                Debug.DrawRay(followingPheromone.pos, followingPheromone.upDir*-10, Color.magenta, 5);
             }
-            else DontTurn();
+            else
+            {
+                objective = followingPheromone.upDir + (followingPheromone.upDir*100);
+                Debug.DrawRay(followingPheromone.pos, followingPheromone.upDir*10, Color.magenta, 5f);
+            }
+        }*/
 
-            //Decidir si avanzar
-            if (pherRel.z > 0 && horAngle < minAngle) SetWalking(true);
-            else SetWalking(false);
+
+        //Obtenemos los datos de distancia hacia la pheromona
+        Vector3 pherRel = Rigidbody.transform.InverseTransformPoint(objective); //relative position of the pheromone to the ant
+        distance = Vector3.Magnitude(pherRel);
+        float yDist = pherRel.y; 
+        pherRel.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
+        float horAngle = Vector3.Angle(Vector3.forward, pherRel);
+        float horDistance = pherRel.magnitude;
+
+        float minAngle = 30f;
+
+        Debug.DrawLine(transform.position, objective, Color.black, 0.35f);
+        //Debug.DrawRay(antObj.transform.position, Vector3.forward*2, Color.red);
+        //Debug.DrawLine(antObj.transform.position, pherRel, Color.blue);
+        Debug.DrawRay(antObj.transform.position, (objective - antObj.transform.position)*2, Color.red);
+        Debug.DrawRay(antObj.transform.position, followingPheromone.upDir*2, Color.blue);
+    
+        //Decidir si girar
+        if (horAngle > 5)
+        {
+            if (pherRel.x > 0) TurnRight();
+            else TurnLeft();
         }
+        else DontTurn();
+
+        //Decidir si avanzar
+        if ((distance > 1 && horAngle < minAngle) || (distance < 1 && horAngle < 5)) SetWalking(true);
+        else SetWalking(false);
+        Debug.Log("Angle: " + horAngle + ",\t" + upAngle + "\t Distance: " + distance);
+    
 
     }
 
@@ -309,8 +318,7 @@ public class AntTest : MonoBehaviour
 
             if (hitCollider != null)
             {
-                PheromoneNode sensedNode = hitCollider.GetComponent<PheromoneNode>();
-                followingPheromone = sensedNode.GetNewestPheromone();
+                followingPheromone = hitCollider.GetComponent<Pheromone>();
                 return;
             }
         }
