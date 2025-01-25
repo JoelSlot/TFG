@@ -248,6 +248,11 @@ https://sketchfab.com/3d-models/larva-14877198919544f5b43cef3e86e7b89f
 
 ![[Pasted image 20241025132335.png]]
 
+
+## Background
+
+
 ## Aditional changes
 
 - Added an outline to the ant object. This will be used when selecting one, remember to add this information to the corresponding section. This used the free public asses Quick Outline.
+

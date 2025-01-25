@@ -62,6 +62,7 @@ public class Ant : MonoBehaviour
     {
     }
 
+
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -78,6 +79,7 @@ public class Ant : MonoBehaviour
         float yPos = 0.5f;
         bool[] rayCastHits = { false, false, false, false, false};
         float[] rayCastDist = {0f,0f,0f,0f,0f};
+        Vector3 hitNormal = new Vector3(0, 0, 0); 
         int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
             if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, raycastLayer))
@@ -87,6 +89,7 @@ public class Ant : MonoBehaviour
                 normalMedian += hit.normal;
                 rayCastHits[i] = true;
                 rayCastDist[i] = hit.distance;
+                hitNormal = hit.normal;
             }
             else hitColor = Color.blue;
             Debug.DrawRay(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
@@ -159,15 +162,12 @@ public class Ant : MonoBehaviour
 
         
         //Deciding and executing the placement of a new pheromone node.
-        if (makingTrail)
+        if (makingTrail && rayCastHits[4])
         {
             float distance = Vector3.Distance(placedPheromone.pos, antObj.transform.position);
-            if (Animator.GetBool("walking") && ( distance > 3 || ( distance > 0.5 && Vector3.Angle(placedPheromone.upDir, antObj.transform.up) > 30))) //Only place when in new spot
+            if (Animator.GetBool("walking") && ( distance > 3 || ( distance > 0.5 && Vector3.Angle(placedPheromone.upDir, hitNormal) > 30))) //Only place when in new spot
             {
-                if (state == AIState.Controlled)
-                {
-                    placedPheromone = Pheromone.PlacePheromone(origPheromone, antObj.transform.position, antObj.transform.up, placedPheromone);
-                }
+                placedPheromone = Pheromone.PlacePheromone(origPheromone, antObj.transform.position, hitNormal, placedPheromone);
             }
         }
 

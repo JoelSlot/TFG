@@ -163,11 +163,43 @@ public class WorldGen : MonoBehaviour
     */
     public static float SampleTerrain(Vector3Int point)
     {
+        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return 1;
         return terrainMap[point.x, point.y, point.z];
+    }
+    public static float SampleTerrain(int x, int y, int z)
+    {
+        if (x < 0 || x >= x_dim || y < 0 || y >= y_dim || z < 0 || z >= z_dim) return 1;
+        return terrainMap[x,y,z];
     }
     public static float SampleTerrain(Vector3 point)
     {
-        return terrainMap[Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.y), Mathf.FloorToInt(point.z)];
+        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return 1;
+
+        // las esquinas del cubo en el que se encuentra el punto
+        int x0 = Mathf.FloorToInt(point.x);
+        int x1 = x0 + 1;
+        int y0 = Mathf.FloorToInt(point.y);
+        int y1 = y0 + 1;
+        int z0 = Mathf.FloorToInt(point.z);
+        int z1 = z0 + 1;
+
+        // pos relativa dentro del cubo
+        float xd = point.x - x0;
+        float yd = point.y - y0;
+        float zd = point.z - z0;
+
+        // Interpolar por eje x
+        float c00 = Mathf.Lerp(SampleTerrain(x0, y0, z0), SampleTerrain(x1, y0, z0), xd);
+        float c01 = Mathf.Lerp(SampleTerrain(x0, y0, z1), SampleTerrain(x1, y0, z1), xd);
+        float c10 = Mathf.Lerp(SampleTerrain(x0, y1, z0), SampleTerrain(x1, y1, z0), xd);
+        float c11 = Mathf.Lerp(SampleTerrain(x0, y1, z1), SampleTerrain(x1, y1, z1), xd);
+
+        // Interpolar por eje y
+        float c0 = Mathf.Lerp(c00, c10, yd);
+        float c1 = Mathf.Lerp(c01, c11, yd);
+
+        // Interpolar por eje z
+        return Mathf.Lerp(c0, c1, zd);
     }
     public static bool IsAboveSurface(Vector3 point)
     {

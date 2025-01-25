@@ -15,6 +15,7 @@ public class FlyCamera : MonoBehaviour
     public float lookSensitivity = 1; // mouse look sensitivity
     public float dampingCoefficient = 5; // how quickly you break to a halt after you stop your input
     public bool focusOnEnable = true; // whether or not to focus and lock cursor immediately on enable
+    public Camera camera; // Objeto cámara que se usa ingame
 
     Vector3 velocity; // current velocity
 
@@ -108,7 +109,11 @@ public class FlyCamera : MonoBehaviour
                 SelectedAnt.placedPheromone = null;
             }
         }
-        
+        if (WorldGen.IsAboveSurface(transform.position))
+        {
+            camera.backgroundColor = new Color(0,191,255);
+        }
+        else camera.backgroundColor = Color.black;
     }
 
     void FixedUpdate()

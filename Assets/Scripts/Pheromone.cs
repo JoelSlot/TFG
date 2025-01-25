@@ -146,6 +146,7 @@ public class Pheromone : MonoBehaviour
         if (prevPheromone != null){
             prevPheromone.SetNext(outPheromone); //Añadir nueva pheromona a la previa como siguiente
             outPheromone.pathId = prevPheromone.pathId;
+            Debug.DrawRay(pos, prevPheromone.upDir, Color.green*Color.black, 10000);
         }
         else
         {
