@@ -1,11 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
-using static UnityEditor.PlayerSettings;
-using NUnit.Framework.Constraints;
+using System;
+using System.Linq;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -17,17 +14,31 @@ public class FlyCamera : MonoBehaviour
     public bool focusOnEnable = true; // whether or not to focus and lock cursor immediately on enable
     public Camera camera; // Objeto cámara que se usa ingame
 
+
+    public Plane projectPlane = new Plane(new Vector3(0,0,1), -10);
+
+
     Vector3 velocity; // current velocity
 
     public Component sphere;
     public WorldGen WG;
+
+    //Variables para sistema de excavacion
+    public GameObject digSphere;
+    public GameObject digCilinder;
+    List<Tuple<GameObject, GameObject, GameObject>> DigObjects =  new List<Tuple<GameObject, GameObject, GameObject>>();
+    private bool confirmDig = false;
+    private Vector3 digStartPoint;
+    private Vector3 digEndPoint;
+
+    
 
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
     int pathId;
 
-    public enum obj { None, Ant, Grub}
+    public enum obj {None, Ant, Grub, digTunnel}
     public GameObject origAnt; //Base ant that will be copied
     //public GameObject Grub; //Base grub that will be copied
     public obj objectMode = obj.None;
@@ -59,6 +70,7 @@ public class FlyCamera : MonoBehaviour
         else sphere.GetComponent<MeshRenderer>().enabled = true;
 
         pathId = Pheromone.getNextPathId();
+
     }
 
     void Update()
@@ -84,8 +96,9 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
         if (Input.GetMouseButtonDown(0))
             rotateAllowed = true;
-        if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
-        if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+        if (Input.GetKeyDown(KeyCode.Alpha0) && !confirmDig){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
+        if (Input.GetKeyDown(KeyCode.Alpha1) && !confirmDig){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+        if (Input.GetKeyDown(KeyCode.Alpha3) && !confirmDig){objectMode = obj.digTunnel; Debug.Log("Modo escavar");} //cambiar de modo a construir
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
             if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
@@ -118,7 +131,7 @@ public class FlyCamera : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (SelectedAnt != null) antInputs();
+        if (SelectedAnt != null) AntInputs();
     }
 
     void CameraMovement()
@@ -225,7 +238,7 @@ public class FlyCamera : MonoBehaviour
         moveInput.y = 0;
         //Up and down movement globally
         AddMovement(KeyCode.Space, Vector3.up);
-        AddMovement(KeyCode.LeftControl, Vector3.down);
+        AddMovement(KeyCode.X, Vector3.down);
         Vector3 direction = moveInput.normalized;
             
         if (Input.GetKey(KeyCode.LeftShift))
@@ -235,10 +248,41 @@ public class FlyCamera : MonoBehaviour
 
     int pathPos = 0;
 
+
     void PlayingMode()
     {
+        
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (objectMode == obj.digTunnel && confirmDig)
+        {
+            if (Input.GetKey(KeyCode.LeftShift)) setHorPlane();
+            else setVertPlane();
+
+            Vector3 cross = Vector3.Cross(digEndPoint - transform.position, projectPlane.normal);
+            //Debug.DrawRay(digEndPoint, cross*20, Color.black);
+
+            if (projectPlane.Raycast(ray, out float distance))
+            {
+                digEndPoint = ray.GetPoint(distance);
+                //Debug.DrawLine(digStartPoint, digEndPoint, Color.black);
+                Vector3 digDir = digEndPoint - digStartPoint;
+                GameObject cilinder = DigObjects.Last().Item2;
+                cilinder.transform.position = digStartPoint + digDir/2;
+                cilinder.transform.localScale = new Vector3(2, digDir.magnitude/2, 2);
+                cilinder.transform.up = digDir;
+                DigObjects.Last().Item3.transform.position = digEndPoint;
+            }
+        }
+
+
         if (Input.GetMouseButton(1))
+        {
             rotateAllowed = true;
+            /*if (confirmDig && !Input.GetKey(KeyCode.LeftShift))
+            {
+                setVertPlane();
+            }*///Prob not necesary unless its too expensive to recreate plane obj every frame (whyyy would it be????)
+        }
         else
         {
             rotateAllowed = false;
@@ -252,6 +296,10 @@ public class FlyCamera : MonoBehaviour
                         if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                         SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
                     }
+                }
+                else if (objectMode == obj.digTunnel && confirmDig)
+                {
+                    confirmDig = false;
                 }
                 else 
                 {
@@ -268,6 +316,25 @@ public class FlyCamera : MonoBehaviour
                                 SelectedAnt = newAnt.GetComponent<Ant>();
                                 break;
                             case obj.Grub:
+                                break;
+                            case obj.digTunnel:
+                                if (!confirmDig)
+                                {
+                                    confirmDig = true;
+                                    digStartPoint = hit.point;
+                                    digEndPoint = hit.point;
+                                    GameObject startSphere = Instantiate(digSphere, digStartPoint, Quaternion.identity);
+                                    startSphere.SetActive(true);
+                                    GameObject endSphere = Instantiate(digSphere, digStartPoint, Quaternion.identity);
+                                    endSphere.SetActive(true);
+                                    Vector3 digDir = digEndPoint - digStartPoint;
+                                    GameObject cilindre = Instantiate(digCilinder, digStartPoint + digDir/2, Quaternion.Euler(digDir));
+                                    cilindre.SetActive(true);
+                                    cilindre.transform.localScale = new Vector3(2, digDir.magnitude, 2);
+                                    setVertPlane();
+                                    DigObjects.Add(Tuple.Create(startSphere, cilindre, endSphere));
+                                    Debug.Log("Set Plane Pos");
+                                }
                                 break;
                             default:
                                 Debug.Log("No valid object mode when clicked");
@@ -345,7 +412,7 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    void antInputs() {
+    void AntInputs() {
         if (SelectedAnt.state != Ant.AIState.Controlled) return;
         if (Input.GetKey(KeyCode.UpArrow))          SelectedAnt.SetWalking(true);
         else                                        SelectedAnt.SetWalking(false);
@@ -356,6 +423,31 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
     }
 
+    void setVertPlane() //ok so the using planos is not something i came up with inmediately, and eventhen i was gonna use 3 and adjust them. thank goodness i noticed thats not possible and also that it would be simpler to have one that is updating all the time as the camera orientation changes
+    {
+        //ESTO HA TENIDO MUCHAS ITERACIONES; DEBIDO A LA COMPLEJIDAD MATEMÄTICA.  
+        //UN PROBLEMA= CUANDO DIGENDPOINT Y DIGSTARTPOINT SE ALINEAN EN CUANTO A PERSPECTIVA DE LA CAMARA; EL PLANO NO RECIBE 3 PUNTOS LO SUFICIENTEMENTE DISTINTOS
+        //Se crea el plano
+        Vector3 camToStart = digStartPoint - transform.position;
+        Vector3 camToEnd = digEndPoint - transform.position;
+        Vector3 camToNearest = Vector3.Project(camToEnd, camToStart);
+        Vector3 Nearest = transform.position + camToNearest;
+        Debug.DrawRay(transform.position, camToStart, Color.red);
+        Debug.DrawRay(transform.position, camToEnd, Color.blue);
+        Debug.DrawLine(digEndPoint, Nearest, Color.green);
+        Vector3 hor  = Vector3.Cross(camToStart, Vector3.up);
+        projectPlane = new Plane(digEndPoint + hor, digEndPoint + Vector3.up*2, digEndPoint);
+        Debug.DrawLine(digEndPoint + Vector3.up*2, digEndPoint, Color.magenta);
+        Debug.DrawLine(digEndPoint + Vector3.up*2, digEndPoint + hor.normalized *2, Color.magenta);
+        Debug.DrawLine(digEndPoint, digEndPoint + hor.normalized *2, Color.magenta);
+    }
+
+    void setHorPlane()
+    {
+        projectPlane = new Plane(digEndPoint, digEndPoint + Vector3.left, digEndPoint + Vector3.forward);
+    }
+
+    //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
 
 }
 

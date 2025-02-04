@@ -210,6 +210,8 @@ public class Ant : MonoBehaviour
         }
     }
 
+    bool specialHelp = false;
+
     void RandomMovement()
     {
         speed = speed_per_second * Time.fixedDeltaTime;
@@ -261,6 +263,8 @@ public class Ant : MonoBehaviour
 
 
         Vector3 objective = followingPheromone.pos;
+
+        //if (specialHelp)
         /*if (Vector3.Distance(antObj.transform.position, objective) < 0.5f && upAngle > neededUpAngle)
         {
             

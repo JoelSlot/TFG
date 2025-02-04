@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Descripcion del proceso seguido.md",
+                "file": "Features.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Descripcion del proceso seguido"
+              "title": "Features"
             }
           }
         ]
@@ -164,9 +164,9 @@
   },
   "active": "a4919b2e482bfc11",
   "lastOpenFiles": [
+    "Descripcion del proceso seguido.md",
     "Pheromone issue- not going up, infinitely reselecting.png",
     "Creación de IA.md",
-    "Descripcion del proceso seguido.md",
     "RaycastExample 1.png",
     "RaycastExample.png",
     "Raycast Collage.png",
@@ -186,7 +186,6 @@
     "Thorax IK stiffness.png.meta",
     "Pasted image 20241102163303.png",
     "Pasted image 20241101214625.png",
-    "Pasted image 20241028125506.png",
     "Creación de animaciones.md",
     "Development.md",
     "Implementación de las acciones.md",
