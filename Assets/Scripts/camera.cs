@@ -24,9 +24,8 @@ public class FlyCamera : MonoBehaviour
     public WorldGen WG;
 
     //Variables para sistema de excavacion
-    public GameObject digSphere;
-    public GameObject digCilinder;
-    List<Tuple<GameObject, GameObject, GameObject>> DigObjects =  new List<Tuple<GameObject, GameObject, GameObject>>();
+    public GameObject  origTunnel;
+    List<Tunnel> DigObjects =  new List<Tunnel>();
     private bool confirmDig = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
@@ -99,6 +98,7 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha0) && !confirmDig){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
         if (Input.GetKeyDown(KeyCode.Alpha1) && !confirmDig){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
         if (Input.GetKeyDown(KeyCode.Alpha3) && !confirmDig){objectMode = obj.digTunnel; Debug.Log("Modo escavar");} //cambiar de modo a construir
+        if (Input.GetKey(KeyCode.Alpha9) && DigObjects.Count != 0) terrainEditSphere(DigObjects.Last().nextPos(), 2.5f, -1);
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
             if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
@@ -165,35 +165,8 @@ public class FlyCamera : MonoBehaviour
             sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
         }
 
-        if ((Input.GetMouseButton(0) || Input.GetMouseButton(1)))
-        {
-
-            List<float> dist = new List<float>();
-            List<Vector3Int> coords = new List<Vector3Int>();
-
-            int radiusCeil = Mathf.CeilToInt(sphereScale / 2);
-            for (int x = -radiusCeil; x < radiusCeil; x++)
-            {
-                for (int y = -radiusCeil; y < radiusCeil; y++)
-                {
-                    for (int z = -radiusCeil; z < radiusCeil; z++)
-                    {
-                        float distPoint = (x * x + y * y + z * z);
-                        float distEdge = radiusCeil * radiusCeil;
-                        if (distPoint <= distEdge)
-                        {
-                            coords.Add(new Vector3Int(x + Mathf.CeilToInt(sphere.transform.position.x), y + Mathf.CeilToInt(sphere.transform.position.y), z + Mathf.CeilToInt(sphere.transform.position.z)));
-                            dist.Add((float)(1f - distPoint / distEdge)/10);
-                        }
-                    }
-                }
-            }
-            if (Input.GetMouseButton(0))
-                WG.EditTerrain(coords, dist, true);
-            else
-                WG.EditTerrain(coords, dist, false);
-
-        }
+        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, 0.8f);
+        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, -0.8f);
 
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -259,18 +232,11 @@ public class FlyCamera : MonoBehaviour
             else setVertPlane();
 
             Vector3 cross = Vector3.Cross(digEndPoint - transform.position, projectPlane.normal);
-            //Debug.DrawRay(digEndPoint, cross*20, Color.black);
 
             if (projectPlane.Raycast(ray, out float distance))
             {
                 digEndPoint = ray.GetPoint(distance);
-                //Debug.DrawLine(digStartPoint, digEndPoint, Color.black);
-                Vector3 digDir = digEndPoint - digStartPoint;
-                GameObject cilinder = DigObjects.Last().Item2;
-                cilinder.transform.position = digStartPoint + digDir/2;
-                cilinder.transform.localScale = new Vector3(2, digDir.magnitude/2, 2);
-                cilinder.transform.up = digDir;
-                DigObjects.Last().Item3.transform.position = digEndPoint;
+                DigObjects.Last().setPos(digStartPoint, digEndPoint);
             }
         }
 
@@ -323,16 +289,13 @@ public class FlyCamera : MonoBehaviour
                                     confirmDig = true;
                                     digStartPoint = hit.point;
                                     digEndPoint = hit.point;
-                                    GameObject startSphere = Instantiate(digSphere, digStartPoint, Quaternion.identity);
-                                    startSphere.SetActive(true);
-                                    GameObject endSphere = Instantiate(digSphere, digStartPoint, Quaternion.identity);
-                                    endSphere.SetActive(true);
-                                    Vector3 digDir = digEndPoint - digStartPoint;
-                                    GameObject cilindre = Instantiate(digCilinder, digStartPoint + digDir/2, Quaternion.Euler(digDir));
-                                    cilindre.SetActive(true);
-                                    cilindre.transform.localScale = new Vector3(2, digDir.magnitude, 2);
+                                    GameObject tunnel = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
+                                    tunnel.SetActive(true);
+                                    Tunnel tunnelScript = tunnel.GetComponent<Tunnel>();
+                                    tunnelScript.setActive(true);
+                                    tunnelScript.setPos(digStartPoint, digEndPoint);
                                     setVertPlane();
-                                    DigObjects.Add(Tuple.Create(startSphere, cilindre, endSphere));
+                                    DigObjects.Add(tunnelScript);
                                     Debug.Log("Set Plane Pos");
                                 }
                                 break;
@@ -448,7 +411,35 @@ public class FlyCamera : MonoBehaviour
     }
 
     //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
+    void PointsInSphere(Vector3 pos, float radius, out List<Vector3Int> coords, out List<float> dist)
+    {
+        dist = new List<float>();
+        coords = new List<Vector3Int>();
 
+        int radiusCeil = Mathf.CeilToInt(radius);
+        for (int x = -radiusCeil; x < radiusCeil; x++)
+        {
+            for (int y = -radiusCeil; y < radiusCeil; y++)
+            {
+                for (int z = -radiusCeil; z < radiusCeil; z++)
+                {
+                    Vector3 point = new Vector3(x, y, z);
+                    float distPoint = point.magnitude;
+                    if (distPoint <= radius)
+                    { //changed it to do ciel with the x and pos added (shouldn't change anything actually, hmm)
+                        coords.Add(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)));
+                        dist.Add((float)(1f - distPoint / radius)/10);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void terrainEditSphere(Vector3 pos, float radius, float degree){
+        PointsInSphere(pos, radius, out List<Vector3Int> coords, out List<float> dist);
+        WG.EditTerrain(coords, dist, degree);
+    }
 }
 
 

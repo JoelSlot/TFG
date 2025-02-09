@@ -235,7 +235,9 @@ TO do TODAY:
 
 
 
+## Excavación
 
+Hay que decidir desde donde se llama la función de excavar el terreno. Desde la hormiga o desde la cámara? Como llega el objeto hormig al objeto necesario para llamarlo? Como informa a la cámara de que ha llegado, usando los objetos que se encuentra? Estos están en la lista de digTunnels de la cámara, pero no son componentes de la cámara misma. Como solución temporal/permanente, se le añadirá un script a las versiones originales de estos gameObjects. Este script contendrá la referencia al objeto cámara.
 ## Modelo de larva
 
 

@@ -7,6 +7,7 @@ using UnityEngine;
 using static UnityEngine.Awaitable;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 public class WorldGen : MonoBehaviour
 {
@@ -81,9 +82,11 @@ public class WorldGen : MonoBehaviour
                 {
                     if (z == 0 || z == z_dim || x == 0 || x == x_dim)
                         terrainMap[x, y, z] = 1f;
-                    else if (y == 10)
+                    else if (y == 30)
                         terrainMap[x, y, z] = 0.3f;
-                    else if (y < 10)
+                    else if (y == 0)
+                        terrainMap[x,y,z] = 1f;
+                    else if (y < 30)
                         terrainMap[x,y,z] = 0f;
                     else
                         terrainMap[x, y, z] = 1f;
@@ -97,7 +100,7 @@ public class WorldGen : MonoBehaviour
     }
 
 
-    public void EditTerrain(List<Vector3Int> points, List<float> val, bool add)
+    public void EditTerrain(List<Vector3Int> points, List<float> val, float degree)
     {
         var h = new HashSet<Vector3Int>();
 
@@ -105,10 +108,7 @@ public class WorldGen : MonoBehaviour
         {
             if (points[i].x < x_dim && points[i].y < y_dim && points[i].z < z_dim && points[i].x >= 0 && points[i].y >= 0 && points[i].z >= 0)
             {
-                if (add)
-                    terrainMap[points[i].x, points[i].y, points[i].z] -= val[i] * 0.8f;
-                else
-                    terrainMap[points[i].x, points[i].y, points[i].z] += val[i] * 0.8f;
+                terrainMap[points[i].x, points[i].y, points[i].z] -= val[i] * degree;
                 if (terrainMap[points[i].x, points[i].y, points[i].z] < 0)
                     terrainMap[points[i].x, points[i].y, points[i].z] = 0f;
                 if (terrainMap[points[i].x, points[i].y, points[i].z] > 1)
