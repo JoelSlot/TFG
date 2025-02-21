@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using System.Linq;
+using UnityEditor.Experimental.GraphView;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -25,10 +26,12 @@ public class FlyCamera : MonoBehaviour
 
     //Variables para sistema de excavacion
     public GameObject  origTunnel;
-    List<Tunnel> DigObjects =  new List<Tunnel>();
+    public GameObject chamber;
+    List<DigObject> DigObjects =  new List<DigObject>();
     private bool confirmDig = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
+    public GameObject origDigPoint;
 
     
 
@@ -37,7 +40,7 @@ public class FlyCamera : MonoBehaviour
 
     int pathId;
 
-    public enum obj {None, Ant, Grub, digTunnel}
+    public enum obj {None, Ant, Grub, digTunnel, digChamber}
     public GameObject origAnt; //Base ant that will be copied
     //public GameObject Grub; //Base grub that will be copied
     public obj objectMode = obj.None;
@@ -67,9 +70,8 @@ public class FlyCamera : MonoBehaviour
     {
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
-
+        origDigPoint.GetComponent<DigPoint>().WG = WG;
         pathId = Pheromone.getNextPathId();
-
     }
 
     void Update()
@@ -95,10 +97,14 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
         if (Input.GetMouseButtonDown(0))
             rotateAllowed = true;
-        if (Input.GetKeyDown(KeyCode.Alpha0) && !confirmDig){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
-        if (Input.GetKeyDown(KeyCode.Alpha1) && !confirmDig){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
-        if (Input.GetKeyDown(KeyCode.Alpha3) && !confirmDig){objectMode = obj.digTunnel; Debug.Log("Modo escavar");} //cambiar de modo a construir
-        if (Input.GetKey(KeyCode.Alpha9) && DigObjects.Count != 0) terrainEditSphere(DigObjects.Last().nextPos(), 2.5f, -1);
+        if (!confirmDig)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
+            if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+            if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
+            if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
             if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
@@ -186,10 +192,6 @@ public class FlyCamera : MonoBehaviour
             sphereScale += 0.1f;
         if (Input.mouseScrollDelta.y < 0)
             sphereScale -= 0.1f;
-
-        
-
-        
     }
 
     Vector3 GetAccelerationVector()
@@ -219,15 +221,21 @@ public class FlyCamera : MonoBehaviour
         return direction * acceleration; // "walking"
     }
 
-    int pathPos = 0;
-
 
     void PlayingMode()
     {
         
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (objectMode == obj.digTunnel && confirmDig)
+        if (confirmDig)
         {
+            DigObject placeDigObject = DigObjects.Last();
+
+            //resize the tunnel
+            if (Input.mouseScrollDelta.y > 0)
+                placeDigObject.setRadius(placeDigObject.getRadius() + 0.1f);
+            if (Input.mouseScrollDelta.y < 0)
+                placeDigObject.setRadius(placeDigObject.getRadius() - 0.1f);
+
             if (Input.GetKey(KeyCode.LeftShift)) setHorPlane();
             else setVertPlane();
 
@@ -236,10 +244,10 @@ public class FlyCamera : MonoBehaviour
             if (projectPlane.Raycast(ray, out float distance))
             {
                 digEndPoint = ray.GetPoint(distance);
-                DigObjects.Last().setPos(digStartPoint, digEndPoint);
+                placeDigObject.setPos(digStartPoint, digEndPoint);
             }
-        }
 
+        }
 
         if (Input.GetMouseButton(1))
         {
@@ -263,14 +271,22 @@ public class FlyCamera : MonoBehaviour
                         SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
                     }
                 }
-                else if (objectMode == obj.digTunnel && confirmDig)
+                else if (confirmDig)
                 {
+                    toDigPoints();
                     confirmDig = false;
                 }
                 else 
                 {
-                    int clickLayer = (1 << 6); //terrain layer
-                    if (clickObject(clickLayer, out RaycastHit hit))
+                    int digPointClickLayer = (1 << 9); //digPoint layer
+                    int terrainClickLayer = (1 << 6); //terrain layer
+                    if (clickObject(digPointClickLayer, out RaycastHit hit))
+                    {
+                        hit.transform.gameObject.GetComponent<DigPoint>().dig();
+                        Destroy(hit.transform.gameObject); //Error: items that have been checked twice in dig don't get destroyed.
+                        //Theory: they do get destroyed but have a copy over it.
+                    }
+                    else if (clickObject(terrainClickLayer, out hit))
                     {
                         switch (objectMode)
                         {
@@ -284,6 +300,7 @@ public class FlyCamera : MonoBehaviour
                             case obj.Grub:
                                 break;
                             case obj.digTunnel:
+                            case obj.digChamber:
                                 if (!confirmDig)
                                 {
                                     confirmDig = true;
@@ -291,7 +308,12 @@ public class FlyCamera : MonoBehaviour
                                     digEndPoint = hit.point;
                                     GameObject tunnel = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
                                     tunnel.SetActive(true);
-                                    Tunnel tunnelScript = tunnel.GetComponent<Tunnel>();
+                                    DigObject tunnelScript = tunnel.GetComponent<DigObject>();
+                                    tunnelScript.setRadius(1);
+
+                                    if (objectMode == obj.digTunnel) tunnelScript.setMode(DigObject.digType.Tunnel);
+                                    else tunnelScript.setMode(DigObject.digType.Chamber);
+
                                     tunnelScript.setActive(true);
                                     tunnelScript.setPos(digStartPoint, digEndPoint);
                                     setVertPlane();
@@ -305,12 +327,8 @@ public class FlyCamera : MonoBehaviour
                         }
                     }
                 }
-
             }
-                
         }
-
-
     }
 
 
@@ -327,6 +345,7 @@ public class FlyCamera : MonoBehaviour
         {
             return true;
         }
+        //Debug.DrawRay(ray.origin, ray.direction, Color.white, 10000);
         return false;
     }
 
@@ -411,10 +430,9 @@ public class FlyCamera : MonoBehaviour
     }
 
     //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
-    void PointsInSphere(Vector3 pos, float radius, out List<Vector3Int> coords, out List<float> dist)
+    void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int,float>> points)
     {
-        dist = new List<float>();
-        coords = new List<Vector3Int>();
+        points = new List<Tuple<Vector3Int,float>>();
 
         int radiusCeil = Mathf.CeilToInt(radius);
         for (int x = -radiusCeil; x < radiusCeil; x++)
@@ -427,8 +445,7 @@ public class FlyCamera : MonoBehaviour
                     float distPoint = point.magnitude;
                     if (distPoint <= radius)
                     { //changed it to do ciel with the x and pos added (shouldn't change anything actually, hmm)
-                        coords.Add(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)));
-                        dist.Add((float)(1f - distPoint / radius)/10);
+                        points.Add(new Tuple<Vector3Int,float>(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)), (float)(1f - distPoint / radius)/10));
                     }
                 }
             }
@@ -437,9 +454,61 @@ public class FlyCamera : MonoBehaviour
 
 
     public void terrainEditSphere(Vector3 pos, float radius, float degree){
-        PointsInSphere(pos, radius, out List<Vector3Int> coords, out List<float> dist);
-        WG.EditTerrain(coords, dist, degree);
+        PointsInSphere(pos, radius, out List<Tuple<Vector3Int, float>> points);
+        WG.EditTerrainAdd(points, degree);
     }
-}
 
+
+    public void toDigPoints()
+    {
+        Dictionary<Vector3Int, float> points = DigObjects.Last().pointsInDigObject();
+        foreach(KeyValuePair<Vector3Int, float> entry in points)
+        {
+            //Añadirlo al o updatear el diccionario global
+            if (DigPoint.digPointDict.ContainsKey(entry.Key))
+            {
+                //Actualizamos el valor que se quiere obtener
+                float maxDesiredVal = Mathf.Max(entry.Value, DigPoint.digPointDict[entry.Key].Item1);
+                GameObject existingObject = DigPoint.digPointDict[entry.Key].Item2;
+                DigPoint.digPointDict[entry.Key] = new Tuple<float, GameObject>(maxDesiredVal, existingObject);
+            }
+            else//sino lo añadiremos al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
+            {
+                GameObject digPoint = null;
+                if (WorldGen.IsAboveSurface(entry.Key) && entry.Value >= 0.5f) //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
+                {
+                    digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
+                    digPoint.SetActive(true);
+                    digPoint.GetComponent<DigPoint>().setDesiredVal(entry.Value);
+                }
+                else if (entry.Value >= 0.5f)// Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
+                {
+                    Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
+                    foreach (Vector3Int direction in directions)
+                    {
+                        //Si algun punto del alrededor se encuentra sobre la superficie
+                        if (WorldGen.IsAboveSurface(entry.Key + direction))
+                        {
+                            digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
+                            digPoint.SetActive(true);
+                            digPoint.GetComponent<DigPoint>().setDesiredVal(entry.Value);
+                            break; //Salgo del loop para no mirar el resto de dirs
+                        }
+                    }
+                }
+                DigPoint.digPointDict.Add(entry.Key, new Tuple<float, GameObject>(entry.Value, digPoint));
+            }
+        }
+    }
+
+    private void digAllPoints(){
+        List<Tuple<Vector3Int, float>> points = new List<Tuple<Vector3Int, float>>();
+        foreach (var entry in DigPoint.digPointDict)
+        {
+            points.Add(new Tuple<Vector3Int, float>(entry.Key, entry.Value.Item1));
+        }
+        WG.EditTerrainSet(points);
+    }
+
+}
 

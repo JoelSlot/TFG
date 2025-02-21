@@ -100,36 +100,38 @@ public class WorldGen : MonoBehaviour
     }
 
 
-    public void EditTerrain(List<Vector3Int> points, List<float> val, float degree)
+    public void EditTerrainAdd(List<Tuple<Vector3Int, float>> points, float degree)
     {
         var h = new HashSet<Vector3Int>();
 
         for (var i = 0; i < points.Count; i++)
         {
-            if (points[i].x < x_dim && points[i].y < y_dim && points[i].z < z_dim && points[i].x >= 0 && points[i].y >= 0 && points[i].z >= 0)
+            Vector3Int point = points[i].Item1;
+            float val = points[i].Item2;
+            if (inRange(point))
             {
-                terrainMap[points[i].x, points[i].y, points[i].z] -= val[i] * degree;
-                if (terrainMap[points[i].x, points[i].y, points[i].z] < 0)
-                    terrainMap[points[i].x, points[i].y, points[i].z] = 0f;
-                if (terrainMap[points[i].x, points[i].y, points[i].z] > 1)
-                    terrainMap[points[i].x, points[i].y, points[i].z] = 1f;
-                h.Add(new Vector3Int((points[i].x / chunk_x_dim) * chunk_x_dim, 0, (points[i].z / chunk_z_dim) * chunk_z_dim));
+                terrainMap[point.x, point.y, point.z] -= val * degree;
+                if (terrainMap[point.x, point.y, point.z] < 0)
+                    terrainMap[point.x, point.y, point.z] = 0f;
+                if (terrainMap[point.x, point.y, point.z] > 1)
+                    terrainMap[point.x, point.y, point.z] = 1f;
+                h.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
                 bool x_0 = false;
                 //mirar si est� justo entre dos chunks en x y no al principio
-                if (points[i].x % chunk_x_dim == 0 && points[i].x != 0)
+                if (point.x % chunk_x_dim == 0 && point.x != 0)
                 {
                     x_0 = true;
-                    h.Add(new Vector3Int((points[i].x / chunk_x_dim - 1) * chunk_x_dim, 0, (points[i].z / chunk_z_dim) * chunk_z_dim));
+                    h.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
                 }
                 bool z_0 = false;
-                if (points[i].z % chunk_z_dim == 0 && points[i].z != 0)
+                if (point.z % chunk_z_dim == 0 && point.z != 0)
                 {
                     z_0 = true;
-                    h.Add(new Vector3Int((points[i].x / chunk_x_dim) * chunk_x_dim, 0, (points[i].z / chunk_z_dim - 1) * chunk_z_dim));
+                    h.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
                 }
                 if (x_0 && z_0)
                 {
-                    h.Add(new Vector3Int((points[i].x / chunk_x_dim - 1) * chunk_x_dim, 0, (points[i].z / chunk_z_dim - 1) * chunk_z_dim));
+                    h.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
                 }
             }
         }
@@ -140,7 +142,44 @@ public class WorldGen : MonoBehaviour
         }
 
     }
-    
+    public void EditTerrainSet(List<Tuple<Vector3Int, float>> points)
+    {
+        var h = new HashSet<Vector3Int>();
+
+        for (var i = 0; i < points.Count; i++)
+        {
+            Vector3Int point = points[i].Item1;
+            float val = points[i].Item2;
+            if (inRange(point))
+            {
+                terrainMap[point.x, point.y, point.z] = Mathf.Clamp01(val);
+                h.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
+                bool x_0 = false;
+                //mirar si est� justo entre dos chunks en x y no al principio
+                if (point.x % chunk_x_dim == 0 && point.x != 0)
+                {
+                    x_0 = true;
+                    h.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
+                }
+                bool z_0 = false;
+                if (point.z % chunk_z_dim == 0 && point.z != 0)
+                {
+                    z_0 = true;
+                    h.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
+                }
+                if (x_0 && z_0)
+                {
+                    h.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
+                }
+            }
+        }
+        //check what chunks it affects
+        foreach (Vector3Int point in h)
+        {
+            chunks[point].CreateMeshData();
+        }
+
+    }
     /*
     public void RemoveTerrain(List<Vector3Int> points, List<float> val)
     {
@@ -161,19 +200,29 @@ public class WorldGen : MonoBehaviour
 
     }
     */
+    public static bool inRange(Vector3Int point)
+    {
+        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return false;
+        return true;
+    }
+    public static bool inRange(Vector3 point)
+    {
+        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return false;
+        return true;
+    }
     public static float SampleTerrain(Vector3Int point)
     {
-        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return 1;
+        if (!inRange(point)) return 1;
         return terrainMap[point.x, point.y, point.z];
     }
     public static float SampleTerrain(int x, int y, int z)
     {
-        if (x < 0 || x >= x_dim || y < 0 || y >= y_dim || z < 0 || z >= z_dim) return 1;
+        if (!inRange(new Vector3Int(x, y, z))) return 1;
         return terrainMap[x,y,z];
     }
     public static float SampleTerrain(Vector3 point)
     {
-        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return 1;
+        if (!inRange(point)) return 1;
 
         // las esquinas del cubo en el que se encuentra el punto
         int x0 = Mathf.FloorToInt(point.x);
@@ -200,6 +249,15 @@ public class WorldGen : MonoBehaviour
 
         // Interpolar por eje z
         return Mathf.Lerp(c0, c1, zd);
+    }
+
+    //Does not reload mesh. Must call the mesh reloader with the affected points after using
+    private static void setTerrain(Vector3Int pos, float val)
+    {
+        if (inRange(pos))
+        {
+            terrainMap[pos.x, pos.y, pos.z] = Mathf.Clamp01(val);
+        }
     }
     public static bool IsAboveSurface(Vector3 point)
     {

@@ -238,6 +238,11 @@ TO do TODAY:
 ## Excavación
 
 Hay que decidir desde donde se llama la función de excavar el terreno. Desde la hormiga o desde la cámara? Como llega el objeto hormig al objeto necesario para llamarlo? Como informa a la cámara de que ha llegado, usando los objetos que se encuentra? Estos están en la lista de digTunnels de la cámara, pero no son componentes de la cámara misma. Como solución temporal/permanente, se le añadirá un script a las versiones originales de estos gameObjects. Este script contendrá la referencia al objeto cámara.
+
+### túnel
+Para designar el tunel a excavar, se usaron 3 objetos para representarlo: dos esferas y un cilindro. Las esferas se colocan el los puntos de comienzo y final del túnel y el cilindro los conecta. Inicialmente usaba un cilindro con las dos esferas como hijos, pero creaba irregularidades a designar las posiciones y escalas debido a su inheritance IMG. Asi que se acabó usando un objeto vació con las dos esferas y el cilindro como hijos y un script para gestionar sus tamaños y posiciones.
+
+El método de excavación del tunel inicial fue usar la función de excavación cilindro a lo largo de la línea entre el comienzo del túnel y el final. Sin embargo, los problemas que presenta son la necesidad de definir un valor de intervalo, que quite tanto terreno a la vez, y que no se ajusta bien el túnel resultante al cilindro. 
 ## Modelo de larva
 
 

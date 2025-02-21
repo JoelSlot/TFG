@@ -40,7 +40,8 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical"
+                "sortOrder": "alphabetical",
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -77,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "2b50ebdb5a359242",
@@ -164,10 +166,16 @@
   },
   "active": "a4919b2e482bfc11",
   "lastOpenFiles": [
-    "Features.md",
+    "Untitled 1.canvas",
     "Descripcion del proceso seguido.md",
-    "Pheromone issue- not going up, infinitely reselecting.png",
+    "Development.md",
+    "Creación y obtención de assets.md",
     "Creación de IA.md",
+    "Implementación de mapas, missiones y retos.md",
+    "Optimización de rendimiento.md",
+    "Pasted image 20240716160956.png",
+    "Features.md",
+    "Pheromone issue- not going up, infinitely reselecting.png",
     "RaycastExample 1.png",
     "RaycastExample.png",
     "Raycast Collage.png",
@@ -186,16 +194,11 @@
     "Pasted image 20240916184531.png.meta",
     "Thorax IK stiffness.png.meta",
     "Pasted image 20241102163303.png",
-    "Pasted image 20241101214625.png",
     "Creación de animaciones.md",
-    "Development.md",
     "Implementación de las acciones.md",
     "Development tasks.md",
-    "Creación y obtención de assets.md",
     "Untitled.canvas",
     "Descripción del TFG.md",
-    "Implementación de mapas, missiones y retos.md",
-    "Optimización de rendimiento.md",
     "UI del juego.md",
     "Controles y cámara de jugador.md",
     "Control del nido.md",
