@@ -137,12 +137,12 @@ public class DigObject : MonoBehaviour
                 if (!checkedPoints.Contains(son)) // si no se ha visto aun
                 { 
                     desiredVal = getMarchingValue(son);
-                    if (desiredVal >= 0.5f)
+                    if (desiredVal < WorldGen.isolevel)
                     {
                         pointsToCheck.Enqueue(son);
                     }
                     //Check to see if it would increase empty val
-                    if (desiredVal > WorldGen.SampleTerrain(son)) points.Add(son, desiredVal); 
+                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, desiredVal); 
                     checkedPoints.Add(son);
                 }
             }
@@ -157,7 +157,7 @@ public class DigObject : MonoBehaviour
         if (mode == digType.Tunnel)
         {
             float dist = DistancePointLine(pos, transform.position, endPos);
-            return 1- Mathf.Clamp01(dist / (2*radius));
+            return Mathf.Clamp01(dist / (2*radius));
         }
         else //if (mode == digType.Chamber)
         {
@@ -202,7 +202,7 @@ public class DigObject : MonoBehaviour
         float value = ((x*x)/(a*a) + (y*y)/(b*b) + (z*z)/(c*c));
         //float value2 = 
         //Debug.Log("a: " + a + ", b: " + b + ", c: " + c + ", x: " + x + ", y: " + y + ", z: " + z + " result: " + value);
-        return 1 - value/2;
+        return value/2;
     }
 
 

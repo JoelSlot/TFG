@@ -78,7 +78,7 @@ public class chunk
         int configIndex = 0;
         for (int i = 0; i < 8; i++)
         {
-            if (cubeVertices[i] > isolevel)
+            if (cubeVertices[i] < isolevel)
                 configIndex |= 1 << i;
         }
 

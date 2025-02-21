@@ -171,8 +171,8 @@ public class FlyCamera : MonoBehaviour
             sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
         }
 
-        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, 0.8f);
-        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, -0.8f);
+        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, -0.8f);
+        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, 0.8f);
 
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -475,13 +475,13 @@ public class FlyCamera : MonoBehaviour
             else//sino lo añadiremos al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
             {
                 GameObject digPoint = null;
-                if (WorldGen.IsAboveSurface(entry.Key) && entry.Value >= 0.5f) //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
+                if (WorldGen.IsAboveSurface(entry.Key) && entry.Value < WorldGen.isolevel) //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
                 {
                     digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
                     digPoint.SetActive(true);
                     digPoint.GetComponent<DigPoint>().setDesiredVal(entry.Value);
                 }
-                else if (entry.Value >= 0.5f)// Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
+                else if (entry.Value < WorldGen.isolevel)// Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
                 {
                     Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
                     foreach (Vector3Int direction in directions)

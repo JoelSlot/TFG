@@ -81,15 +81,15 @@ public class WorldGen : MonoBehaviour
                 for (int z = 0; z < z_dim + 1; z++)
                 {
                     if (z == 0 || z == z_dim || x == 0 || x == x_dim)
-                        terrainMap[x, y, z] = 1f;
+                        terrainMap[x, y, z] = 0f;
                     else if (y == 30)
-                        terrainMap[x, y, z] = 0.3f;
+                        terrainMap[x, y, z] = 0.7f;
                     else if (y == 0)
-                        terrainMap[x,y,z] = 1f;
-                    else if (y < 30)
                         terrainMap[x,y,z] = 0f;
+                    else if (y < 30)
+                        terrainMap[x,y,z] = 1f;
                     else
-                        terrainMap[x, y, z] = 1f;
+                        terrainMap[x, y, z] = 0f;
                 }
             }
         }
@@ -110,7 +110,7 @@ public class WorldGen : MonoBehaviour
             float val = points[i].Item2;
             if (inRange(point))
             {
-                terrainMap[point.x, point.y, point.z] -= val * degree;
+                terrainMap[point.x, point.y, point.z] += val * degree;
                 if (terrainMap[point.x, point.y, point.z] < 0)
                     terrainMap[point.x, point.y, point.z] = 0f;
                 if (terrainMap[point.x, point.y, point.z] > 1)
@@ -212,17 +212,17 @@ public class WorldGen : MonoBehaviour
     }
     public static float SampleTerrain(Vector3Int point)
     {
-        if (!inRange(point)) return 1;
+        if (!inRange(point)) return 0;
         return terrainMap[point.x, point.y, point.z];
     }
     public static float SampleTerrain(int x, int y, int z)
     {
-        if (!inRange(new Vector3Int(x, y, z))) return 1;
+        if (!inRange(new Vector3Int(x, y, z))) return 0;
         return terrainMap[x,y,z];
     }
     public static float SampleTerrain(Vector3 point)
     {
-        if (!inRange(point)) return 1;
+        if (!inRange(point)) return 0;
 
         // las esquinas del cubo en el que se encuentra el punto
         int x0 = Mathf.FloorToInt(point.x);
@@ -251,21 +251,13 @@ public class WorldGen : MonoBehaviour
         return Mathf.Lerp(c0, c1, zd);
     }
 
-    //Does not reload mesh. Must call the mesh reloader with the affected points after using
-    private static void setTerrain(Vector3Int pos, float val)
-    {
-        if (inRange(pos))
-        {
-            terrainMap[pos.x, pos.y, pos.z] = Mathf.Clamp01(val);
-        }
-    }
     public static bool IsAboveSurface(Vector3 point)
     {
-        return !(isolevel > SampleTerrain(point));
+        return !(isolevel < SampleTerrain(point));
     }
     public static bool IsAboveSurface(Vector3Int point)
     {
-        return !(isolevel > SampleTerrain(point));
+        return !(isolevel < SampleTerrain(point));
     }
     public static Vector3 SurfaceDirection(Vector3Int point)
     {
@@ -355,4 +347,11 @@ public class WorldGen : MonoBehaviour
         writer.Close();
         Debug.Log("Saved succesfully!");
     }
+
+    public Vector3Int[] getAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
+    {
+
+        return new Vector3Int[0];
+    }
+
 }

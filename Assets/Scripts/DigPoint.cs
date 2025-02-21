@@ -47,7 +47,7 @@ public class DigPoint : MonoBehaviour
             if (digPointDict.ContainsKey(pos + direction))
             {
                 float desiredVal = digPointDict[pos + direction].Item1;
-                if ( desiredVal < 0.5f) //si es pared lo excavamos y lo eliminamos del diccionario
+                if ( desiredVal > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
                     points.Add(new Tuple<Vector3Int, float>(pos + direction, digPointDict[pos+direction].Item1));
                     digPointDict.Remove(pos + direction);
@@ -63,8 +63,8 @@ public class DigPoint : MonoBehaviour
                         digPointDict[pos + direction] = new Tuple<float, GameObject>(desiredVal, digPoint);
                     }
                     //Quitar un poco de los alrededores
-                    float newVal = WorldGen.SampleTerrain(pos + direction) + 0.2f;
-                    if (newVal < digPointDict[pos+direction].Item1) //Si el valor no excede o cumple con el valor que se queire obtener:
+                    float newVal = WorldGen.SampleTerrain(pos + direction) - 0.2f;
+                    if (newVal > digPointDict[pos+direction].Item1) //Si el valor no excede o cumple con el valor que se queire obtener:
                         points.Add(new Tuple<Vector3Int, float>(pos+direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }
