@@ -64,7 +64,7 @@ public class DigPoint : MonoBehaviour
                     }
                     //Quitar un poco de los alrededores
                     float newVal = WorldGen.SampleTerrain(pos + direction) - 0.2f;
-                    if (newVal > digPointDict[pos+direction].Item1) //Si el valor no excede o cumple con el valor que se queire obtener:
+                    if (newVal > digPointDict[pos+direction].Item1) //Si el valor no excede o iguala a el valor que se queire obtener:
                         points.Add(new Tuple<Vector3Int, float>(pos+direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }

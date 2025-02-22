@@ -204,8 +204,28 @@ public class chunk
     //tabla de ejes. Para cada eje los �ndices de los v�rtices que lo forman.
     public static int[,] edgeIndexes = new int[12, 2] {
 
-        {0, 1}, { 1, 2}, { 3, 2}, {0, 3}, { 4, 5}, {5, 6}, {7, 6}, { 4, 7}, {0, 4}, { 1, 5}, { 2, 6}, { 3, 7}
+        {0, 1}, {1, 2}, {3, 2}, {0, 3}, {4, 5}, {5, 6}, {7, 6}, {4, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
 
+    };
+
+    public static int[,] faceIndexes = new int[6,4]
+    {
+        {0, 1, 2, 3}, // back face
+        {4, 5, 6, 7}, // forward face
+        {1, 2, 5, 6}, // right face
+        {0, 3, 4, 7}, // left face
+        {2, 3, 6, 7}, // up face
+        {0, 1, 4, 5}  // down face
+    };
+
+    public static Vector3Int[] faceDirections = new Vector3Int[6]
+    {
+        Vector3Int.back, // back face
+        Vector3Int.forward, // forward face
+        Vector3Int.right, // right face
+        Vector3Int.left, // left face
+        Vector3Int.up, // up face
+        Vector3Int.down  // down face
     };
 
     //Configuraciones: las distintas combinaciones de tri�ngulos.

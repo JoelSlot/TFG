@@ -40,7 +40,7 @@ public class FlyCamera : MonoBehaviour
 
     int pathId;
 
-    public enum obj {None, Ant, Grub, digTunnel, digChamber}
+    public enum obj {None, Ant, Grub, digTunnel, digChamber, test}
     public GameObject origAnt; //Base ant that will be copied
     //public GameObject Grub; //Base grub that will be copied
     public obj objectMode = obj.None;
@@ -103,6 +103,7 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
             if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
             if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
+            if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
@@ -319,6 +320,15 @@ public class FlyCamera : MonoBehaviour
                                     setVertPlane();
                                     DigObjects.Add(tunnelScript);
                                     Debug.Log("Set Plane Pos");
+                                }
+                                break;
+                            case obj.test:
+                                Vector3Int cube = Vector3Int.FloorToInt(hit.point);
+                                WorldGen.DrawCube(cube);
+                                List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = WorldGen.AdyacentCubes(cube, hit.normal);
+                                foreach (Tuple<Vector3Int, Vector3Int> adyacentCube in adyacentCubes)
+                                {
+                                    WorldGen.DrawCube(adyacentCube.Item1);
                                 }
                                 break;
                             default:

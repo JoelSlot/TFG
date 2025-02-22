@@ -8,6 +8,7 @@ using static UnityEngine.Awaitable;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using System.Linq;
 
 public class WorldGen : MonoBehaviour
 {
@@ -348,10 +349,141 @@ public class WorldGen : MonoBehaviour
         Debug.Log("Saved succesfully!");
     }
 
-    public Vector3Int[] getAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
+    public static List<Tuple<Vector3Int, Vector3Int>> AdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
     {
+        List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = new List<Tuple<Vector3Int, Vector3Int>>();
 
-        return new Vector3Int[0];
+        Dictionary<Vector3Int, bool> cornerValues = new Dictionary<Vector3Int, bool>(); //
+        foreach (Vector3Int corner in chunk.cornerTable) //Rellena la lista de los vértices adjacentes
+            cornerValues.Add(corner, !IsAboveSurface(cube + corner));
+        
+        Vector3Int antCorner = CornerFromNormal(surfaceNormal);
+
+        List<Vector3Int> cubeGroup = GetGroup(antCorner, cornerValues);
+        foreach (Vector3Int corner in chunk.cornerTable) //Quitar trues que no estén en el grupo
+            if (cornerValues[corner])
+                if (!cubeGroup.Contains(corner))
+                    cornerValues[corner] = false;
+        
+        for (int i = 0; i < 6; i++)
+        {
+            if (FaceXOR(i, cornerValues))
+            {
+                adyacentCubes.Add(new Tuple<Vector3Int, Vector3Int>(cube + chunk.faceDirections[i], TrueCorner(i, cornerValues)));
+            }
+        }
+
+        return adyacentCubes;
     }
 
+
+    public static List<Tuple<Vector3Int, Vector3Int>> AdyacentCubes(Tuple<Vector3Int, Vector3Int> cube) // cube contains the cube pos and on of the 
+    {
+        List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = new List<Tuple<Vector3Int, Vector3Int>>();
+
+        Dictionary<Vector3Int, bool> cornerValues = new Dictionary<Vector3Int, bool>(); //
+        foreach (Vector3Int corner in chunk.cornerTable) //Rellena la lista de los vértices adjacentes
+            cornerValues.Add(corner, !IsAboveSurface(cube.Item1 + corner));
+
+        List<Vector3Int> cubeGroup = GetGroup(cube.Item2, cornerValues);
+        foreach (Vector3Int corner in chunk.cornerTable) //Quitar trues que no estén en el grupo
+            if (cornerValues[corner])
+                if (!cubeGroup.Contains(corner))
+                    cornerValues[corner] = false;
+        
+        for (int i = 0; i < 6; i++)
+        {
+            if (FaceXOR(i, cornerValues))
+            {
+                adyacentCubes.Add(new Tuple<Vector3Int, Vector3Int>(cube.Item1 + chunk.faceDirections[i], TrueCorner(i, cornerValues)));
+            }
+        }
+
+        return adyacentCubes;
+    }
+
+
+    private static Vector3Int TrueCorner(int faceIndex, Dictionary<Vector3Int, bool> cornerValues)
+    {
+        if (cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,0]]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,0]];
+        if (cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,1]]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,1]];
+        if (cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,2]]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,2]];
+        return chunk.cornerTable[chunk.faceIndexes[faceIndex,3]];
+    }
+
+    private static bool FaceXOR(int faceIndex, Dictionary<Vector3Int, bool> cornerValues)
+    {
+        return !(
+            cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,0]]] == cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,1]]] && 
+            cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,0]]] == cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,2]]] && 
+            cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,0]]] == cornerValues[chunk.cornerTable[chunk.faceIndexes[faceIndex,3]]] );
+    }
+
+    //Agrupa los puntos según si están conectados todos
+    public static List<Vector3Int> GetGroup(Vector3Int antCorner, Dictionary<Vector3Int, bool> cornerValues)
+    {
+        List<Vector3Int> group = new List<Vector3Int>() {antCorner};
+        HashSet<Vector3Int> checkedCorners = new HashSet<Vector3Int>();
+        Queue<Vector3Int> cornersToCheck = new Queue<Vector3Int>();
+        cornersToCheck.Enqueue(antCorner);
+
+        while (cornersToCheck.Count > 0)
+        {
+            Vector3Int corner = cornersToCheck.Dequeue(); //Cogemos el siguiente
+            checkedCorners.Add(corner); //anotamos que lo miramos
+            foreach (Vector3Int adyCorner in AdyacentCorners(corner))
+            {
+                if (!checkedCorners.Contains(adyCorner)) // si no lo hemos mirado
+                {
+                    if (cornerValues[adyCorner]) // si está debajo del suelo
+                    {
+                        group.Add(adyCorner); // Añadimos la esquina al grupo
+                        cornersToCheck.Enqueue(adyCorner); // Y lo preparamos para mirar sus adyacentes
+                    }
+                }
+            }
+        }
+        return group;
+    }
+
+    private static List<Vector3Int> AdyacentCorners(Vector3Int corner)
+    {
+        return new List<Vector3Int>(){
+            new Vector3Int(Mathf.Abs(corner.x-1), corner.y, corner.z),
+            new Vector3Int(corner.x, Mathf.Abs(corner.y-1), corner.z),
+            new Vector3Int(corner.x, corner.y, Mathf.Abs(corner.z-1))
+            };
+        
+    }
+
+    public static Vector3Int CornerFromNormal(Vector3 normal)
+    {
+        Vector3Int returnCorner = Vector3Int.zero;
+        float minAngle = 180;
+        foreach(Vector3Int corner in chunk.cornerTable)
+        {
+            float angle = Vector3.Angle(normal, CornerNormal(corner));
+            if (angle < minAngle)
+            {
+                minAngle = angle;
+                returnCorner = corner;
+            }
+        }
+        return returnCorner;
+    }
+
+    //Dado una de las esquinas de un cubo como las de chunk.cornerTable devuelve la dir de él hacia el centro
+    public static Vector3Int CornerNormal(Vector3Int corner)
+    {
+        Vector3Int opposite = new Vector3Int(Mathf.Abs(corner.x - 1), Mathf.Abs(corner.y - 1), Mathf.Abs(corner.z - 1));
+        return opposite - corner;
+    }
+
+    public static void DrawCube(Vector3Int cube)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i,0]], cube + chunk.cornerTable[chunk.edgeIndexes[i,1]], Color.black, 20);
+        }
+    }
 }
