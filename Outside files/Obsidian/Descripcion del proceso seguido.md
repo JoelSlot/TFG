@@ -234,6 +234,10 @@ TO do TODAY:
 ![[Pheromone issue- not going up, infinitely reselecting.png]]
 
 
+### NUevo sistema de pheromonas: CubePheromones
+
+- Error: las hormigas creadas, si no está instanciada la hormiga base de la que se copian todos, saltan hacia delante al crearse. WHY???
+- Error: a pesar de que 
 
 ## Excavación
 

@@ -289,6 +289,7 @@ public class Ant : MonoBehaviour
         Animator.SetInteger("turning", 0);
     }
 
+    //ERROR: The raycasts go way to far, making the ant put down pheromones on the wrong places.
     private void SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal)
     {
         Color hitColor;
@@ -304,7 +305,8 @@ public class Ant : MonoBehaviour
         hitCubePos = new Vector3Int(0,0,0);
         int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
-            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, raycastLayer))
+            //HE ESTADO USANDO MAL ESTA FUNCIÓN. RAYCASTLAYER ESTABA FUNCIONANDO COMO MAXDISTANCE
+            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, 0.8f, raycastLayer))
             {
                 hitColor = Color.red;
                 numHits++;
