@@ -113,7 +113,6 @@ public class FlyCamera : MonoBehaviour
             {
                 SelectedAnt.state = Ant.AIState.Passive;
                 SelectedAnt.makingTrail = false;
-                SelectedAnt.placedPheromone = null;
             }
         }
         if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
@@ -121,19 +120,19 @@ public class FlyCamera : MonoBehaviour
             if (SelectedAnt.state == Ant.AIState.Controlled && !SelectedAnt.makingTrail)
             {
                 SelectedAnt.makingTrail = true;
-                SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
+                //SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
             }
             else
             {
                 SelectedAnt.makingTrail = false;
-                SelectedAnt.placedPheromone = null;
+                //SelectedAnt.placedPheromone = null;
             }
         }
         if (WorldGen.IsAboveSurface(transform.position))
         {
             camera.backgroundColor = new Color(0,191,255);
         }
-        else camera.backgroundColor = Color.black;
+        //else camera.backgroundColor = Color.black;
     }
 
     void FixedUpdate()
@@ -270,6 +269,7 @@ public class FlyCamera : MonoBehaviour
                     {
                         if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                         SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
+                        Debug.Log("Selected an ant");
                     }
                 }
                 else if (confirmDig)
@@ -324,12 +324,20 @@ public class FlyCamera : MonoBehaviour
                                 break;
                             case obj.test:
                                 Vector3Int cube = Vector3Int.FloorToInt(hit.point);
-                                WorldGen.DrawCube(cube);
-                                List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = WorldGen.AdyacentCubes(cube, hit.normal);
+                                CubePaths.DrawCube(cube, Color.red, 20);
+                                /*List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = CubePaths.GetAdyacentCubes(cube, hit.normal);
                                 foreach (Tuple<Vector3Int, Vector3Int> adyacentCube in adyacentCubes)
                                 {
-                                    WorldGen.DrawCube(adyacentCube.Item1);
-                                }
+                                    CubePaths.DrawCube(adyacentCube.Item1, Color.red, 20);
+                                }*/
+
+                                Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
+
+                                List<CubePaths.cubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cube, belowSurfaceCorner);
+
+                                if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
+                                else Debug.Log("Pheromones found");
+                                
                                 break;
                             default:
                                 Debug.Log("No valid object mode when clicked");
@@ -412,7 +420,7 @@ public class FlyCamera : MonoBehaviour
         else if (Input.GetKey(KeyCode.RightArrow))  SelectedAnt.TurnRight();
         else                                        SelectedAnt.DontTurn();
 
-        if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
+        //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
     }
 
     void setVertPlane() //ok so the using planos is not something i came up with inmediately, and eventhen i was gonna use 3 and adjust them. thank goodness i noticed thats not possible and also that it would be simpler to have one that is updating all the time as the camera orientation changes

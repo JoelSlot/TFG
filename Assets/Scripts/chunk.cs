@@ -201,6 +201,18 @@ public class chunk
         new Vector3Int(0, 1, 1)
     };
 
+    public static Dictionary<Vector3Int, int> reverseCornerTable = new Dictionary<Vector3Int, int>
+    {
+        {new Vector3Int(0, 0, 0), 0},
+        {new Vector3Int(1, 0, 0), 1},
+        {new Vector3Int(1, 1, 0), 2},
+        {new Vector3Int(0, 1, 0), 3},
+        {new Vector3Int(0, 0, 1), 4},
+        {new Vector3Int(1, 0, 1), 5},
+        {new Vector3Int(1, 1, 1), 6},
+        {new Vector3Int(0, 1, 1), 7}
+    };
+
     //tabla de ejes. Para cada eje los �ndices de los v�rtices que lo forman.
     public static int[,] edgeIndexes = new int[12, 2] {
 
@@ -226,6 +238,16 @@ public class chunk
         Vector3Int.left, // left face
         Vector3Int.up, // up face
         Vector3Int.down  // down face
+    };
+
+    public static Dictionary<Vector3Int, int> reverseFaceDirections = new Dictionary<Vector3Int, int>()
+    {
+        {Vector3Int.back, 0},// back face
+        {Vector3Int.forward, 1},// forward face
+        {Vector3Int.right, 2},// right face
+        {Vector3Int.left, 3}, // left face
+        {Vector3Int.up, 4},// up face
+        {Vector3Int.down, 5}  // down face
     };
 
     //Configuraciones: las distintas combinaciones de tri�ngulos.
