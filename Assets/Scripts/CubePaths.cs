@@ -1,118 +1,15 @@
 using System.Collections.Generic;
-using NUnit.Framework.Internal;
-using System.Collections;
 using UnityEngine;
 using System;
 
 public class CubePaths : MonoBehaviour
 {
-    public class cubePheromone
-    {
-        //These fucking things gotta be differentiated by their pos, id and surface. Damn.
-        static int nextId = -1;
-        int pathId;
-        int pathPos;
-        Vector3Int pos;
-        bool[] surfaceGroup; //El grupo de esquinas que son true si es encuentran debajo de la superficie
-        public cubePheromone prev;
-        public cubePheromone next;
-
-        //Crea una nueva feromona como comienzo de un nuevo camino el la posición pherPos
-        public cubePheromone(Vector3Int pherPos, Vector3Int pointBelowSurface)
-        {
-            pathId = GetNextId();
-            pathPos = 0;
-            //Previo/siguiente se señalan a si mismos =  comienzo/final del camino
-            prev = this;
-            next = this;
-            pos = pherPos;
-            makeSurfaceGroup(pointBelowSurface);
-        }
-
-        //Crea el siguientd nodo en el camino dado el actual
-        public cubePheromone(Vector3Int pherPos, cubePheromone prevPher)
-        {
-            pathId = prevPher.pathId;
-            pathPos = prevPher.pathPos + 1;
-            prev = prevPher;
-            next = this;
-            pos = pherPos;
-            makeSurfaceGroup(prevPher);
-
-            prevPher.next = this;
-
-        }
-
-        private static int GetNextId()
-        {
-            nextId += 1;
-            return nextId;
-        }
-
-        //Devuelve el siguiente nodo del camino dependiendo de si se mueve hacia delante o hacia detrás
-        public cubePheromone GetNext(bool forward)
-        {
-            if (forward) return next;
-            else return prev;
-        }
-
-        //Devuelve si el nodo es el ultimo del camino dado si se está moviendo hacia delante o hacia detrás
-        public bool isLast(bool forward)
-        {
-            if (forward) return next == this;
-            else return prev == this;
-        }
-
-        //Devuelve el pathId del nodo
-        public int GetPathId() {return pathId;}
-
-        //Devuelve si el nodo de pheromona se encuentra en:
-        //La misma posición y
-        //El mismo camino y
-        //La misma superficie
-        //Es decir, si son exactamente iguales
-        public bool SameCubeSamePathSameSurface(cubePheromone other)
-        {
-            if (pos != other.pos) return false; //check if same pos
-            if (pathId != other.pathId) return false; //check if same path
-            return CompareGroups(surfaceGroup, other.surfaceGroup);
-        }
-
-        //Asigna el grupo de valores de las esquinas del cubo según si están debajo de la superficie de la feromona.
-        //Usado para diferenciar nodos en superficies distintas.
-        //Versión que usa un punto dado debajo de la superficie.
-        public void makeSurfaceGroup(Vector3Int pointUnderSurface)
-        {
-            surfaceGroup = GetGroup(pointUnderSurface, CubeCornerValues(pos));
-        }
-
-        //Versión que usa la dirección de la superficie
-        public void makeSurfaceGroup(cubePheromone adyacentCube)
-        {
-            int newCubeDirIndex = chunk.reverseFaceDirections[pos - adyacentCube.pos]; //obtenemos indice de dir desde adyacente a actual cubo
-            Vector3Int pointUnderSurface = TrueCorner(newCubeDirIndex, adyacentCube.surfaceGroup) - chunk.faceDirections[newCubeDirIndex]; //Mediante dicho índice conseguimos uno de los puntos compartidos debajo de la superficie
-            makeSurfaceGroup(pointUnderSurface);
-        }
-
-        //Devuelve el grupo de valores de esquinas de la superficie
-        public bool[] GetSurfaceGroup()
-        {
-            return this.surfaceGroup;
-        }
-
-        //Devuelve el cubo en el que se encuentra la feromona
-        public Vector3Int GetPos()
-        {
-            return pos;
-        }
-
-    }
 
     //Diccionario de todas las pheromonas. Son indexadas según su posición, para que una hormiga pueda fácilmente acceder a las pheromonas en los cubos alrededores.
     //Ya que pueden haber pheromonas de caminos distintos en el mismo cubo, y pueden haber múltiples superficies con pheromonas del mismo camino en un mismo cubo, se guarda una lista de todas aquellas que se encuentran en cada cubo
-    public static Dictionary<Vector3Int, List<cubePheromone>> cubePherDict = new Dictionary<Vector3Int, List<cubePheromone>>();
+    public static Dictionary<Vector3Int, List<CubePheromone>> cubePherDict = new Dictionary<Vector3Int, List<CubePheromone>>();
     //El diccionario de caminos, contiene los primeros nodos de los caminos indexados por su pathId
-    public static Dictionary<int, cubePheromone> pathDict = new Dictionary<int, cubePheromone>();
+    public static Dictionary<int, CubePheromone> pathDict = new Dictionary<int, CubePheromone>();
 
     /*
     Comienza un nuevo camino de pheromonas creando el primer miembro y colocandolo en el mapa.
@@ -122,9 +19,9 @@ public class CubePaths : MonoBehaviour
 
     return: la feromona nueva creada
     */
-    public static cubePheromone StartPheromoneTrail(Vector3Int pos, Vector3 surfaceNormal)
+    public static CubePheromone StartPheromoneTrail(Vector3Int pos, Vector3 surfaceNormal)
     {
-        cubePheromone newPher = new cubePheromone(pos, CornerFromNormal(surfaceNormal));
+        CubePheromone newPher = new CubePheromone(pos, CornerFromNormal(surfaceNormal));
         PlacePheromone(pos, newPher);
         pathDict.Add(newPher.GetPathId(), newPher); // añadir primer pher del nuevo camino al dictionario
         return newPher;
@@ -138,9 +35,9 @@ public class CubePaths : MonoBehaviour
     
     return: la feromona nueva creada
     */
-    public static cubePheromone ContinuePheromoneTrail(Vector3Int pos, cubePheromone prevPher)
+    public static CubePheromone ContinuePheromoneTrail(Vector3Int pos, CubePheromone prevPher)
     {
-        cubePheromone newPher = new cubePheromone(pos, prevPher);
+        CubePheromone newPher = new CubePheromone(pos, prevPher);
         PlacePheromone(pos, newPher);
         return newPher;
     }
@@ -150,21 +47,21 @@ public class CubePaths : MonoBehaviour
     Coloca una feromona en la posición indicada, reemplazando la feromona que ya se encuentra en dicho lugar si tiene la misma pathId y está en la misma superficie
 
     pos: La posición del cubo en la que se coloca la feromona
-    newPher: el objecto cubePheromone que debe colocarse en la posicion dada
+    newPher: el objecto CubePheromone que debe colocarse en la posicion dada
     */
-    private static void PlacePheromone(Vector3Int pos, cubePheromone newPher)
+    private static void PlacePheromone(Vector3Int pos, CubePheromone newPher)
     {
-        List<cubePheromone> pheromones;
+        List<CubePheromone> pheromones;
         if (cubePherDict.TryGetValue(pos, out pheromones)) //Si ya hay feromonas en el cubo indicado: 
         {
             bool replaced = false;                          
             for (int i = 0; i < pheromones.Count; i++)
             {
-                cubePheromone oldPher = cubePherDict[pos][i];
+                CubePheromone oldPher = cubePherDict[pos][i];
                 if (oldPher.SameCubeSamePathSameSurface(newPher))   //Si una de las feromonas del cubo tiene la misma superficie y pathId
                 {
                     newPher.prev = oldPher.prev;                        //Desconectar el camino inutil
-                    cubePherDict[pos][i] = newPher;                     //Reemplazar el cubePheromone viejo
+                    cubePherDict[pos][i] = newPher;                     //Reemplazar el CubePheromone viejo
                     replaced = true;
                     break;
                 }
@@ -173,7 +70,7 @@ public class CubePaths : MonoBehaviour
         }
         else                                                //Si no había ya alguna pheromona, añadir
         {
-            pheromones = new List<cubePheromone>(){newPher};
+            pheromones = new List<CubePheromone>(){newPher};
             cubePherDict.Add(pos, pheromones);
         }
 
@@ -188,17 +85,16 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de feromonas en la superficie.
     */
-    public static List<cubePheromone> GetPheromonesOnSurface(Vector3Int surfaceCube, Vector3Int belowSurfaceCorner)
+    public static List<CubePheromone> GetPheromonesOnSurface(cubeSurface surface)
     {
-        bool[] surfaceGroup = GetGroup(belowSurfaceCorner, CubeCornerValues(surfaceCube));
-        List<cubePheromone> sameSurfacePheromones = new List<cubePheromone>();
+        List<CubePheromone> sameSurfacePheromones = new List<CubePheromone>();
 
-        if (cubePherDict.TryGetValue(surfaceCube, out List<cubePheromone> pheromones))
+        if (cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> pheromones))
         {
             //Debug.Log("There is good shit here:" + pheromones.Count);
             foreach (var pheromone in pheromones)
             {
-                if (CompareGroups(surfaceGroup, pheromone.GetSurfaceGroup()))
+                if (CompareGroups(surface.surfaceGroup, pheromone.GetSurfaceGroup()))
                 {
                     sameSurfacePheromones.Add(pheromone);
                 }
@@ -248,9 +144,9 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
     */
-    public static List<Tuple<Vector3Int, Vector3Int>> GetAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
+    public static List<cubeSurface> GetAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
     {
-        List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = new List<Tuple<Vector3Int, Vector3Int>>();
+        List<cubeSurface> adyacentCubes = new List<cubeSurface>();
 
         bool[] cornerValues = CubeCornerValues(cube);
         
@@ -263,7 +159,8 @@ public class CubePaths : MonoBehaviour
             if (FaceXOR(i, groupCornerValues))
             {
                 //Debug.DrawLine(cube + new Vector3(0.5f, 0.5f, 0.5f), cube + new Vector3(0.5f, 0.5f, 0.5f) + chunk.faceDirections[i], Color.black, 10);
-                adyacentCubes.Add(new Tuple<Vector3Int, Vector3Int>(cube + chunk.faceDirections[i], TrueCorner(i, groupCornerValues)));
+                
+                adyacentCubes.Add(new cubeSurface(cube + chunk.faceDirections[i], groupCornerValues));
             }
         }
 
@@ -273,24 +170,27 @@ public class CubePaths : MonoBehaviour
     /*
     Dado una superficie de un cubo, devuelve los cubos adyacentes que conectan con esa superficie.
 
-    cubeAndPoint: Par que contiene la pos del cubo y una esquina del cubo que se encuentra debajo de la superficie.
+    cubeSurface: Par que contiene la pos del cubo y los valores de grupo de superficie del cubo que se encuentra debajo de la superficie.
 
     return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
     */
-    public static List<Tuple<Vector3Int, Vector3Int>> GetAdyacentCubes(Tuple<Vector3Int, Vector3Int> cubeAndPoint) // cube contains the cube pos and one of the points below
+    public static List<cubeSurface> GetAdyacentCubes(cubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
     {
-        List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = new List<Tuple<Vector3Int, Vector3Int>>();
+        List<cubeSurface> adyacentCubes = new List<cubeSurface>();
 
-        bool[] cornerValues = CubeCornerValues(cubeAndPoint.Item1);
+        List<int> index = new List<int>{0,1,2,3,4,5};
 
-        bool[] groupCornerValues = GetGroup(cubeAndPoint.Item2, cornerValues);
+        index.Sort((x, y) => (int)(Vector3.Angle(forwardDir, chunk.faceDirections[x]) - Vector3.Angle(forwardDir, chunk.faceDirections[y])));
         
         for (int i = 0; i < 6; i++)
         {
-            if (FaceXOR(i, groupCornerValues))
+            if (FaceXOR(index[i], surface.surfaceGroup))
             {
-                //Debug.DrawLine(cube.Item1 + new Vector3(0.5f, 0.5f, 0.5f), cube.Item1 + new Vector3(0.5f, 0.5f, 0.5f) + chunk.faceDirections[i], Color.black, 10);
-                adyacentCubes.Add(new Tuple<Vector3Int, Vector3Int>(cubeAndPoint.Item1 + chunk.faceDirections[i], TrueCorner(i, groupCornerValues)));
+                Vector3Int dir = chunk.faceDirections[index[i]]; //Get dir
+                bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
+                Vector3Int newSurfaceCorner = TrueCorner(index[i], surface.surfaceGroup) - dir; //Get corner value
+                bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
+                adyacentCubes.Add(new cubeSurface(surface.pos + dir, newGroupCornerValues));
             }
         }
 
@@ -461,7 +361,7 @@ public class CubePaths : MonoBehaviour
     {
         for (int i = 0; i < 12; i++)
         {
-            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i,0]], cube + chunk.cornerTable[chunk.edgeIndexes[i,1]], color, time);
+            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color, time);
         }
     }
 
@@ -475,5 +375,45 @@ public class CubePaths : MonoBehaviour
         if (FaceXOR(dirIndex, belowSurfaceValues)) return true;
         return false;
 
+    }
+
+
+    public struct cubeSurface
+    {
+        public bool[] surfaceGroup;
+        public Vector3Int pos;
+        public cubeSurface(Vector3Int newPos, Vector3Int belowSurfacePoint)
+        {
+            surfaceGroup = GetGroup(belowSurfacePoint, CubeCornerValues(newPos));
+            pos = newPos;
+        }public cubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
+        {
+            surfaceGroup = GetGroup(CornerFromNormal(surfaceNormals), CubeCornerValues(newPos));
+            pos = newPos;
+        }
+        public cubeSurface(Vector3Int newPos, bool[] newSurfaceGroup)
+        {
+            pos = newPos;
+            surfaceGroup = newSurfaceGroup;
+        }
+        public override bool Equals(object obj) 
+        {
+            if (!(obj is cubeSurface))
+                return false;
+
+            cubeSurface mys = (cubeSurface) obj;
+            // compare elements here
+
+            if (pos != mys.pos) return false;
+
+            for (int i = 0; i < 8; i++)
+                if (surfaceGroup[i] != mys.surfaceGroup[i]) return false;
+            
+            return true;
+        }
+        public override int GetHashCode()
+        {
+            return pos.x + pos.y * 1000 + pos.z * 1000000;
+        }
     }
 }

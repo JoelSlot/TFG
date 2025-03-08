@@ -28,7 +28,7 @@ public class Ant : MonoBehaviour
     private int pathId = -1; //if -1, not following a path
     private Vector3 pheromoneGoal = Vector3.zero;
     private Vector3Int lastCube;
-    private CubePaths.cubePheromone placedPher = null;
+    private CubePheromone placedPher = null;
     public int stucktimer = 0;
 
 
@@ -167,101 +167,167 @@ public class Ant : MonoBehaviour
         else SetWalking(false);
     }
 
+    struct objectiveSurface
+    {
+        public CubePaths.cubeSurface objective;
+        public CubePaths.cubeSurface firstStep;
+        public objectiveSurface(CubePaths.cubeSurface newSurface, CubePaths.cubeSurface newStep)
+        {
+            objective = newSurface;
+            firstStep = newStep;
+        }
+    }
+    
+    void DrawSurface(CubePaths.cubeSurface cubeSurface, Color color, int time)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (cubeSurface.surfaceGroup[i])
+                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
+        }
+    }
 
-    //Function idea: Create a list of the first 
+    List<objectiveSurface> GetNextSurfaceRange(CubePaths.cubeSurface antSurface, List<objectiveSurface> currentRange, ref HashSet<CubePaths.cubeSurface> checkedSurfaces)
+    {
+        List<objectiveSurface> nextRange = new List<objectiveSurface>();
+
+        //Si el rango está empezando se coge la superficie de la hormiga
+        if (currentRange.Count == 0)
+        {
+            nextRange.Add(new objectiveSurface(antSurface, antSurface));
+            checkedSurfaces.Add(antSurface);
+            return nextRange;
+        }
+
+        //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
+        if(currentRange[0].objective.Equals(antSurface)) 
+        {
+            Debug.Log(currentRange[0].objective.pos + " vs " + currentRange[0].firstStep.pos);
+            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
+
+            List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0].objective, transform.forward);
+            foreach (var son in adyacentCubes)
+            {
+                nextRange.Add(new objectiveSurface(son, son));
+                checkedSurfaces.Add(son);
+            }
+            return nextRange;
+        }
+
+
+        //Si el rango es mayor que todo eso se procede como debido
+        foreach (var currentSurface in currentRange)
+        {
+            List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface.objective, transform.forward);
+            
+            foreach (var son in adyacentCubes)
+            {
+                if (!checkedSurfaces.Contains(son))
+                {
+                    nextRange.Add(new objectiveSurface(son, currentSurface.firstStep));
+                    checkedSurfaces.Add(son);
+                }
+            }
+        }
+        return nextRange;
+    }
+
+
     private void SensePheromones(Vector3Int currentCube, Vector3 hitNormal) 
     {
-        Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hitNormal);
-        List<CubePaths.cubePheromone> sensedPhers = CubePaths.GetPheromonesOnSurface(currentCube, belowSurfaceCorner);
-        List<Vector3Int> passingThroughCube = new List<Vector3Int>();
-        int searchDistance = 0;
+        CubePaths.cubeSurface antSurface = new CubePaths.cubeSurface(currentCube, CubePaths.CornerFromNormal(hitNormal));
+        List<objectiveSurface> sensedRange = new List<objectiveSurface>();
+        HashSet<CubePaths.cubeSurface> checkedSurfaces = new HashSet<CubePaths.cubeSurface>();
+        bool haveGoal = false;
+        int range = -1;
+        CubePheromone objectivePher = null;
 
-        if (sensedPhers.Count == 0)
+        Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
+
+        while (!haveGoal && range < 5)
         {
-            List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = CubePaths.GetAdyacentCubes(currentCube, hitNormal);
+            range++;
+            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
 
-            foreach (var cubeAndPoint in adyacentCubes)
+            //Put all pheromones on a list
+            List<CubePheromone> sensedPheromones = new List<CubePheromone>();
+            foreach (var surface in sensedRange)
             {
-                CubePaths.DrawCube(cubeAndPoint.Item1, Color.blue, 4);
-                sensedPhers.AddRange(CubePaths.GetPheromonesOnSurface(cubeAndPoint.Item1, cubeAndPoint.Item2));
-                //ERROR 2: WAS USING CONCAT HERE THAT JUST GAVE BACK A NEW LIST INSTEAD OF MODIFYING THE ORIGINAL. THIS CAUSED THE ANT TO NEVER FIND THE PHEROMONES.
+                CubePaths.DrawCube(surface.objective.pos, colors[range], 2);
+                if (CubePaths.cubePherDict.TryGetValue(surface.objective.pos, out List<CubePheromone> surfacePhers))
+                    sensedPheromones.AddRange(surfacePhers);
             }
-            
+            //
 
+            objectivePher = ChoosePheromone(sensedPheromones);
+            if (objectivePher != null) haveGoal = true;
+        }
 
-            if (sensedPhers.Count == 0) //Aumentamos el rango de búsqueda una vez más
+        //Si no se ha encontrado objetivo, nos volvemos pasivos.
+        if (!haveGoal)
+        {
+            state = AIState.Passive;
+            Debug.Log("NO PHEROMONES FOUND/CHOSEN");
+            return;
+        }
+
+        //Si la pheromona está en la superficie actual seguimos su camino
+        if (range == 0)
+        {
+            if (objectivePher.isLast(followingForwards)) followingForwards = !followingForwards;
+            if (objectivePher.isLast(followingForwards))
             {
-                
-                Dictionary<Vector3Int, Tuple<Vector3Int, Vector3Int>> adyacentCubes2 = new Dictionary<Vector3Int, Tuple<Vector3Int, Vector3Int>>();
-                //Key: the reached cube. Value: A tuple. 
-                //Tuple.item1: one of the points below the surface of the reached cube.
-                //Tuple.item2: the cube through which the new one is reached.
-                foreach (var cubeAndPoint in adyacentCubes)
-                    foreach (var cubeAndPoint2 in CubePaths.GetAdyacentCubes(cubeAndPoint))
-                        adyacentCubes2.TryAdd(cubeAndPoint2.Item1, new Tuple<Vector3Int, Vector3Int>(cubeAndPoint2.Item2, cubeAndPoint.Item1));
-
-
-                foreach (var cubeAndPoint in adyacentCubes2)
-                {
-                    CubePaths.DrawCube(cubeAndPoint.Key, Color.black, 4);
-                    List<CubePaths.cubePheromone> sensedPhersDist2 = CubePaths.GetPheromonesOnSurface(cubeAndPoint.Key, cubeAndPoint.Value.Item1);
-                    if (sensedPhersDist2.Count != 0)
-                    {
-                        sensedPhers.AddRange(sensedPhersDist2);
-                        for (int i = 0; i < sensedPhersDist2.Count; i++) passingThroughCube.Add(cubeAndPoint.Value.Item2);
-                    }
-                    else Debug.Log("Got no phers");
-                }
-
-
-                if (sensedPhers.Count == 0)
-                {
-                    state = AIState.Passive;
-                    Debug.Log("NO PHEROMONES FOUND");
-                    return;
-                }
-                else searchDistance = 2;
+                state = AIState.Passive;
+                Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
+                return;
             }
-            else searchDistance = 1;
+
+            objectivePher = objectivePher.GetNext(followingForwards);
         }
-
-
-
-
-        int chosenPher = 0; //HERE CHOOSE THE PHEROMONE YOU WANT TO FOLLOW AND GET ITS LIST INDEX
-
-        if (sensedPhers[chosenPher].isLast(followingForwards)) 
-        {
-            followingForwards = !followingForwards;
-            Debug.Log("Switched dir");
-        }
-
-        //LLegado aqui, hay pheromonas alcanzables cerca en la lisra a distancia
-        bool[] surfaceGroup;
-        Vector3Int dir;
-        switch (searchDistance)
-        {
-            case 0:
-                surfaceGroup = sensedPhers[chosenPher].GetSurfaceGroup();
-                dir = sensedPhers[chosenPher].GetNext(followingForwards).GetPos() - sensedPhers[chosenPher].GetPos();
-                pheromoneGoal = CubePaths.GetMovementGoal(currentCube, surfaceGroup, dir);
-            break;
-            case 1:
-                surfaceGroup = CubePaths.GetGroup(belowSurfaceCorner, CubePaths.CubeCornerValues(currentCube));
-                dir = sensedPhers[chosenPher].GetPos() - currentCube;
-                pheromoneGoal = CubePaths.GetMovementGoal(currentCube, surfaceGroup, dir);
-            break;
-            case 2:
-                surfaceGroup = CubePaths.GetGroup(belowSurfaceCorner, CubePaths.CubeCornerValues(currentCube));
-                dir = passingThroughCube[chosenPher] - currentCube;
-                pheromoneGoal = CubePaths.GetMovementGoal(currentCube, surfaceGroup, dir);
-            break;
-
-        }
-
+        
+        
+        Vector3Int dir = objectivePher.GetPos() - antSurface.pos;
+        pheromoneGoal = CubePaths.GetMovementGoal(antSurface.pos, antSurface.surfaceGroup, dir);
         state = AIState.Following;
 
 
+    }
+
+    
+
+    private CubePheromone ChoosePheromone(List<CubePheromone> sensedPhers)
+    {
+        CubePheromone chosenPheromone = null;
+        int pathVal = 0;
+        if (!followingForwards) pathVal = int.MaxValue;
+
+        bool isFurther(int value)
+        {
+            if (followingForwards) return pathVal < value;
+            else return pathVal > value;
+        }
+
+        for (int i = 0; i < sensedPhers.Count(); i++)
+        {
+            if (pathId != -1)
+            {
+                if (sensedPhers[i].GetPathId() == pathId)
+                    if (isFurther(sensedPhers[i].GetPathPos()))
+                    {
+                        chosenPheromone = sensedPhers[i];
+                        pathVal = sensedPhers[i].GetPathPos();
+                    }
+            }
+            else
+            {
+                if (isFurther(sensedPhers[i].GetPathPos()))
+                {
+                    chosenPheromone = sensedPhers[i];
+                    pathVal = sensedPhers[i].GetPathPos();
+                }
+            }
+        }
+        return chosenPheromone;
     }
 
     public void SetWalking(bool walk){

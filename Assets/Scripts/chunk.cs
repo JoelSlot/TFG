@@ -26,9 +26,6 @@ public class chunk
     int z_dim { get { return WorldGen.chunk_z_dim; } }
     float isolevel { get { return WorldGen.isolevel; } }
 
-
-
-
     //index of configuration to use from the TriangleTable list
     int cubeindex;
 

@@ -325,19 +325,28 @@ public class FlyCamera : MonoBehaviour
                             case obj.test:
                                 Vector3Int cube = Vector3Int.FloorToInt(hit.point);
                                 CubePaths.DrawCube(cube, Color.red, 20);
-                                /*List<Tuple<Vector3Int, Vector3Int>> adyacentCubes = CubePaths.GetAdyacentCubes(cube, hit.normal);
-                                foreach (Tuple<Vector3Int, Vector3Int> adyacentCube in adyacentCubes)
+
+                                bool[] cornerValues = CubePaths.CubeCornerValues(cube);
+        
+                                Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
+                                
+                                bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
+
+                                CubePaths.cubeSurface surface = new CubePaths.cubeSurface(cube, groupCornerValues);
+                                List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
+                                foreach (var adyacentCube in adyacentCubes)
                                 {
-                                    CubePaths.DrawCube(adyacentCube.Item1, Color.red, 20);
-                                }*/
-
+                                    CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
+                                }
+                                /*
                                 Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
+                                CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
 
-                                List<CubePaths.cubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cube, belowSurfaceCorner);
+                                List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
 
                                 if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
                                 else Debug.Log("Pheromones found");
-                                
+                                */
                                 break;
                             default:
                                 Debug.Log("No valid object mode when clicked");
