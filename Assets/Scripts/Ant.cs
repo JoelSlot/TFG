@@ -167,18 +167,18 @@ public class Ant : MonoBehaviour
         else SetWalking(false);
     }
 
-    struct objectiveSurface
+    struct ObjectiveSurface
     {
-        public CubePaths.cubeSurface objective;
-        public CubePaths.cubeSurface firstStep;
-        public objectiveSurface(CubePaths.cubeSurface newSurface, CubePaths.cubeSurface newStep)
+        public CubePaths.CubeSurface objective;
+        public CubePaths.CubeSurface prevStep;
+        public ObjectiveSurface(CubePaths.CubeSurface newSurface, CubePaths.CubeSurface newStep)
         {
             objective = newSurface;
-            firstStep = newStep;
+            prevStep = newStep;
         }
     }
     
-    void DrawSurface(CubePaths.cubeSurface cubeSurface, Color color, int time)
+    void DrawSurface(CubePaths.CubeSurface cubeSurface, Color color, int time)
     {
         for (int i = 0; i < 8; i++)
         {
@@ -187,29 +187,29 @@ public class Ant : MonoBehaviour
         }
     }
 
-    List<objectiveSurface> GetNextSurfaceRange(CubePaths.cubeSurface antSurface, List<objectiveSurface> currentRange, ref HashSet<CubePaths.cubeSurface> checkedSurfaces)
+    List<ObjectiveSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<ObjectiveSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
     {
-        List<objectiveSurface> nextRange = new List<objectiveSurface>();
+        List<ObjectiveSurface> nextRange = new List<ObjectiveSurface>();
 
         //Si el rango está empezando se coge la superficie de la hormiga
         if (currentRange.Count == 0)
         {
-            nextRange.Add(new objectiveSurface(antSurface, antSurface));
-            checkedSurfaces.Add(antSurface);
+            ObjectiveSurface objSurface = new ObjectiveSurface(antSurface, antSurface);
+            nextRange.Add(objSurface);
+            checkedSurfaces.Add(antSurface, antSurface);
             return nextRange;
         }
 
         //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
         if(currentRange[0].objective.Equals(antSurface)) 
         {
-            Debug.Log(currentRange[0].objective.pos + " vs " + currentRange[0].firstStep.pos);
             if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
 
-            List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0].objective, transform.forward);
+            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0].objective, transform.forward);
             foreach (var son in adyacentCubes)
             {
-                nextRange.Add(new objectiveSurface(son, son));
-                checkedSurfaces.Add(son);
+                nextRange.Add(new ObjectiveSurface(son, son));
+                checkedSurfaces.Add(son, son);
             }
             return nextRange;
         }
@@ -218,14 +218,14 @@ public class Ant : MonoBehaviour
         //Si el rango es mayor que todo eso se procede como debido
         foreach (var currentSurface in currentRange)
         {
-            List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface.objective, transform.forward);
+            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface.objective, transform.forward);
             
             foreach (var son in adyacentCubes)
             {
-                if (!checkedSurfaces.Contains(son))
+                if (!checkedSurfaces.ContainsKey(son))
                 {
-                    nextRange.Add(new objectiveSurface(son, currentSurface.firstStep));
-                    checkedSurfaces.Add(son);
+                    nextRange.Add(new ObjectiveSurface(son, currentSurface.objective));
+                    checkedSurfaces.Add(son, currentSurface.objective);
                 }
             }
         }
@@ -235,12 +235,14 @@ public class Ant : MonoBehaviour
 
     private void SensePheromones(Vector3Int currentCube, Vector3 hitNormal) 
     {
-        CubePaths.cubeSurface antSurface = new CubePaths.cubeSurface(currentCube, CubePaths.CornerFromNormal(hitNormal));
-        List<objectiveSurface> sensedRange = new List<objectiveSurface>();
-        HashSet<CubePaths.cubeSurface> checkedSurfaces = new HashSet<CubePaths.cubeSurface>();
+        CubePaths.CubeSurface antSurface = new CubePaths.CubeSurface(currentCube, CubePaths.CornerFromNormal(hitNormal));
+        List<ObjectiveSurface> sensedRange = new List<ObjectiveSurface>();
+        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface>();
         bool haveGoal = false;
         int range = -1;
+
         CubePheromone objectivePher = null;
+        CubePaths.CubeSurface firstStep = new CubePaths.CubeSurface();
 
         Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
 
@@ -260,7 +262,11 @@ public class Ant : MonoBehaviour
             //
 
             objectivePher = ChoosePheromone(sensedPheromones);
-            if (objectivePher != null) haveGoal = true;
+            if (objectivePher != null)
+            {
+                haveGoal = true;
+                firstStep = objectivePher.surface;
+            }
         }
 
         //Si no se ha encontrado objetivo, nos volvemos pasivos.
@@ -282,14 +288,18 @@ public class Ant : MonoBehaviour
                 return;
             }
 
-            objectivePher = objectivePher.GetNext(followingForwards);
+            firstStep = objectivePher.GetNext(followingForwards).GetSurface();
         }
+        else
+            while (!checkedSurfaces[firstStep].Equals(firstStep))
+            {
+                firstStep = checkedSurfaces[firstStep];
+            }
         
-        
-        Vector3Int dir = objectivePher.GetPos() - antSurface.pos;
+
+        Vector3Int dir = firstStep.pos - antSurface.pos;
         pheromoneGoal = CubePaths.GetMovementGoal(antSurface.pos, antSurface.surfaceGroup, dir);
         state = AIState.Following;
-
 
     }
 
@@ -297,7 +307,7 @@ public class Ant : MonoBehaviour
 
     private CubePheromone ChoosePheromone(List<CubePheromone> sensedPhers)
     {
-        CubePheromone chosenPheromone = null;
+        CubePheromone chosenPher = null;
         int pathVal = 0;
         if (!followingForwards) pathVal = int.MaxValue;
 
@@ -314,7 +324,7 @@ public class Ant : MonoBehaviour
                 if (sensedPhers[i].GetPathId() == pathId)
                     if (isFurther(sensedPhers[i].GetPathPos()))
                     {
-                        chosenPheromone = sensedPhers[i];
+                        chosenPher = sensedPhers[i];
                         pathVal = sensedPhers[i].GetPathPos();
                     }
             }
@@ -322,12 +332,12 @@ public class Ant : MonoBehaviour
             {
                 if (isFurther(sensedPhers[i].GetPathPos()))
                 {
-                    chosenPheromone = sensedPhers[i];
+                    chosenPher = sensedPhers[i];
                     pathVal = sensedPhers[i].GetPathPos();
                 }
             }
         }
-        return chosenPheromone;
+        return chosenPher;
     }
 
     public void SetWalking(bool walk){

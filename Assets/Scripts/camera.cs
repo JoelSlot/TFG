@@ -332,8 +332,8 @@ public class FlyCamera : MonoBehaviour
                                 
                                 bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
 
-                                CubePaths.cubeSurface surface = new CubePaths.cubeSurface(cube, groupCornerValues);
-                                List<CubePaths.cubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
+                                CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
+                                List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
                                 foreach (var adyacentCube in adyacentCubes)
                                 {
                                     CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);

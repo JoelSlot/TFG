@@ -11,8 +11,7 @@ public class CubePheromone
     static int nextId = -1;
     int pathId;
     int pathPos;
-    Vector3Int pos;
-    bool[] surfaceGroup; //El grupo de esquinas que son true si es encuentran debajo de la superficie
+    public CubePaths.CubeSurface surface;
     public CubePheromone prev;
     public CubePheromone next;
 
@@ -24,8 +23,9 @@ public class CubePheromone
         //Previo/siguiente se señalan a si mismos =  comienzo/final del camino
         prev = this;
         next = this;
-        pos = pherPos;
-        makeSurfaceGroup(pointBelowSurface);
+
+        bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
+        surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
     }
 
     //Crea el siguientd nodo en el camino dado el actual
@@ -35,11 +35,13 @@ public class CubePheromone
         pathPos = prevPher.pathPos + 1;
         prev = prevPher;
         next = this;
-        pos = pherPos;
-        makeSurfaceGroup(prevPher);
-
+        
         prevPher.next = this;
 
+        int newCubeDirIndex = chunk.reverseFaceDirections[pherPos - prevPher.surface.pos]; //obtenemos indice de dir desde adyacente a actual cubo
+        Vector3Int pointBelowSurface = CubePaths.TrueCorner(newCubeDirIndex, prevPher.surface.surfaceGroup) - chunk.faceDirections[newCubeDirIndex]; //Mediante dicho índice conseguimos uno de los puntos compartidos debajo de la superficie
+        bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
+        surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
     }
 
     private static int GetNextId()
@@ -75,37 +77,24 @@ public class CubePheromone
     //Es decir, si son exactamente iguales
     public bool SameCubeSamePathSameSurface(CubePheromone other)
     {
-        if (pos != other.pos) return false; //check if same pos
         if (pathId != other.pathId) return false; //check if same path
-        return CubePaths.CompareGroups(surfaceGroup, other.surfaceGroup);
+        return surface.Equals(other.surface);
     }
 
-    //Asigna el grupo de valores de las esquinas del cubo según si están debajo de la superficie de la feromona.
-    //Usado para diferenciar nodos en superficies distintas.
-    //Versión que usa un punto dado debajo de la superficie.
-    public void makeSurfaceGroup(Vector3Int pointUnderSurface)
+    public CubePaths.CubeSurface GetSurface()
     {
-        surfaceGroup = CubePaths.GetGroup(pointUnderSurface, CubePaths.CubeCornerValues(pos));
-    }
-
-    //Versión que usa la dirección de la superficie
-    public void makeSurfaceGroup(CubePheromone adyacentCube)
-    {
-        int newCubeDirIndex = chunk.reverseFaceDirections[pos - adyacentCube.pos]; //obtenemos indice de dir desde adyacente a actual cubo
-        Vector3Int pointUnderSurface = CubePaths.TrueCorner(newCubeDirIndex, adyacentCube.surfaceGroup) - chunk.faceDirections[newCubeDirIndex]; //Mediante dicho índice conseguimos uno de los puntos compartidos debajo de la superficie
-        makeSurfaceGroup(pointUnderSurface);
-    }
-
-    //Devuelve el grupo de valores de esquinas de la superficie
-    public bool[] GetSurfaceGroup()
-    {
-        return this.surfaceGroup;
+        return surface;
     }
 
     //Devuelve el cubo en el que se encuentra la feromona
     public Vector3Int GetPos()
     {
-        return pos;
+        return surface.pos;
+    }
+
+    public bool[] GetSurfaceGroup()
+    {
+        return surface.surfaceGroup;
     }
 
 }

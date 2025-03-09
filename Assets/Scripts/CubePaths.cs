@@ -85,7 +85,7 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de feromonas en la superficie.
     */
-    public static List<CubePheromone> GetPheromonesOnSurface(cubeSurface surface)
+    public static List<CubePheromone> GetPheromonesOnSurface(CubeSurface surface)
     {
         List<CubePheromone> sameSurfacePheromones = new List<CubePheromone>();
 
@@ -144,9 +144,9 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
     */
-    public static List<cubeSurface> GetAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
+    public static List<CubeSurface> GetAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
     {
-        List<cubeSurface> adyacentCubes = new List<cubeSurface>();
+        List<CubeSurface> adyacentCubes = new List<CubeSurface>();
 
         bool[] cornerValues = CubeCornerValues(cube);
         
@@ -160,7 +160,7 @@ public class CubePaths : MonoBehaviour
             {
                 //Debug.DrawLine(cube + new Vector3(0.5f, 0.5f, 0.5f), cube + new Vector3(0.5f, 0.5f, 0.5f) + chunk.faceDirections[i], Color.black, 10);
                 
-                adyacentCubes.Add(new cubeSurface(cube + chunk.faceDirections[i], groupCornerValues));
+                adyacentCubes.Add(new CubeSurface(cube + chunk.faceDirections[i], groupCornerValues));
             }
         }
 
@@ -174,9 +174,9 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
     */
-    public static List<cubeSurface> GetAdyacentCubes(cubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
+    public static List<CubeSurface> GetAdyacentCubes(CubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
     {
-        List<cubeSurface> adyacentCubes = new List<cubeSurface>();
+        List<CubeSurface> adyacentCubes = new List<CubeSurface>();
 
         List<int> index = new List<int>{0,1,2,3,4,5};
 
@@ -190,7 +190,7 @@ public class CubePaths : MonoBehaviour
                 bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
                 Vector3Int newSurfaceCorner = TrueCorner(index[i], surface.surfaceGroup) - dir; //Get corner value
                 bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
-                adyacentCubes.Add(new cubeSurface(surface.pos + dir, newGroupCornerValues));
+                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroupCornerValues));
             }
         }
 
@@ -378,30 +378,30 @@ public class CubePaths : MonoBehaviour
     }
 
 
-    public struct cubeSurface
+    public struct CubeSurface
     {
         public bool[] surfaceGroup;
         public Vector3Int pos;
-        public cubeSurface(Vector3Int newPos, Vector3Int belowSurfacePoint)
+        public CubeSurface(Vector3Int newPos, Vector3Int belowSurfacePoint)
         {
             surfaceGroup = GetGroup(belowSurfacePoint, CubeCornerValues(newPos));
             pos = newPos;
-        }public cubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
+        }public CubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
         {
             surfaceGroup = GetGroup(CornerFromNormal(surfaceNormals), CubeCornerValues(newPos));
             pos = newPos;
         }
-        public cubeSurface(Vector3Int newPos, bool[] newSurfaceGroup)
+        public CubeSurface(Vector3Int newPos, bool[] newSurfaceGroup)
         {
             pos = newPos;
             surfaceGroup = newSurfaceGroup;
         }
-        public override bool Equals(object obj) 
+        public override bool Equals(object obj)
         {
-            if (!(obj is cubeSurface))
+            if (!(obj is CubeSurface))
                 return false;
 
-            cubeSurface mys = (cubeSurface) obj;
+            CubeSurface mys = (CubeSurface) obj;
             // compare elements here
 
             if (pos != mys.pos) return false;
