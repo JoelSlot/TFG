@@ -367,14 +367,12 @@ public class CubePaths : MonoBehaviour
 
     
     //Función que dado dos cubos y la subSuperficie del primero, devuelve si esa superficie conecta directamente con el segundo cubo
-    public static bool DoesSurfaceConnect(Vector3Int pos1, bool[] belowSurfaceValues, Vector3Int pos2)
+    public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
     {
-        Vector3Int dir = pos2 - pos1; //La dir al segundo cubo
+        Vector3Int dir = surface1.pos - cube2; //La dir al segundo cubo
         int dirIndex;
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out dirIndex)) return false; //Si no son dayacente falso
-        if (FaceXOR(dirIndex, belowSurfaceValues)) return true;
-        return false;
-
+        return FaceXOR(dirIndex, surface1.surfaceGroup);
     }
 
 

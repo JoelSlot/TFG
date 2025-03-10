@@ -446,7 +446,7 @@ public class Ant : MonoBehaviour
                 {
                     placedPher = CubePaths.StartPheromoneTrail(hitCubePos, hitNormal);
                 }
-                else if (CubePaths.DoesSurfaceConnect(placedPher.GetPos(), placedPher.GetSurfaceGroup(), hitCubePos)) //Si se ha llegado a un nuevo cubo adyacente
+                else if (CubePaths.DoesSurfaceConnect(placedPher.GetSurface(), hitCubePos)) //Si se ha llegado a un nuevo cubo adyacente
                 {   //Might somehow fuck up if ant moves to adyacent cube on unreachable surface SOMEHOW. 
                     placedPher = CubePaths.ContinuePheromoneTrail(hitCubePos, placedPher); 
                 }

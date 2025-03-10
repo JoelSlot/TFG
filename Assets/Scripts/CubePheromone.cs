@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using NUnit.Framework.Internal;
-using System.Collections;
 using UnityEngine;
-using System;
 
 
 public class CubePheromone
