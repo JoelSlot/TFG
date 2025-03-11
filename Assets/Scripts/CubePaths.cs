@@ -181,8 +181,10 @@ public class CubePaths : MonoBehaviour
                 Vector3Int dir = chunk.faceDirections[i]; //Get dir
                 bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
                 Vector3Int newSurfaceCorner = TrueCorner(i, surface.surfaceGroup) - dir; //Get corner value
-                bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
-                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroupCornerValues));
+                bool[] newGroup = GetGroup(newSurfaceCorner, newCornerValues);
+                int groupCount = 0;
+                foreach (bool corner in newGroup) if (corner) groupCount += 1;
+                if (groupCount > 1) adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
             }
         }
 
