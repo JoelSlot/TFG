@@ -194,23 +194,23 @@ public class CubePaths : MonoBehaviour
 
     cube: posición del cubo que se quiere mirar.
 
-    return: array de 8 bools, uno por cada esquina en orden según el cornerTable de la clase Chunk. Si un bool es true, su esquina se encuentra debajo del terreno y viceversa.
+    return: array de 8 bools, uno por cada esquina en orden según el cornerTable de la clase Chunk. Si un bool es true, su esquina se encuentra sobre del terreno y viceversa.
     */
     public static bool[] CubeCornerValues(Vector3Int cube)
     {
         bool[] cornerValues = new bool[8];
         for (int i = 0; i < 8; i++)
-            cornerValues[i] = !WorldGen.IsAboveSurface(cube + chunk.cornerTable[i]);
+            cornerValues[i] = WorldGen.IsAboveSurface(cube + chunk.cornerTable[i]);
         return cornerValues;
     }
 
     /*
-    TrueCorner sirve para devolver una de las esquinas debajo de la superficie que comparten dos cubos. Dado la cara del cubo principal que conecta con el otro cubo, y los valores de las esquinas del cubo principal, el primer valor debajo de la superficie de la cara indicada es devuelto.
+    TrueCorner sirve para devolver una de las esquinas debajo de la superficie que comparten dos cubos. Dado la cara del cubo principal que conecta con el otro cubo, y los valores de las esquinas del cubo principal, el primer valor sobre la superficie de la cara indicada es devuelto.
 
     faceIndex: El índice de la cara que conecta el cubo 1 con el cubo 2.
     cornerValues: Los valores de las esquinas del cubo 1 respecto a la superficie que conecta los dos cubos.
 
-    return: La posición dentro del cubo 2 de una de las esquinas del cubo 1 que conecta los dos cubos y se encuentra debajo de la superficie.
+    return: una de las esquinas de la cara dada que esté sobre la superficie
     */
     public static Vector3Int TrueCorner(int faceIndex, bool[] cornerValues)
     {
@@ -239,13 +239,13 @@ public class CubePaths : MonoBehaviour
     }
 
     /*
-    Agrupa los puntos según si están conectados todos. Se le pasan los valores de cubo según si están debajo o encima del terreno y uno de las esquinas debajo de la superficie que se quiere identificar.
-    Devuelve todos los puntos debajo de la superficie conectados con el punto pasado.
+    Agrupa los puntos según si están conectados todos. Se le pasan los valores de cubo según si están debajo o encima del terreno y uno de las esquinas sobre la superficie que se quiere identificar.
+    Devuelve un array de bools donde son true los que se encuentran sobre la superficie dada, y falso los que no.
 
-    antCorner: Uno de los puntos debajo de la superficie.
-    cornerValues: array de bool con los valores de las esquinas del cubo. True si debajo del terreno, false si no.
+    antCorner: Uno de los puntos sobre la superficie.
+    cornerValues: array de bool con los valores de las esquinas del cubo. True si sobre el terreno, false si no.
 
-    return: array de bool con los valores de las esquinas del cubo. True si debajo de la superficie dada, false si no.
+    return: array de bool con los valores de las esquinas del cubo. True si sobre la superficie dada, false si no.
     */
     public static bool[] GetGroup(Vector3Int antCorner, bool[] cornerValues)
     {
@@ -263,7 +263,7 @@ public class CubePaths : MonoBehaviour
             {
                 if (!checkedCorners.Contains(adyCorner)) // si no lo hemos mirado
                 {
-                    if (cornerValues[chunk.reverseCornerTable[adyCorner]]) // si está debajo del suelo
+                    if (cornerValues[chunk.reverseCornerTable[adyCorner]]) // si está sobre el suelo
                     {
                         group[chunk.reverseCornerTable[adyCorner]] = true; // Añadimos la esquina al grupo
                         cornersToCheck.Enqueue(adyCorner); // Y lo preparamos para mirar sus adyacentes
@@ -271,10 +271,7 @@ public class CubePaths : MonoBehaviour
                 }
             }
         }
-        for (int i = 0; i < 8; i++) //Quedarse con los debajo del suelo y en el grupo
-            cornerValues[i] = cornerValues[i] && group[i];
-
-        return cornerValues;
+        return group;
     }
 
     /*
@@ -295,11 +292,11 @@ public class CubePaths : MonoBehaviour
     }
 
     /*
-    CornerFromNormal devuelve la esquina más debajo de la superficie dado la normal de la superficie. Se consigue cogiendo la esquina cuya dirección hacia el centro del cubo se parezca más a la normal.
+    CornerFromNormal devuelve la esquina más sobre la superficie dado la normal de la superficie. Se consigue cogiendo la esquina cuya dirección hacia el centro del cubo se parezca más a la inversa de la normal.
 
     normal: Vector3 dirección de la normal de la superficie.
 
-    return: Vector3Int coordenada de una de las esquinas debajo de la superficie.
+    return: Vector3Int coordenada de una de las esquinas sobre la superficie.
     */
     public static Vector3Int CornerFromNormal(Vector3 normal)
     {
@@ -307,7 +304,7 @@ public class CubePaths : MonoBehaviour
         float minAngle = 180;
         foreach(Vector3Int corner in chunk.cornerTable)
         {
-            float angle = Vector3.Angle(normal, CornerNormal(corner));
+            float angle = Vector3.Angle(-normal, CornerNormal(corner));
             if (angle < minAngle)
             {
                 minAngle = angle;
@@ -334,7 +331,7 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
-            if (!surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
+            if (surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
             {
                 goal += chunk.cornerTable[cornerIndex];
                 num++;
@@ -371,9 +368,9 @@ public class CubePaths : MonoBehaviour
     {
         public bool[] surfaceGroup;
         public Vector3Int pos;
-        public CubeSurface(Vector3Int newPos, Vector3Int belowSurfacePoint)
+        public CubeSurface(Vector3Int newPos, Vector3Int aboveSurfacePoint)
         {
-            surfaceGroup = GetGroup(belowSurfacePoint, CubeCornerValues(newPos));
+            surfaceGroup = GetGroup(aboveSurfacePoint, CubeCornerValues(newPos));
             pos = newPos;
         }
         public CubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
@@ -407,11 +404,11 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
+    public static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
     {
         for (int i = 0; i < 8; i++)
         {
-            if (cubeSurface.surfaceGroup[i])
+            if (!cubeSurface.surfaceGroup[i])
                 Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
         }
     }

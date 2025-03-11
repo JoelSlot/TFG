@@ -253,6 +253,7 @@ public class Ant : MonoBehaviour
             List<CubePheromone> sensedPheromones = new List<CubePheromone>();
             foreach (var surface in sensedRange)
             {
+                CubePaths.DrawSurface(surface.objective, colors[range], 2);
                 CubePaths.DrawCube(surface.objective.pos, colors[range], 2);
                 if (CubePaths.cubePherDict.TryGetValue(surface.objective.pos, out List<CubePheromone> surfacePhers))
                     sensedPheromones.AddRange(surfacePhers);
