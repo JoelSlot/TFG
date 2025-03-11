@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 public class DigObject : MonoBehaviour
@@ -98,7 +95,7 @@ public class DigObject : MonoBehaviour
     }
 
 
-    public void setActive(Boolean active) 
+    public void setActive(bool active) 
     {
         startSphere.SetActive(active);
         endSphere.SetActive(active);
@@ -107,6 +104,7 @@ public class DigObject : MonoBehaviour
 
     private bool gotPoints = false;
 
+    //Devuelve los puntos que componen el área que se quiere excavar.
     public Dictionary<Vector3Int, float> pointsInDigObject(){
         if (gotPoints) return new Dictionary<Vector3Int, float>();
         else gotPoints = true;

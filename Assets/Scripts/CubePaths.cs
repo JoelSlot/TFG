@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using Utils;
 using UnityEngine;
 using System;
+using System.Linq;
 
 public class CubePaths : MonoBehaviour
 {
@@ -137,42 +139,13 @@ public class CubePaths : MonoBehaviour
     }
 
     /*
-    Dado un cubo y una superficie de ese cubo, devuelve los cubos adyacentes que conectan con esa superficie.
-
-    cube: Posición del cubo que contiene la superficie.
-    surfaceNormal: La normal de la superficie, usada para señalar a cual de los posiblemente múltiples superficies del cubo se trata de buscar los adyacentes
-
-    return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
-    */
-    public static List<CubeSurface> GetAdyacentCubes(Vector3Int cube, Vector3 surfaceNormal)
-    {
-        List<CubeSurface> adyacentCubes = new List<CubeSurface>();
-
-        bool[] cornerValues = CubeCornerValues(cube);
-        
-        Vector3Int antCorner = CornerFromNormal(surfaceNormal);
-        
-        bool[] groupCornerValues = GetGroup(antCorner, cornerValues);
-        
-        for (int i = 0; i < 6; i++)
-        {
-            if (FaceXOR(i, groupCornerValues))
-            {
-                //Debug.DrawLine(cube + new Vector3(0.5f, 0.5f, 0.5f), cube + new Vector3(0.5f, 0.5f, 0.5f) + chunk.faceDirections[i], Color.black, 10);
-                
-                adyacentCubes.Add(new CubeSurface(cube + chunk.faceDirections[i], groupCornerValues));
-            }
-        }
-
-        return adyacentCubes;
-    }
-
-    /*
     Dado una superficie de un cubo, devuelve los cubos adyacentes que conectan con esa superficie.
 
-    cubeSurface: Par que contiene la pos del cubo y los valores de grupo de superficie del cubo que se encuentra debajo de la superficie.
+    surface: superficie de la que se buscan los adyacentes
 
-    return: Lista de pares de valores, siendo la primera de cada par la posición de un cubo adyacente, y la segunda del par una de las esquinas debajo de la superficie de ese cubo adyacente.
+    forwardDir: Dirección en la que está mirando la hormiga.
+
+    return: Lista de superficies adyacentes, ordenados en el que está más hacia la dirección dada hasta la que menos.
     */
     public static List<CubeSurface> GetAdyacentCubes(CubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
     {
@@ -197,7 +170,25 @@ public class CubePaths : MonoBehaviour
         return adyacentCubes;
     }
 
-    
+    public static List<CubeSurface> GetAdyacentCubes(CubeSurface surface) // cube contains the cube pos and one of the points below
+    {
+        List<CubeSurface> adyacentCubes = new List<CubeSurface>();
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (FaceXOR(i, surface.surfaceGroup))
+            {
+                Vector3Int dir = chunk.faceDirections[i]; //Get dir
+                bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
+                Vector3Int newSurfaceCorner = TrueCorner(i, surface.surfaceGroup) - dir; //Get corner value
+                bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
+                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroupCornerValues));
+            }
+        }
+
+        return adyacentCubes;
+    }
+
     /*
     Dado la posición de un cubo, devuelve para todas las esquinas si esa esquina se encuentra debajo del terreno o no.
 
@@ -334,7 +325,7 @@ public class CubePaths : MonoBehaviour
     }
 
     //Dado el cubo actual, la dir en la que se quiere mover y el grupo subSuperficie de la superficie actual, devuelve el punto a seguir para llegar
-    public static Vector3 GetMovementGoal(Vector3Int cubePos, bool[] surfaceGroup, Vector3Int dir) //faceIndex points to face with same index as dirIndex
+    public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir) //faceIndex points to face with same index as dirIndex
     {
         int faceIndex = chunk.reverseFaceDirections[dir];
 
@@ -343,13 +334,13 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
-            if (!surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
+            if (!surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
             {
                 goal += chunk.cornerTable[cornerIndex];
                 num++;
             }
         }
-        goal = cubePos + goal / num;
+        goal = surface.pos + goal / num;
         Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex], Color.blue, 10);
         return goal + chunk.faceDirections[faceIndex];
     }
@@ -384,7 +375,8 @@ public class CubePaths : MonoBehaviour
         {
             surfaceGroup = GetGroup(belowSurfacePoint, CubeCornerValues(newPos));
             pos = newPos;
-        }public CubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
+        }
+        public CubeSurface(Vector3Int newPos, Vector3 surfaceNormals)
         {
             surfaceGroup = GetGroup(CornerFromNormal(surfaceNormals), CubeCornerValues(newPos));
             pos = newPos;
@@ -414,4 +406,79 @@ public class CubePaths : MonoBehaviour
             return pos.x + pos.y * 1000 + pos.z * 1000000;
         }
     }
+
+    static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (cubeSurface.surfaceGroup[i])
+                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
+        }
+    }
+
+
+    public static List<CubeSurface> PathToDigPoint(CubeSurface start, Vector3Int objective)
+    {
+        List<CubeSurface> path = new List<CubeSurface>();
+
+        PriorityQueue<CubeSurface, float> frontera = new PriorityQueue<CubeSurface, float>();
+        frontera.Enqueue(start, 0);
+        Dictionary<CubeSurface, CubeSurface> previo = new Dictionary<CubeSurface, CubeSurface>();
+        Dictionary<CubeSurface, float> coste = new Dictionary<CubeSurface, float>();
+
+        previo[start] = start;
+        coste[start] = 0;
+
+
+        float heuristic(Vector3Int point, Vector3Int objective)
+        {
+            return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
+        }
+
+        CubeSurface reachedSurface = start;
+
+        while (frontera.Count > 0 && reachedSurface.pos != objective)
+        {
+            CubeSurface current = frontera.Dequeue();
+
+            if (current.pos == objective)
+                break;
+            
+            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+
+            foreach(var son in adyacentSurfaces)
+            {
+                float newCost = coste[current] + 1;
+                if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
+                bool updateOrInsert = false;
+                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                else if (newCost < prevCost) updateOrInsert = true;
+
+                if(updateOrInsert)
+                {
+                    //DrawCube(son.pos, Color.black, 5);
+                    coste[son] = newCost;
+                    float prioridad = newCost + heuristic(son.pos, objective);
+                    frontera.Enqueue(son, prioridad);
+                    previo[son] = current;
+
+                    if (son.pos == objective) reachedSurface = son;
+                }
+            }
+        }
+
+        while (!reachedSurface.Equals(start))
+        {
+            DrawCube(reachedSurface.pos, Color.blue, 40);
+            DrawSurface(reachedSurface, Color.black, 40);
+            path.Append(reachedSurface);
+            reachedSurface = previo[reachedSurface];
+        }
+
+        path.Append(reachedSurface);
+        DrawCube(reachedSurface.pos, Color.blue, 20);
+
+        return path;
+    }
+
 }

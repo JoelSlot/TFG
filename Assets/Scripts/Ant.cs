@@ -1,13 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
-using static UnityEngine.ParticleSystem;
-using UnityEngine.Rendering;
-using static UnityEditor.Experimental.GraphView.GraphView;
-using System;
 using System.Linq;
+using System.Collections.Generic;
 
 
 public class Ant : MonoBehaviour
@@ -25,23 +18,26 @@ public class Ant : MonoBehaviour
     //public GameObject origPheromone;
     public bool makingTrail = false;
     private bool followingForwards = false;
-    private int pathId = -1; //if -1, not following a path
-    private Vector3 pheromoneGoal = Vector3.zero;
+    private int pherId = -1; //if -1, not following a pheromone
     private Vector3Int lastCube;
-    private CubePheromone placedPher = null;
+    private CubePheromone placedPher = null; //Last placed pheromone by ant
+    private List<CubePaths.CubeSurface> path = null; //Path the ant will follow if in followingPath mode
+    private Vector3 nextGoal; //Point in space the ant will try to move to.
+    private bool haveGoal = false; 
     public int stucktimer = 0;
 
-
+    public CubePaths.CubeSurface currentSurface;
 
     public enum AIState
     {
         Exploring,
-        Following,
+        FollowingPher,
+        FollowingPath, //Following a
         Controlled,
         Passive
     }
 
-    public AIState state = AIState.Following;
+    public AIState state = AIState.FollowingPher;
     //el animador
     private Animator Animator;
     public float speed_per_second = 2f;
@@ -55,7 +51,7 @@ public class Ant : MonoBehaviour
         Rigidbody = antObj.GetComponent<Rigidbody>(); //El rigidbody se registra
         Animator = antObj.GetComponent<Animator>(); //El Animator se registra
         PherSenseRange = antObj.GetComponent<BoxCollider>(); //El boxCollider se registra
-        Animator.SetBool("walking", false); //El estado por defecto no camina
+        SetWalking(false); //El estado por defecto no camina
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
         Animator.enabled = true; //Se habilita el animator
 
@@ -70,13 +66,14 @@ public class Ant : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal);
-
-        AIMovement(lastCube != hitCubePos, hitCubePos, hitNormal);
+        if (SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal))
+        {
+            AIMovement(lastCube != hitCubePos, hitCubePos, hitNormal);
         
-        DecideToPlacePheromone(rayCastHits, hitCubePos, hitNormal);
+            DecideToPlacePheromone(rayCastHits, hitCubePos, hitNormal);
 
-        ApplyMovement(normalMedian, rayCastHits, rayCastDist);
+            ApplyMovement(normalMedian, rayCastHits, rayCastDist);
+        }
         
     }
 
@@ -102,35 +99,43 @@ public class Ant : MonoBehaviour
     
     void AIMovement(bool movedCube, Vector3Int hitCube, Vector3 hitNormal) {
 
-        if (movedCube && state != AIState.Controlled) //If changed cube check next goal
-        {
-            Debug.Log("Changed cube");
-            pheromoneGoal = Vector3.zero;
-            SensePheromones(hitCube, hitNormal);
-        }
+        currentSurface = new CubePaths.CubeSurface(hitCube, hitNormal);
 
-        if (pheromoneGoal != Vector3.zero && state == AIState.Following) FollowPheromone();
-        else if (state == AIState.Exploring)
+        switch (state)
         {
-            RandomMovement();
-        }
-        else if (state == AIState.Passive)
-        {
-            senseTimer++;
-            Animator.SetInteger("turning", 0);
-            speed = 0f;
-            Animator.SetBool("walking", false);
-            if (senseTimer == 100 && hitNormal != Vector3.zero)
-            {
-                SensePheromones(hitCube, hitNormal); //This might happen when hitNormal isn't sensed??
-                senseTimer = 0; 
-            }
+            //Si estamos siguiendo una feromona, buscamos siguiente paso al cambiar de cubo.
+            //La gestión de cambiar de following a no following al perderse no se hace aqui?
+            case AIState.FollowingPher:
+                if (movedCube || !haveGoal) haveGoal = SensePheromones(currentSurface);
+                if (haveGoal) FollowGoal();
+                else state = AIState.Passive;
+            break;
+
+            case AIState.Exploring:
+                RandomMovement();
+            break;
+
+            case AIState.Passive:
+                senseTimer++;
+                if (senseTimer == 100 && hitNormal != Vector3.zero)
+                {
+                    senseTimer = 0;
+                    if (SensePheromones(currentSurface))
+                    {
+                        haveGoal = true;
+                        state = AIState.FollowingPher;
+                        FollowGoal();
+                    }
+                }
+            break;
+
+            default:
+                Debug.Log("Default case");
+            break;
         }
         //MODO CONTROLADO LO GESTIONA LA CÁMARA
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
     }
-
-    bool specialHelp = false;
 
     void RandomMovement()
     {
@@ -140,10 +145,10 @@ public class Ant : MonoBehaviour
 
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
-    void FollowPheromone()
+    void FollowGoal()
     {
         //Obtenemos los datos de distancia hacia la pheromona
-        Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(pheromoneGoal); //relative position of the goal to the ant
+        Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(nextGoal); //relative position of the goal to the ant
         float distance = Vector3.Magnitude(relativeGoal);
         relativeGoal.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
         float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
@@ -178,14 +183,7 @@ public class Ant : MonoBehaviour
         }
     }
     
-    void DrawSurface(CubePaths.CubeSurface cubeSurface, Color color, int time)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            if (cubeSurface.surfaceGroup[i])
-                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
-        }
-    }
+
 
     List<ObjectiveSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<ObjectiveSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
     {
@@ -194,7 +192,7 @@ public class Ant : MonoBehaviour
         //Si el rango está empezando se coge la superficie de la hormiga
         if (currentRange.Count == 0)
         {
-            ObjectiveSurface objSurface = new ObjectiveSurface(antSurface, antSurface);
+            ObjectiveSurface objSurface = new(antSurface, antSurface);
             nextRange.Add(objSurface);
             checkedSurfaces.Add(antSurface, antSurface);
             return nextRange;
@@ -233,9 +231,9 @@ public class Ant : MonoBehaviour
     }
 
 
-    private void SensePheromones(Vector3Int currentCube, Vector3 hitNormal) 
+    //Devuelve true si ha encontrado una pheromona
+    private bool SensePheromones(CubePaths.CubeSurface antSurface) 
     {
-        CubePaths.CubeSurface antSurface = new CubePaths.CubeSurface(currentCube, CubePaths.CornerFromNormal(hitNormal));
         List<ObjectiveSurface> sensedRange = new List<ObjectiveSurface>();
         Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface>();
         bool haveGoal = false;
@@ -269,12 +267,11 @@ public class Ant : MonoBehaviour
             }
         }
 
-        //Si no se ha encontrado objetivo, nos volvemos pasivos.
+        //Si no se ha encontrado objetivo, devolvemos falso.
         if (!haveGoal)
         {
-            state = AIState.Passive;
             Debug.Log("NO PHEROMONES FOUND/CHOSEN");
-            return;
+            return false;
         }
 
         //Si la pheromona está en la superficie actual seguimos su camino
@@ -283,9 +280,8 @@ public class Ant : MonoBehaviour
             if (objectivePher.isLast(followingForwards)) followingForwards = !followingForwards;
             if (objectivePher.isLast(followingForwards))
             {
-                state = AIState.Passive;
                 Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
-                return;
+                return false;
             }
 
             firstStep = objectivePher.GetNext(followingForwards).GetSurface();
@@ -296,10 +292,11 @@ public class Ant : MonoBehaviour
                 firstStep = checkedSurfaces[firstStep];
             }
         
-
         Vector3Int dir = firstStep.pos - antSurface.pos;
-        pheromoneGoal = CubePaths.GetMovementGoal(antSurface.pos, antSurface.surfaceGroup, dir);
-        state = AIState.Following;
+
+        nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+
+        return true;
 
     }
 
@@ -319,9 +316,9 @@ public class Ant : MonoBehaviour
 
         for (int i = 0; i < sensedPhers.Count(); i++)
         {
-            if (pathId != -1)
+            if (pherId != -1)
             {
-                if (sensedPhers[i].GetPathId() == pathId)
+                if (sensedPhers[i].GetPathId() == pherId)
                     if (isFurther(sensedPhers[i].GetPathPos()))
                     {
                         chosenPher = sensedPhers[i];
@@ -366,7 +363,7 @@ public class Ant : MonoBehaviour
     }
 
     //ERROR: The raycasts go way to far, making the ant put down pheromones on the wrong places.
-    private void SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal)
+    private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal)
     {
         Color hitColor;
         numHits = 0;
@@ -400,12 +397,14 @@ public class Ant : MonoBehaviour
         if (numHits > 0)
         {
             Animator.SetBool("grounded", true);
+            normalMedian /= numHits;
+            return true;
         }
         else
         {
             Animator.SetBool("grounded", false);
+            return false;
         }
-        if (numHits != 0) normalMedian /= numHits;
     }
 
     private void ApplyMovement(Vector3 surfaceNormalMedian, bool[] rayCastHits, float[] rayCastDist)

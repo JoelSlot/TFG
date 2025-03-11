@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -28,7 +27,7 @@ public class FlyCamera : MonoBehaviour
     public GameObject  origTunnel;
     public GameObject chamber;
     List<DigObject> DigObjects =  new List<DigObject>();
-    private bool confirmDig = false;
+    private bool placingDigZone = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
     public GameObject origDigPoint;
@@ -76,58 +75,8 @@ public class FlyCamera : MonoBehaviour
 
     void Update()
     {
+        ReadInputs();
 
-        //Mouse controls depending on game mode
-        if (MainMenu.GameSettings.gameMode == 0)
-            MapBuildingMode();
-        else
-            PlayingMode();
-        //to return to main menu
-        if (Input.GetKeyDown(KeyCode.Z))
-            SceneManager.LoadSceneAsync(0);
-        //Keys to load/save map
-        if (Input.GetKeyDown(KeyCode.L))
-            WG.LoadMap();
-        if (Input.GetKeyDown(KeyCode.O))
-            WG.SaveMap();
-        //Move the camera
-        CameraMovement();
-        // Leave cursor lock
-        if (Input.GetKeyDown(KeyCode.Escape))
-            rotateAllowed = false;
-        if (Input.GetMouseButtonDown(0))
-            rotateAllowed = true;
-        if (!confirmDig)
-        {
-            if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
-            if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
-            if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
-            if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
-            if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
-        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
-        { 
-            if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
-            else
-            {
-                SelectedAnt.state = Ant.AIState.Passive;
-                SelectedAnt.makingTrail = false;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
-        {
-            if (SelectedAnt.state == Ant.AIState.Controlled && !SelectedAnt.makingTrail)
-            {
-                SelectedAnt.makingTrail = true;
-                //SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
-            }
-            else
-            {
-                SelectedAnt.makingTrail = false;
-                //SelectedAnt.placedPheromone = null;
-            }
-        }
         if (WorldGen.IsAboveSurface(transform.position))
         {
             camera.backgroundColor = new Color(0,191,255);
@@ -177,10 +126,10 @@ public class FlyCamera : MonoBehaviour
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (UnityEngine.Cursor.lockState == CursorLockMode.Locked)
-                UnityEngine.Cursor.lockState = CursorLockMode.None;
+            if (Cursor.lockState == CursorLockMode.Locked)
+                Cursor.lockState = CursorLockMode.None;
             else
-                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+                Cursor.lockState = CursorLockMode.Locked;
         }
 
         if (Input.GetKey(KeyCode.Q))
@@ -225,148 +174,28 @@ public class FlyCamera : MonoBehaviour
     void PlayingMode()
     {
         
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (confirmDig)
-        {
-            DigObject placeDigObject = DigObjects.Last();
-
-            //resize the tunnel
-            if (Input.mouseScrollDelta.y > 0)
-                placeDigObject.setRadius(placeDigObject.getRadius() + 0.1f);
-            if (Input.mouseScrollDelta.y < 0)
-                placeDigObject.setRadius(placeDigObject.getRadius() - 0.1f);
-
-            if (Input.GetKey(KeyCode.LeftShift)) setHorPlane();
-            else setVertPlane();
-
-            Vector3 cross = Vector3.Cross(digEndPoint - transform.position, projectPlane.normal);
-
-            if (projectPlane.Raycast(ray, out float distance))
-            {
-                digEndPoint = ray.GetPoint(distance);
-                placeDigObject.setPos(digStartPoint, digEndPoint);
-            }
-
-        }
+        if (placingDigZone) TakePlacingInputs();
 
         if (Input.GetMouseButton(1))
         {
             rotateAllowed = true;
-            /*if (confirmDig && !Input.GetKey(KeyCode.LeftShift))
-            {
-                setVertPlane();
-            }*///Prob not necesary unless its too expensive to recreate plane obj every frame (whyyy would it be????)
         }
         else
         {
             rotateAllowed = false;
             if (Input.GetMouseButtonDown(0))
             {
-                if (objectMode == obj.None)
-                {
-                    int clickLayer = (1 << 7); //capa de hormigas
-                    if (clickObject(clickLayer, out RaycastHit hit))
-                    {
-                        if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                        SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
-                        Debug.Log("Selected an ant");
-                    }
-                }
-                else if (confirmDig)
-                {
-                    toDigPoints();
-                    confirmDig = false;
-                }
-                else 
-                {
-                    int digPointClickLayer = (1 << 9); //digPoint layer
-                    int terrainClickLayer = (1 << 6); //terrain layer
-                    if (clickObject(digPointClickLayer, out RaycastHit hit))
-                    {
-                        hit.transform.gameObject.GetComponent<DigPoint>().dig();
-                        Destroy(hit.transform.gameObject); //Error: items that have been checked twice in dig don't get destroyed.
-                        //Theory: they do get destroyed but have a copy over it.
-                    }
-                    else if (clickObject(terrainClickLayer, out hit))
-                    {
-                        switch (objectMode)
-                        {
-                            case obj.Ant:
-                                if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                                GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
-                                newAnt.layer = 7;
-                                newAnt.SetActive(true);
-                                SelectedAnt = newAnt.GetComponent<Ant>();
-                                break;
-                            case obj.Grub:
-                                break;
-                            case obj.digTunnel:
-                            case obj.digChamber:
-                                if (!confirmDig)
-                                {
-                                    confirmDig = true;
-                                    digStartPoint = hit.point;
-                                    digEndPoint = hit.point;
-                                    GameObject tunnel = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
-                                    tunnel.SetActive(true);
-                                    DigObject tunnelScript = tunnel.GetComponent<DigObject>();
-                                    tunnelScript.setRadius(1);
-
-                                    if (objectMode == obj.digTunnel) tunnelScript.setMode(DigObject.digType.Tunnel);
-                                    else tunnelScript.setMode(DigObject.digType.Chamber);
-
-                                    tunnelScript.setActive(true);
-                                    tunnelScript.setPos(digStartPoint, digEndPoint);
-                                    setVertPlane();
-                                    DigObjects.Add(tunnelScript);
-                                    Debug.Log("Set Plane Pos");
-                                }
-                                break;
-                            case obj.test:
-                                Vector3Int cube = Vector3Int.FloorToInt(hit.point);
-                                CubePaths.DrawCube(cube, Color.red, 20);
-
-                                bool[] cornerValues = CubePaths.CubeCornerValues(cube);
-        
-                                Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
-                                
-                                bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
-
-                                CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
-                                List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
-                                foreach (var adyacentCube in adyacentCubes)
-                                {
-                                    CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
-                                }
-                                /*
-                                Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
-                                CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
-
-                                List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
-
-                                if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
-                                else Debug.Log("Pheromones found");
-                                */
-                                break;
-                            default:
-                                Debug.Log("No valid object mode when clicked");
-                            break;
-                        }
-                    }
-                }
+                PlayingModeLeftClick();
             }
         }
     }
-
 
     bool clickObject(int layer, out RaycastHit hit)
     {
         //get mouse position with a set distance from screen
         Vector3 mousePos = Input.mousePosition;
         mousePos.z = 100f;
-        mousePos = Camera.main.ScreenToWorldPoint(mousePos);
         //create a ray and raycast it
-        //Debug.DrawRay(transform.position, mousePos - transform.position, Color.blue);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out hit, 1000, layer))
         {
@@ -485,21 +314,20 @@ public class FlyCamera : MonoBehaviour
         WG.EditTerrainAdd(points, degree);
     }
 
-
+    
     public void toDigPoints()
     {
         Dictionary<Vector3Int, float> points = DigObjects.Last().pointsInDigObject();
         foreach(KeyValuePair<Vector3Int, float> entry in points)
         {
-            //Añadirlo al o updatear el diccionario global
-            if (DigPoint.digPointDict.ContainsKey(entry.Key))
+            if (DigPoint.digPointDict.ContainsKey(entry.Key)) //Si se encuentra en el diccionario, updatear
             {
                 //Actualizamos el valor que se quiere obtener
                 float maxDesiredVal = Mathf.Max(entry.Value, DigPoint.digPointDict[entry.Key].Item1);
                 GameObject existingObject = DigPoint.digPointDict[entry.Key].Item2;
                 DigPoint.digPointDict[entry.Key] = new Tuple<float, GameObject>(maxDesiredVal, existingObject);
             }
-            else//sino lo añadiremos al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
+            else//si no se encuentra en el diccionario, añadir al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
             {
                 GameObject digPoint = null;
                 if (WorldGen.IsAboveSurface(entry.Key) && entry.Value < WorldGen.isolevel) //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
@@ -535,6 +363,191 @@ public class FlyCamera : MonoBehaviour
             points.Add(new Tuple<Vector3Int, float>(entry.Key, entry.Value.Item1));
         }
         WG.EditTerrainSet(points);
+    }
+
+
+    private void ReadInputs()
+    {
+        
+        //Mouse controls depending on game mode
+        if (MainMenu.GameSettings.gameMode == 0)
+            MapBuildingMode();
+        else
+            PlayingMode();
+        //to return to main menu
+        if (Input.GetKeyDown(KeyCode.Z))
+            SceneManager.LoadSceneAsync(0);
+        //Keys to load/save map
+        if (Input.GetKeyDown(KeyCode.L))
+            WG.LoadMap();
+        if (Input.GetKeyDown(KeyCode.O))
+            WG.SaveMap();
+        //Move the camera
+        CameraMovement();
+        // Leave cursor lock
+        if (Input.GetKeyDown(KeyCode.Escape))
+            rotateAllowed = false;
+        if (Input.GetMouseButtonDown(0))
+            rotateAllowed = true;
+        if (!placingDigZone)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
+            if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+            if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
+            if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
+            if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
+        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
+        { 
+            if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
+            else
+            {
+                SelectedAnt.state = Ant.AIState.Passive;
+                SelectedAnt.makingTrail = false;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
+        {
+            if (SelectedAnt.state == Ant.AIState.Controlled && !SelectedAnt.makingTrail)
+            {
+                SelectedAnt.makingTrail = true;
+                //SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
+            }
+            else
+            {
+                SelectedAnt.makingTrail = false;
+                //SelectedAnt.placedPheromone = null;
+            }
+        }
+    }
+
+    private void TakePlacingInputs()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        DigObject placeDigObject = DigObjects.Last();
+
+        //resize the tunnel
+        if (Input.mouseScrollDelta.y > 0)
+            placeDigObject.setRadius(placeDigObject.getRadius() + 0.1f);
+        if (Input.mouseScrollDelta.y < 0)
+            placeDigObject.setRadius(placeDigObject.getRadius() - 0.1f);
+
+        if (Input.GetKey(KeyCode.LeftShift)) setHorPlane();
+        else setVertPlane();
+
+        if (projectPlane.Raycast(ray, out float distance))
+        {
+            digEndPoint = ray.GetPoint(distance);
+            placeDigObject.setPos(digStartPoint, digEndPoint);
+        }
+    }
+
+    private void PlayingModeLeftClick()
+    {
+        
+        if (objectMode == obj.None)
+        {
+            int clickLayer = (1 << 7); //capa de hormigas
+            if (clickObject(clickLayer, out RaycastHit hit))
+            {
+                if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
+                Debug.Log("Selected an ant");
+            }
+        }
+        else if (placingDigZone)
+        {
+            toDigPoints();
+            placingDigZone = false;
+        }
+        else 
+        {
+            int digPointClickLayer = (1 << 9); //digPoint layer
+            int terrainClickLayer = (1 << 6); //terrain layer
+            if (clickObject(digPointClickLayer, out RaycastHit hit))
+            {
+                hit.transform.gameObject.GetComponent<DigPoint>().dig();
+                Destroy(hit.transform.gameObject); //Error: items that have been checked twice in dig don't get destroyed.
+                //Theory: they do get destroyed but have a copy over it.
+            }
+            else if (clickObject(terrainClickLayer, out hit))
+            {
+                switch (objectMode)
+                {
+                    case obj.Ant:
+                        if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                        GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
+                        newAnt.layer = 7;
+                        newAnt.SetActive(true);
+                        SelectedAnt = newAnt.GetComponent<Ant>();
+                        break;
+                    case obj.Grub:
+                        break;
+                    case obj.digTunnel:
+                    case obj.digChamber:
+                        if (!placingDigZone)
+                        {
+                            placingDigZone = true;
+                            digStartPoint = hit.point;
+                            digEndPoint = hit.point;
+                            GameObject tunnel = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
+                            tunnel.SetActive(true);
+                            DigObject tunnelScript = tunnel.GetComponent<DigObject>();
+                            tunnelScript.setRadius(1);
+
+                            if (objectMode == obj.digTunnel) tunnelScript.setMode(DigObject.digType.Tunnel);
+                            else tunnelScript.setMode(DigObject.digType.Chamber);
+
+                            tunnelScript.setActive(true);
+                            tunnelScript.setPos(digStartPoint, digEndPoint);
+                            setVertPlane();
+                            DigObjects.Add(tunnelScript);
+                            Debug.Log("Set Plane Pos");
+                        }
+                        break;
+                    case obj.test:
+                        Vector3Int cube = Vector3Int.FloorToInt(hit.point);
+                        
+
+
+                        if (SelectedAnt != null)
+                        {
+                            List<CubePaths.CubeSurface> path = CubePaths.PathToDigPoint(SelectedAnt.currentSurface, cube);
+                        }
+
+                        CubePaths.DrawCube(cube, Color.red, 20);
+                        
+                        /*
+                        bool[] cornerValues = CubePaths.CubeCornerValues(cube);
+
+                        Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
+                        
+                        bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
+
+                        CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
+                        List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
+                        foreach (var adyacentCube in adyacentCubes)
+                        {
+                            CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
+                        }*/
+                        /*
+                        Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
+                        CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
+
+                        List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
+
+                        if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
+                        else Debug.Log("Pheromones found");
+                        */
+                        break;
+                    default:
+                        Debug.Log("No valid object mode when clicked");
+                    break;
+                }
+            }
+        }
     }
 
 }
