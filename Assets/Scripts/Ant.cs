@@ -130,7 +130,6 @@ public class Ant : MonoBehaviour
             break;
 
             default:
-                Debug.Log("Default case");
             break;
         }
         //MODO CONTROLADO LO GESTIONA LA CÁMARA
@@ -156,8 +155,7 @@ public class Ant : MonoBehaviour
 
         float minAngle = 30f;
 
-        Debug.DrawLine(transform.position, transform.position + relativeGoal, Color.black, 0.35f);
-        Debug.DrawRay(antObj.transform.position, (relativeGoal - antObj.transform.position)*2, Color.red);
+        Debug.DrawLine(transform.position, nextGoal, Color.red, 0.35f);
     
         //Decidir si girar
         if (horAngle > 5)
@@ -187,7 +185,7 @@ public class Ant : MonoBehaviour
 
     List<ObjectiveSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<ObjectiveSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
     {
-        List<ObjectiveSurface> nextRange = new List<ObjectiveSurface>();
+        List<ObjectiveSurface> nextRange = new();
 
         //Si el rango está empezando se coge la superficie de la hormiga
         if (currentRange.Count == 0)
@@ -234,13 +232,13 @@ public class Ant : MonoBehaviour
     //Devuelve true si ha encontrado una pheromona
     private bool SensePheromones(CubePaths.CubeSurface antSurface) 
     {
-        List<ObjectiveSurface> sensedRange = new List<ObjectiveSurface>();
-        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface>();
+        List<ObjectiveSurface> sensedRange = new();
+        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
         bool haveGoal = false;
         int range = -1;
 
         CubePheromone objectivePher = null;
-        CubePaths.CubeSurface firstStep = new CubePaths.CubeSurface();
+        CubePaths.CubeSurface firstStep = new();
 
         Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
 
@@ -250,7 +248,7 @@ public class Ant : MonoBehaviour
             sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
 
             //Put all pheromones on a list
-            List<CubePheromone> sensedPheromones = new List<CubePheromone>();
+            List<CubePheromone> sensedPheromones = new();
             foreach (var surface in sensedRange)
             {
                 CubePaths.DrawSurface(surface.objective, colors[range], 2);
@@ -271,14 +269,18 @@ public class Ant : MonoBehaviour
         //Si no se ha encontrado objetivo, devolvemos falso.
         if (!haveGoal)
         {
-            Debug.Log("NO PHEROMONES FOUND/CHOSEN");
+            //("NO PHEROMONES FOUND/CHOSEN");
             return false;
         }
 
         //Si la pheromona está en la superficie actual seguimos su camino
         if (range == 0)
         {
-            if (objectivePher.isLast(followingForwards)) followingForwards = !followingForwards;
+            if (objectivePher.isLast(followingForwards))
+            {
+                followingForwards = !followingForwards;
+                //Debug.Log("Switched following");
+            }
             if (objectivePher.isLast(followingForwards))
             {
                 Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");

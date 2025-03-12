@@ -43,7 +43,7 @@ public class CubePaths : MonoBehaviour
         PlacePheromone(pos, newPher);
         return newPher;
     }
-
+    
     
     /*
     Coloca una feromona en la posición indicada, reemplazando la feromona que ya se encuentra en dicho lugar si tiene la misma pathId y está en la misma superficie
@@ -76,7 +76,6 @@ public class CubePaths : MonoBehaviour
             cubePherDict.Add(pos, pheromones);
         }
 
-        DrawCube(pos, Color.black, 100000);
     }
 
     /*
@@ -234,6 +233,11 @@ public class CubePaths : MonoBehaviour
     */
     private static bool FaceXOR(int faceIndex, bool[] cornerValues)
     {
+        Debug.Log(
+            chunk.faceIndexes[faceIndex, 0] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 0]] + ", " +
+            chunk.faceIndexes[faceIndex, 1] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 1]] + ", " +
+            chunk.faceIndexes[faceIndex, 2] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 2]] + ", " +
+            chunk.faceIndexes[faceIndex, 3] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 3]] + ", " );
         return !(
             cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 1]] && 
             cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 2]] && 
@@ -330,6 +334,7 @@ public class CubePaths : MonoBehaviour
 
         Vector3 goal = Vector3.zero;
         int num = 0;
+        DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
@@ -343,26 +348,24 @@ public class CubePaths : MonoBehaviour
         Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex], Color.blue, 10);
         return goal + chunk.faceDirections[faceIndex];
     }
-
-    /*
-    Debuja el cubo dado, en el color dado, durando el tiempo dado
-    */
-    public static void DrawCube(Vector3Int cube, Color color, int time)
-    {
-        for (int i = 0; i < 12; i++)
-        {
-            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color, time);
-        }
-    }
-
     
     //Función que dado dos cubos y la subSuperficie del primero, devuelve si esa superficie conecta directamente con el segundo cubo
     public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
     {
-        Vector3Int dir = surface1.pos - cube2; //La dir al segundo cubo
+        Vector3Int dir = cube2 - surface1.pos; //La dir al segundo cubo //This was reversed, so it caused problems
         int dirIndex;
-        if (!chunk.reverseFaceDirections.TryGetValue(dir, out dirIndex)) return false; //Si no son dayacente falso
-        return FaceXOR(dirIndex, surface1.surfaceGroup);
+        if (!chunk.reverseFaceDirections.TryGetValue(dir, out dirIndex))
+        {
+            Debug.Log("Not adyacent");
+            return false; //Si no son dayacente falso
+        }
+        DrawFace(surface1.pos, dirIndex, Color.black, 10000);
+        if (!FaceXOR(dirIndex, surface1.surfaceGroup))
+        {
+            Debug.Log("FaceXor negative");
+            return false;
+        }
+        return true;
     }
 
 
@@ -405,16 +408,6 @@ public class CubePaths : MonoBehaviour
             return pos.x + pos.y * 1000 + pos.z * 1000000;
         }
     }
-
-    public static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            if (!cubeSurface.surfaceGroup[i])
-                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
-        }
-    }
-
 
     public static List<CubeSurface> PathToDigPoint(CubeSurface start, Vector3Int objective)
     {
@@ -478,6 +471,36 @@ public class CubePaths : MonoBehaviour
         DrawCube(reachedSurface.pos, Color.blue, 20);
 
         return path;
+    }
+
+    
+    /*
+    Debuja el cubo dado, en el color dado, durando el tiempo dado
+    */
+    public static void DrawCube(Vector3Int cube, Color color, int time)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color, time);
+        }
+    }
+
+    
+    public static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (!cubeSurface.surfaceGroup[i])
+                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
+        }
+    }
+
+    public static void DrawFace(Vector3Int pos, int faceId, Color color, int time)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            Debug.DrawLine(pos + chunk.cornerTable[chunk.faceIndexes[faceId, i%4]], pos + chunk.cornerTable[chunk.faceIndexes[faceId, (i+1)%4]], color, time);
+        }
     }
 
 }

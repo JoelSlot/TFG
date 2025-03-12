@@ -22,6 +22,9 @@ public class CubePheromone
 
         bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
         surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
+
+        Color[] colors= {Color.red, Color.blue, Color.green};
+        CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
     }
 
     //Crea el siguientd nodo en el camino dado el actual
@@ -38,6 +41,10 @@ public class CubePheromone
         Vector3Int pointBelowSurface = CubePaths.TrueCorner(newCubeDirIndex, prevPher.surface.surfaceGroup) - chunk.faceDirections[newCubeDirIndex]; //Mediante dicho índice conseguimos uno de los puntos compartidos debajo de la superficie
         bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
         surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
+
+        
+        Color[] colors= {Color.red, Color.blue, Color.green};
+        CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
     }
 
     private static int GetNextId()

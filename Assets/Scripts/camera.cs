@@ -81,7 +81,7 @@ public class FlyCamera : MonoBehaviour
         {
             camera.backgroundColor = new Color(0,191,255);
         }
-        //else camera.backgroundColor = Color.black;
+        else camera.backgroundColor = Color.black;
     }
 
     void FixedUpdate()
