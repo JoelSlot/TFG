@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using Utils;
 
 
 public class Ant : MonoBehaviour
@@ -20,13 +21,14 @@ public class Ant : MonoBehaviour
     private bool followingForwards = false;
     private int pherId = -1; //if -1, not following a pheromone
     private Vector3Int lastCube;
+    public CubePaths.CubeSurface lastSurface;
     private CubePheromone placedPher = null; //Last placed pheromone by ant
-    private List<CubePaths.CubeSurface> path = null; //Path the ant will follow if in followingPath mode
+    public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
+    private DigPoint digObjective = null;
     private Vector3 nextGoal; //Point in space the ant will try to move to.
-    private bool haveGoal = false; 
+    public bool haveGoal = false; //only use in AIMovement case
     public int stucktimer = 0;
 
-    public CubePaths.CubeSurface currentSurface;
 
     public enum AIState
     {
@@ -42,6 +44,13 @@ public class Ant : MonoBehaviour
     private Animator Animator;
     public float speed_per_second = 2f;
     public float degrees_per_second = 67.5f;
+
+    public enum followState
+    {
+        Reached,
+        Lost,
+        Following
+    }
 
 
     // Start is called before the first frame update
@@ -62,53 +71,81 @@ public class Ant : MonoBehaviour
     {
     }
 
-
+    int pathTimer = 0;
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal))
+        if (SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface))
         {
-            AIMovement(lastCube != hitCubePos, hitCubePos, hitNormal);
+            AIBehaviour(changedSurface, antSurface);
         
-            DecideToPlacePheromone(rayCastHits, hitCubePos, hitNormal);
+            if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
+
+            lastSurface = antSurface;
         }
-        
+    /*
+        if (path.Count > 0)
+        {
+            pathTimer++;
+            if (Mathf.FloorToInt(pathTimer/10) >= path.Count) pathTimer = 0;
+            CubePaths.DrawCube(path[Mathf.FloorToInt(pathTimer/10)].pos, Color.green, 1);
+        }
+        */
     }
 
-    /*
-    private void DecidePlacePheromone(bool[] rayCastHits, Vector3 hitNormal)
-    {
-        if (makingTrail && rayCastHits[4])
-        {
-            float distance = Vector3.Distance(placedPheromone.pos, antObj.transform.position);
-            if (Animator.GetBool("walking") && ( distance > 3 || ( distance > 0.5 && Vector3.Angle(placedPheromone.upDir, hitNormal) > 30))) //Only place when in new spot
-            {
-                placedPheromone = Pheromone.PlacePheromone(origPheromone, antObj.transform.position, hitNormal, placedPheromone);
-            }
-        }
-    }
-    +*/
-    public Vector3 getRelativePos(float x, float y, float z)
+    public Vector3 GetRelativePos(float x, float y, float z)
     {
         return Rigidbody.position + antObj.transform.rotation * new Vector3(x, y, z);
     }
 
     int senseTimer = 0;
     
-    void AIMovement(bool movedCube, Vector3Int hitCube, Vector3 hitNormal) {
-
-        currentSurface = new CubePaths.CubeSurface(hitCube, hitNormal);
+    void AIBehaviour(bool movedCube, CubePaths.CubeSurface antSurface) {
 
         switch (state)
         {
             //Si estamos siguiendo una feromona, buscamos siguiente paso al cambiar de cubo.
             //La gestión de cambiar de following a no following al perderse no se hace aqui?
             case AIState.FollowingPher:
-                if (movedCube || !haveGoal) haveGoal = SensePheromones(currentSurface);
+
+                if (movedCube)
+                {
+                    if (SenseDigPoint(antSurface))
+                    {
+                        haveGoal = true;
+                        state = AIState.FollowingPath;
+                        SetGoalFromPath(antSurface);
+                    }
+                    else
+                        haveGoal = SensePheromones(antSurface);
+                }
+
                 if (haveGoal) FollowGoal();
                 else state = AIState.Passive;
+            break;
+
+            case AIState.FollowingPath:
+                followState followState = followState.Following;
+                if (movedCube || !haveGoal) followState = SetGoalFromPath(antSurface);
+
+                switch (followState){
+                    case followState.Reached:
+                        haveGoal = false;
+                        state = AIState.Passive;
+                    break;
+
+                    case followState.Lost:
+                        haveGoal = false;
+                        state = AIState.Passive;
+                    break;
+
+                    case followState.Following:
+                        haveGoal = true;
+                        FollowGoal();
+                    break;
+                }
             break;
 
             case AIState.Exploring:
@@ -116,11 +153,15 @@ public class Ant : MonoBehaviour
             break;
 
             case AIState.Passive:
+
+                SetWalking(false);
+                DontTurn();
+
                 senseTimer++;
-                if (senseTimer == 100 && hitNormal != Vector3.zero)
+                if (senseTimer == 100)
                 {
                     senseTimer = 0;
-                    if (SensePheromones(currentSurface))
+                    if (SensePheromones(antSurface))
                     {
                         haveGoal = true;
                         state = AIState.FollowingPher;
@@ -146,14 +187,21 @@ public class Ant : MonoBehaviour
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
     void FollowGoal()
     {
+
+        if (!haveGoal)
+        {
+            DontTurn();
+            SetWalking(false);
+            Debug.Log("I DON THAVE A GOAL");
+            return;
+        }
+
         //Obtenemos los datos de distancia hacia la pheromona
         Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(nextGoal); //relative position of the goal to the ant
-        float distance = Vector3.Magnitude(relativeGoal);
         relativeGoal.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
         float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
-        float horDistance = relativeGoal.magnitude;
 
-        float minAngle = 30f;
+        float minAngle = 35f;
 
         Debug.DrawLine(transform.position, nextGoal, Color.red, 0.35f);
     
@@ -169,141 +217,6 @@ public class Ant : MonoBehaviour
         if (horAngle < minAngle) SetWalking(true);
         else SetWalking(false);
     }
-
-    struct ObjectiveSurface
-    {
-        public CubePaths.CubeSurface objective;
-        public CubePaths.CubeSurface prevStep;
-        public ObjectiveSurface(CubePaths.CubeSurface newSurface, CubePaths.CubeSurface newStep)
-        {
-            objective = newSurface;
-            prevStep = newStep;
-        }
-    }
-    
-
-
-    List<ObjectiveSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<ObjectiveSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
-    {
-        List<ObjectiveSurface> nextRange = new();
-
-        //Si el rango está empezando se coge la superficie de la hormiga
-        if (currentRange.Count == 0)
-        {
-            ObjectiveSurface objSurface = new(antSurface, antSurface);
-            nextRange.Add(objSurface);
-            checkedSurfaces.Add(antSurface, antSurface);
-            return nextRange;
-        }
-
-        //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
-        if(currentRange[0].objective.Equals(antSurface)) 
-        {
-            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
-
-            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0].objective, transform.forward);
-            foreach (var son in adyacentCubes)
-            {
-                nextRange.Add(new ObjectiveSurface(son, son));
-                checkedSurfaces.Add(son, son);
-            }
-            return nextRange;
-        }
-
-
-        //Si el rango es mayor que todo eso se procede como debido
-        foreach (var currentSurface in currentRange)
-        {
-            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface.objective, transform.forward);
-            
-            foreach (var son in adyacentCubes)
-            {
-                if (!checkedSurfaces.ContainsKey(son))
-                {
-                    nextRange.Add(new ObjectiveSurface(son, currentSurface.objective));
-                    checkedSurfaces.Add(son, currentSurface.objective);
-                }
-            }
-        }
-        return nextRange;
-    }
-
-
-    //Devuelve true si ha encontrado una pheromona
-    private bool SensePheromones(CubePaths.CubeSurface antSurface) 
-    {
-        List<ObjectiveSurface> sensedRange = new();
-        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
-        bool haveGoal = false;
-        int range = -1;
-
-        CubePheromone objectivePher = null;
-        CubePaths.CubeSurface firstStep = new();
-
-        Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
-
-        while (!haveGoal && range < 5)
-        {
-            range++;
-            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
-
-            //Put all pheromones on a list
-            List<CubePheromone> sensedPheromones = new();
-            foreach (var surface in sensedRange)
-            {
-                CubePaths.DrawSurface(surface.objective, colors[range], 2);
-                CubePaths.DrawCube(surface.objective.pos, colors[range], 2);
-                if (CubePaths.cubePherDict.TryGetValue(surface.objective.pos, out List<CubePheromone> surfacePhers))
-                    sensedPheromones.AddRange(surfacePhers);
-            }
-            //
-
-            objectivePher = ChoosePheromone(sensedPheromones);
-            if (objectivePher != null)
-            {
-                haveGoal = true;
-                firstStep = objectivePher.surface;
-            }
-        }
-
-        //Si no se ha encontrado objetivo, devolvemos falso.
-        if (!haveGoal)
-        {
-            //("NO PHEROMONES FOUND/CHOSEN");
-            return false;
-        }
-
-        //Si la pheromona está en la superficie actual seguimos su camino
-        if (range == 0)
-        {
-            if (objectivePher.isLast(followingForwards))
-            {
-                followingForwards = !followingForwards;
-                //Debug.Log("Switched following");
-            }
-            if (objectivePher.isLast(followingForwards))
-            {
-                Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
-                return false;
-            }
-
-            firstStep = objectivePher.GetNext(followingForwards).GetSurface();
-        }
-        else
-            while (!checkedSurfaces[firstStep].Equals(firstStep))
-            {
-                firstStep = checkedSurfaces[firstStep];
-            }
-        
-        Vector3Int dir = firstStep.pos - antSurface.pos;
-
-        nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
-
-        return true;
-
-    }
-
-    
 
     private CubePheromone ChoosePheromone(List<CubePheromone> sensedPhers)
     {
@@ -365,8 +278,7 @@ public class Ant : MonoBehaviour
         Animator.SetInteger("turning", 0);
     }
 
-    //ERROR: The raycasts go way to far, making the ant put down pheromones on the wrong places.
-    private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out Vector3Int hitCubePos, out Vector3 hitNormal)
+    private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface)
     {
         Color hitColor;
         numHits = 0;
@@ -377,12 +289,12 @@ public class Ant : MonoBehaviour
         float yPos = 0.5f;
         rayCastHits = new bool[]{ false, false, false, false, false};
         rayCastDist = new float[]{0f,0f,0f,0f,0f};
-        hitNormal = new Vector3(0, 0, 0); 
-        hitCubePos = new Vector3Int(0,0,0);
+        Vector3 hitNormal = new Vector3(0, 0, 0); 
+        Vector3Int hitCubePos = new Vector3Int(0,0,0);
         int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
             //HE ESTADO USANDO MAL ESTA FUNCIÓN. RAYCASTLAYER ESTABA FUNCIONANDO COMO MAXDISTANCE
-            if (Physics.Raycast(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, 0.8f, raycastLayer))
+            if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, 0.8f, raycastLayer))
             {
                 hitColor = Color.red;
                 numHits++;
@@ -393,18 +305,26 @@ public class Ant : MonoBehaviour
                 hitCubePos = Vector3Int.FloorToInt(hit.point);
             }
             else hitColor = Color.blue;
-            Debug.DrawRay(getRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
+            Debug.DrawRay(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
         }
+
 
         //REMEMBER TO COMMENT HOW YOU CHANGED FROM LOCAL BOOL TO THE ANIMATOR ONE
         if (numHits > 0)
         {
+            antSurface = new CubePaths.CubeSurface(hitCubePos, hitNormal);
+            changedSurface = lastCube != hitCubePos;
+            lastCube = hitCubePos;
+
             Animator.SetBool("grounded", true);
             normalMedian /= numHits;
             return true;
         }
         else
         {
+            antSurface = new CubePaths.CubeSurface();
+            changedSurface = true;
+
             Animator.SetBool("grounded", false);
             return false;
         }
@@ -437,28 +357,24 @@ public class Ant : MonoBehaviour
         }
     }
 
-    private void DecideToPlacePheromone(bool[] rayCastHits, Vector3Int hitCubePos, Vector3 hitNormal)
+    private void DecideToPlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
     {
         //DECIDE SI PONER PHEROMONA AAAAAAAAAAAAAAA---------------------------------------------------------
         if (makingTrail && rayCastHits[4]) //si se crea camino y el raycast principal ve suelo
         {
-            if (lastCube != hitCubePos)
+            if (placedPher == null) //La hormiga no ha empezado aún su camino
             {
-                if (placedPher == null) //La hormiga no ha empezado aún su camino
-                {
-                    placedPher = CubePaths.StartPheromoneTrail(hitCubePos, hitNormal);
-                }
-                else if (CubePaths.DoesSurfaceConnect(placedPher.GetSurface(), hitCubePos)) //Si se ha llegado a un nuevo cubo adyacente
-                {   //Might somehow fuck up if ant moves to adyacent cube on unreachable surface SOMEHOW. 
-                    placedPher = CubePaths.ContinuePheromoneTrail(hitCubePos, placedPher); 
-                }
-                else //Si la hormiga se ha separado de su anterior camino
-                {
-                    placedPher = CubePaths.StartPheromoneTrail(hitCubePos, hitNormal);
-                }
+                placedPher = CubePaths.StartPheromoneTrail(antSurface);
+            }
+            else if (CubePaths.DoesSurfaceConnect(placedPher.GetSurface(), antSurface.pos)) //Si se ha llegado a un nuevo cubo adyacente
+            {   //Might somehow fuck up if ant moves to adyacent cube on unreachable surface SOMEHOW. 
+                placedPher = CubePaths.ContinuePheromoneTrail(antSurface, placedPher); 
+            }
+            else //Si la hormiga se ha separado de su anterior camino
+            {
+                placedPher = CubePaths.StartPheromoneTrail(antSurface);
             }
         }
-        lastCube = hitCubePos;
     }
 
     
@@ -496,5 +412,212 @@ public class Ant : MonoBehaviour
             }
     }
 
+    //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
+    //Si no hay, devuelve false.
+    private bool SenseDigPoint(CubePaths.CubeSurface antSurface)
+    {
+        int layermask = 1 << 9;
+        PriorityQueue<DigPoint, float> sensedDigPoints = new();
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 5, layermask);
+        foreach (var hitCollider in hitColliders)
+        {
+            DigPoint digPoint = hitCollider.transform.gameObject.GetComponent<DigPoint>();
+            sensedDigPoints.Enqueue(digPoint, Vector3.Distance(digPoint.transform.position, transform.position));
+        }
+
+        while (sensedDigPoints.Count > 0)
+        {
+            DigPoint digPoint = sensedDigPoints.Dequeue();
+            
+            path = CubePaths.PathToPoint(antSurface, Vector3Int.FloorToInt(digPoint.transform.position), 10);
+
+            if (path.Count > 0) return true;
+        }
+
+        return false;
+    }
+
+    //Pone el 
+    private followState SetGoalFromPath(CubePaths.CubeSurface antSurface)
+    {
+        Debug.Log("SettingGoal");
+
+        if (path.Count == 0)
+        {
+            Debug.Log("no path to follow");
+            return followState.Lost; 
+        }//Para evitar seguir camino nonexistente.
+
+        List<CubePaths.CubeSurface> sensedRange = new();
+        bool foundPath = false;
+        CubePaths.CubeSurface goal = new();
+        int range = 0;
+        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
+        
+        sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces); //Initial one.
+
+        var sameCube = sensedRange[0];
+
+        if (sameCube.Equals(path.Last()))
+        {
+            Debug.Log("Same");
+            path = new();
+            return followState.Reached;
+        }
+
+        while (!foundPath && range < 5)
+        {
+            range++;
+            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
+
+            for (int i = 0; i < path.Count; i += 1)
+            {
+                var index = sensedRange.FindIndex(x => x.Equals(path[i]));
+                if (index >= 0)
+                {
+                    foundPath = true;
+                    goal = sensedRange[index];
+                }
+            }
+        }
+
+        if (!foundPath)
+        {
+            Debug.Log("not found");
+            path = new();
+            return followState.Lost;
+        }
+
+        CubePaths.CubeSurface firstStep = checkedSurfaces[goal];
+
+        Debug.Log("First step: " + firstStep.pos);
+
+        Vector3Int dir = firstStep.pos - antSurface.pos;
+
+        nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+
+        return followState.Following;
+    }
+
+    
+    //Devuelve true si ha encontrado una pheromona
+    private bool SensePheromones(CubePaths.CubeSurface antSurface) 
+    {
+        List<CubePaths.CubeSurface> sensedRange = new();
+        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
+        bool foundGoal = false;
+        int range = -1;
+
+        CubePheromone objectivePher = null;
+        CubePaths.CubeSurface firstStep = new();
+
+        Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
+
+        while (!foundGoal && range < 5)
+        {
+            range++;
+            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
+
+            //Put all pheromones on a list
+            List<CubePheromone> sensedPheromones = new();
+            foreach (var surface in sensedRange)
+            {
+                CubePaths.DrawSurface(surface, colors[range], 2);
+                CubePaths.DrawCube(surface.pos, colors[range], 2);
+                if (CubePaths.cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> surfacePhers))
+                    sensedPheromones.AddRange(surfacePhers);
+            }
+            //
+
+            objectivePher = ChoosePheromone(sensedPheromones);
+            if (objectivePher != null)
+            {
+                foundGoal = true;
+                firstStep = objectivePher.surface;
+            }
+        }
+
+        //Si no se ha encontrado objetivo, devolvemos falso.
+        if (!foundGoal)
+        {
+            //("NO PHEROMONES FOUND/CHOSEN");
+            return false;
+        }
+
+        //Si la pheromona está en la superficie actual seguimos su camino
+        if (range == 0)
+        {
+            if (objectivePher.isLast(followingForwards))
+            {
+                followingForwards = !followingForwards;
+                //Debug.Log("Switched following");
+            }
+            if (objectivePher.isLast(followingForwards))
+            {
+                Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
+                return false;
+            }
+
+            firstStep = objectivePher.GetNext(followingForwards).GetSurface();
+        }
+        else
+            while (!checkedSurfaces[firstStep].Equals(firstStep))
+            {
+                firstStep = checkedSurfaces[firstStep];
+            }
+        
+        Vector3Int dir = firstStep.pos - antSurface.pos;
+
+        nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+
+        return true;
+
+    }
+
+    List<CubePaths.CubeSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<CubePaths.CubeSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
+    {
+        List<CubePaths.CubeSurface> nextRange = new();
+
+        //Si el rango está empezando se coge la superficie de la hormiga
+        if (currentRange.Count == 0)
+        {
+            nextRange.Add(antSurface);
+            checkedSurfaces.Add(antSurface, antSurface);
+            return nextRange;
+        }
+
+        //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
+        if(currentRange[0].Equals(antSurface)) 
+        {
+            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
+
+            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0], transform.forward);
+            foreach (var son in adyacentCubes)
+            {
+                nextRange.Add(son);
+                checkedSurfaces.Add(son, son);
+                CubePaths.DrawCube(son.pos, Color.magenta, 1);
+            }
+            return nextRange;
+        }
+
+
+        //Si el rango es mayor que todo eso se procede como debido
+        foreach (var currentSurface in currentRange)
+        {
+            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface, transform.forward);
+            
+            foreach (var son in adyacentCubes)
+            {
+                if (!checkedSurfaces.ContainsKey(son))
+                {
+                    nextRange.Add(son);
+                    checkedSurfaces.Add(son, currentSurface);
+                    CubePaths.DrawCube(son.pos, Color.green, 1);
+                }
+            }
+        }
+        return nextRange;
+    }
 
 }

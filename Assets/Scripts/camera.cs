@@ -47,11 +47,11 @@ public class FlyCamera : MonoBehaviour
 
     static bool rotateAllowed
     {
-        get => UnityEngine.Cursor.lockState == CursorLockMode.Locked;
+        get => Cursor.lockState == CursorLockMode.Locked;
         set
         {
-            UnityEngine.Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
-            UnityEngine.Cursor.visible = value == false;
+            Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = value == false;
         }
     }
 
@@ -514,7 +514,10 @@ public class FlyCamera : MonoBehaviour
 
                         if (SelectedAnt != null)
                         {
-                            List<CubePaths.CubeSurface> path = CubePaths.PathToDigPoint(SelectedAnt.currentSurface, cube);
+                            List<CubePaths.CubeSurface> path = CubePaths.PathToPoint(SelectedAnt.lastSurface, cube, 100);
+                            SelectedAnt.path = path;
+                            SelectedAnt.haveGoal = false;
+                            SelectedAnt.state = Ant.AIState.FollowingPath;
                         }
 
                         CubePaths.DrawCube(cube, Color.red, 20);

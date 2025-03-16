@@ -12,7 +12,7 @@ public class CubePheromone
     public CubePheromone next;
 
     //Crea una nueva feromona como comienzo de un nuevo camino el la posición pherPos
-    public CubePheromone(Vector3Int pherPos, Vector3Int pointBelowSurface)
+    public CubePheromone(CubePaths.CubeSurface surface)
     {
         pathId = GetNextId();
         pathPos = 0;
@@ -20,15 +20,14 @@ public class CubePheromone
         prev = this;
         next = this;
 
-        bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
-        surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
+        this.surface = surface;
 
         Color[] colors= {Color.red, Color.blue, Color.green};
         CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
     }
 
     //Crea el siguientd nodo en el camino dado el actual
-    public CubePheromone(Vector3Int pherPos, CubePheromone prevPher)
+    public CubePheromone(CubePaths.CubeSurface newSurface, CubePheromone prevPher)
     {
         pathId = prevPher.pathId;
         pathPos = prevPher.pathPos + 1;
@@ -37,12 +36,8 @@ public class CubePheromone
         
         prevPher.next = this;
 
-        int newCubeDirIndex = chunk.reverseFaceDirections[pherPos - prevPher.surface.pos]; //obtenemos indice de dir desde adyacente a actual cubo
-        Vector3Int pointBelowSurface = CubePaths.TrueCorner(newCubeDirIndex, prevPher.surface.surfaceGroup) - chunk.faceDirections[newCubeDirIndex]; //Mediante dicho índice conseguimos uno de los puntos compartidos debajo de la superficie
-        bool[] surfaceGroup = CubePaths.GetGroup(pointBelowSurface, CubePaths.CubeCornerValues(pherPos));
-        surface = new CubePaths.CubeSurface(pherPos, surfaceGroup);
+        surface = newSurface;
 
-        
         Color[] colors= {Color.red, Color.blue, Color.green};
         CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
     }

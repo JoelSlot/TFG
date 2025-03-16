@@ -21,10 +21,10 @@ public class CubePaths : MonoBehaviour
 
     return: la feromona nueva creada
     */
-    public static CubePheromone StartPheromoneTrail(Vector3Int pos, Vector3 surfaceNormal)
+    public static CubePheromone StartPheromoneTrail(CubeSurface surface)
     {
-        CubePheromone newPher = new CubePheromone(pos, CornerFromNormal(surfaceNormal));
-        PlacePheromone(pos, newPher);
+        CubePheromone newPher = new CubePheromone(surface);
+        PlacePheromone(surface.pos, newPher);
         pathDict.Add(newPher.GetPathId(), newPher); // añadir primer pher del nuevo camino al dictionario
         return newPher;
     }
@@ -37,10 +37,10 @@ public class CubePaths : MonoBehaviour
     
     return: la feromona nueva creada
     */
-    public static CubePheromone ContinuePheromoneTrail(Vector3Int pos, CubePheromone prevPher)
+    public static CubePheromone ContinuePheromoneTrail(CubeSurface surface, CubePheromone prevPher)
     {
-        CubePheromone newPher = new CubePheromone(pos, prevPher);
-        PlacePheromone(pos, newPher);
+        CubePheromone newPher = new CubePheromone(surface, prevPher);
+        PlacePheromone(surface.pos, newPher);
         return newPher;
     }
     
@@ -233,11 +233,11 @@ public class CubePaths : MonoBehaviour
     */
     private static bool FaceXOR(int faceIndex, bool[] cornerValues)
     {
-        Debug.Log(
+        /*Debug.Log(
             chunk.faceIndexes[faceIndex, 0] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 0]] + ", " +
             chunk.faceIndexes[faceIndex, 1] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 1]] + ", " +
             chunk.faceIndexes[faceIndex, 2] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 2]] + ", " +
-            chunk.faceIndexes[faceIndex, 3] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 3]] + ", " );
+            chunk.faceIndexes[faceIndex, 3] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 3]] + ", " );*/
         return !(
             cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 1]] && 
             cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 2]] && 
@@ -327,8 +327,8 @@ public class CubePaths : MonoBehaviour
         return opposite - corner;
     }
 
-    //Dado el cubo actual, la dir en la que se quiere mover y el grupo subSuperficie de la superficie actual, devuelve el punto a seguir para llegar
-    public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir) //faceIndex points to face with same index as dirIndex
+    //Dado la superficie actual y la dir en la que se quiere mover devuelve el punto a seguir para llegar
+    public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
         int faceIndex = chunk.reverseFaceDirections[dir];
 
@@ -345,16 +345,16 @@ public class CubePaths : MonoBehaviour
             }
         }
         goal = surface.pos + goal / num;
-        Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex], Color.blue, 10);
-        return goal + chunk.faceDirections[faceIndex];
+        Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex]*4, Color.blue, 10);
+        return goal + chunk.faceDirections[faceIndex]*4;
     }
     
     //Función que dado dos cubos y la subSuperficie del primero, devuelve si esa superficie conecta directamente con el segundo cubo
     public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
     {
         Vector3Int dir = cube2 - surface1.pos; //La dir al segundo cubo //This was reversed, so it caused problems
-        int dirIndex;
-        if (!chunk.reverseFaceDirections.TryGetValue(dir, out dirIndex))
+        Debug.Log("pos: " + cube2 + " - " + surface1.pos);
+        if (!chunk.reverseFaceDirections.TryGetValue(dir, out int dirIndex))
         {
             Debug.Log("Not adyacent");
             return false; //Si no son dayacente falso
@@ -409,23 +409,33 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    public static List<CubeSurface> PathToDigPoint(CubeSurface start, Vector3Int objective)
+    public static bool NextToPoint(Vector3Int cube, Vector3Int point)
+    {
+        for (int i = 0; i < 8; i++) if (cube + chunk.cornerTable[i] == point) return true;
+        return false;
+    }
+
+    public static List<CubeSurface> PathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit)
     {
         List<CubeSurface> path = new List<CubeSurface>();
 
-        PriorityQueue<CubeSurface, float> frontera = new PriorityQueue<CubeSurface, float>();
+        PriorityQueue<CubeSurface, float> frontera = new();
         frontera.Enqueue(start, 0);
-        Dictionary<CubeSurface, CubeSurface> previo = new Dictionary<CubeSurface, CubeSurface>();
-        Dictionary<CubeSurface, float> coste = new Dictionary<CubeSurface, float>();
+        Dictionary<CubeSurface, CubeSurface> previo = new();
+        Dictionary<CubeSurface, float> coste = new();
+        Dictionary<CubeSurface, int> longitud = new();
 
         previo[start] = start;
         coste[start] = 0;
+        longitud[start] = 0;
 
 
         float heuristic(Vector3Int point, Vector3Int objective)
         {
             return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
         }
+
+        
 
         CubeSurface reachedSurface = start;
 
@@ -441,20 +451,24 @@ public class CubePaths : MonoBehaviour
             foreach(var son in adyacentSurfaces)
             {
                 float newCost = coste[current] + 1;
+                int newLength = longitud[current] + 1;
                 if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
                 bool updateOrInsert = false;
                 if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
                 else if (newCost < prevCost) updateOrInsert = true;
 
+                if (newLength > lengthLimit) updateOrInsert = false;
+
+                if (NextToPoint(son.pos, objective)) reachedSurface = current;
+
                 if(updateOrInsert)
                 {
                     //DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;
+                    longitud[son] = newLength;
                     float prioridad = newCost + heuristic(son.pos, objective);
                     frontera.Enqueue(son, prioridad);
                     previo[son] = current;
-
-                    if (son.pos == objective) reachedSurface = son;
                 }
             }
         }
@@ -463,12 +477,9 @@ public class CubePaths : MonoBehaviour
         {
             DrawCube(reachedSurface.pos, Color.blue, 40);
             DrawSurface(reachedSurface, Color.black, 40);
-            path.Append(reachedSurface);
+            path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedSurface = previo[reachedSurface];
         }
-
-        path.Append(reachedSurface);
-        DrawCube(reachedSurface.pos, Color.blue, 20);
 
         return path;
     }
