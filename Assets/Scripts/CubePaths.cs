@@ -330,11 +330,15 @@ public class CubePaths : MonoBehaviour
     //Dado la superficie actual y la dir en la que se quiere mover devuelve el punto a seguir para llegar
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
-        int faceIndex = chunk.reverseFaceDirections[dir];
+        if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
+        {
+            Debug.Log("NOT VALID DIR: " + dir);
+            return surface.pos + dir*4 + Vector3.one / 2;
+        }
 
         Vector3 goal = Vector3.zero;
         int num = 0;
-        DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
+        //DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
@@ -359,7 +363,7 @@ public class CubePaths : MonoBehaviour
             Debug.Log("Not adyacent");
             return false; //Si no son dayacente falso
         }
-        DrawFace(surface1.pos, dirIndex, Color.black, 10000);
+        //DrawFace(surface1.pos, dirIndex, Color.black, 10000);
         if (!FaceXOR(dirIndex, surface1.surfaceGroup))
         {
             Debug.Log("FaceXor negative");
@@ -415,9 +419,9 @@ public class CubePaths : MonoBehaviour
         return false;
     }
 
-    public static List<CubeSurface> PathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit)
+    public static bool PathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit, out List<CubeSurface> path)
     {
-        List<CubeSurface> path = new List<CubeSurface>();
+        path = new List<CubeSurface>();
 
         PriorityQueue<CubeSurface, float> frontera = new();
         frontera.Enqueue(start, 0);
@@ -435,17 +439,24 @@ public class CubePaths : MonoBehaviour
             return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
         }
 
-        
+        bool gotToPoint = false;
 
         CubeSurface reachedSurface = start;
 
-        while (frontera.Count > 0 && reachedSurface.pos != objective)
+        while (frontera.Count > 0)
         {
             CubeSurface current = frontera.Dequeue();
 
             if (current.pos == objective)
                 break;
             
+            if (NextToPoint(current.pos, objective))
+            {
+                reachedSurface = previo[current];
+                gotToPoint = true;
+                break;
+            }
+
             List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
 
             foreach(var son in adyacentSurfaces)
@@ -459,8 +470,7 @@ public class CubePaths : MonoBehaviour
 
                 if (newLength > lengthLimit) updateOrInsert = false;
 
-                if (NextToPoint(son.pos, objective)) reachedSurface = current;
-
+                
                 if(updateOrInsert)
                 {
                     //DrawCube(son.pos, Color.black, 5);
@@ -475,13 +485,13 @@ public class CubePaths : MonoBehaviour
 
         while (!reachedSurface.Equals(start))
         {
-            DrawCube(reachedSurface.pos, Color.blue, 40);
-            DrawSurface(reachedSurface, Color.black, 40);
+            DrawCube(reachedSurface.pos, Color.blue, 4);
+            //DrawSurface(reachedSurface, Color.black, 40);
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedSurface = previo[reachedSurface];
         }
-
-        return path;
+        Debug.Log(path.Count);
+        return gotToPoint;
     }
 
     

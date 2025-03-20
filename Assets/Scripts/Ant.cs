@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using Utils;
+using NUnit.Framework;
 
 
 public class Ant : MonoBehaviour
@@ -24,7 +25,7 @@ public class Ant : MonoBehaviour
     public CubePaths.CubeSurface lastSurface;
     private CubePheromone placedPher = null; //Last placed pheromone by ant
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
-    private DigPoint digObjective = null;
+    public GameObject digObjective = null;
     private Vector3 nextGoal; //Point in space the ant will try to move to.
     public bool haveGoal = false; //only use in AIMovement case
     public int stucktimer = 0;
@@ -35,6 +36,7 @@ public class Ant : MonoBehaviour
         Exploring,
         FollowingPher,
         FollowingPath, //Following a
+        DiggingAnim,
         Controlled,
         Passive
     }
@@ -77,6 +79,8 @@ public class Ant : MonoBehaviour
     {
         if (SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface))
         {
+            Rigidbody.useGravity = false;
+
             AIBehaviour(changedSurface, antSurface);
         
             if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
@@ -85,14 +89,10 @@ public class Ant : MonoBehaviour
 
             lastSurface = antSurface;
         }
-    /*
-        if (path.Count > 0)
-        {
-            pathTimer++;
-            if (Mathf.FloorToInt(pathTimer/10) >= path.Count) pathTimer = 0;
-            CubePaths.DrawCube(path[Mathf.FloorToInt(pathTimer/10)].pos, Color.green, 1);
-        }
-        */
+        else Rigidbody.useGravity = true;
+
+        if (digObjective != null) Debug.DrawLine(transform.position, digObjective.transform.position, Color.black);
+
     }
 
     public Vector3 GetRelativePos(float x, float y, float z)
@@ -114,9 +114,13 @@ public class Ant : MonoBehaviour
                 {
                     if (SenseDigPoint(antSurface))
                     {
-                        haveGoal = true;
-                        state = AIState.FollowingPath;
-                        SetGoalFromPath(antSurface);
+                        if (path.Count == 0) state = AIState.DiggingAnim;
+                        else
+                        {
+                            haveGoal = true;
+                            state = AIState.FollowingPath;
+                            SetGoalFromPath(antSurface);
+                        }
                     }
                     else
                         haveGoal = SensePheromones(antSurface);
@@ -131,9 +135,10 @@ public class Ant : MonoBehaviour
                 if (movedCube || !haveGoal) followState = SetGoalFromPath(antSurface);
 
                 switch (followState){
+
                     case followState.Reached:
                         haveGoal = false;
-                        state = AIState.Passive;
+                        state = AIState.DiggingAnim;
                     break;
 
                     case followState.Lost:
@@ -161,11 +166,34 @@ public class Ant : MonoBehaviour
                 if (senseTimer == 100)
                 {
                     senseTimer = 0;
-                    if (SensePheromones(antSurface))
+                    if (SenseDigPoint(antSurface))
+                    {
+                        Debug.Log("THE PATH LENG IS " + path.Count);
+                        if (path.Count == 0) state = AIState.DiggingAnim;
+                        else
+                        {
+                            haveGoal = true;
+                            state = AIState.FollowingPath;
+                            SetGoalFromPath(antSurface);
+                        }
+                    }
+                    else if (SensePheromones(antSurface))
                     {
                         haveGoal = true;
                         state = AIState.FollowingPher;
                         FollowGoal();
+                    }
+                }
+            break;
+
+            case AIState.DiggingAnim:
+                if (digObjective == null) state = AIState.Passive;
+                else
+                {
+                    if (!IsDigging())
+                    {
+                        SetWalking(false);
+                        if (Align(digObjective.transform.position)) SetDig(true);
                     }
                 }
             break;
@@ -175,6 +203,34 @@ public class Ant : MonoBehaviour
         }
         //MODO CONTROLADO LO GESTIONA LA CÁMARA
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
+    }
+
+    public void PerformDig()
+    {
+        SetDig(false);
+        if (digObjective == null) return;
+
+        digObjective.GetComponent<DigPoint>().Dig();
+        Destroy(digObjective);
+        digObjective = null;
+    }
+
+    //Devuelve true si la hormiga llega alinearse con el punto
+    bool Align(Vector3 point)
+    {
+        Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(point);
+        relativeGoal.y = 0;
+        float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
+
+        //Decidir si girar
+        if (horAngle > 5)
+        {
+            if (relativeGoal.x > 0) TurnRight();
+            else TurnLeft();
+            return false;
+        }
+        DontTurn();
+        return true;
     }
 
     void RandomMovement()
@@ -278,6 +334,22 @@ public class Ant : MonoBehaviour
         Animator.SetInteger("turning", 0);
     }
 
+    public void SetDig(bool dig)
+    {
+        if (dig)
+        {
+            SetWalking(false);
+            DontTurn();
+            Animator.SetBool("Digging", true);
+        }
+        else Animator.SetBool("Digging", false);
+    }
+
+    public bool IsDigging()
+    {
+        return Animator.GetBool("Digging");
+    }
+
     private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface)
     {
         Color hitColor;
@@ -332,29 +404,23 @@ public class Ant : MonoBehaviour
 
     private void ApplyMovement(Vector3 surfaceNormalMedian, bool[] rayCastHits, float[] rayCastDist)
     {
-        if (Animator.GetBool("grounded"))
-        {
-            //REMOVE MOVEMENT EFFECTS
-            Rigidbody.angularVelocity = Vector3.zero;
-            Rigidbody.AddForce(-surfaceNormalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
-            Physics.gravity = Vector3.zero;
+        //REMOVE MOVEMENT EFFECTS
+        Rigidbody.angularVelocity = Vector3.zero;
 
-            //ROTATE ANT
-            Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
-            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
+        //APPLY LOCAL GRAVITY
+        Rigidbody.AddForce(-surfaceNormalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
 
-            //MOVE ANT FORWARD
-            Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, surfaceNormalMedian); //Project movement over terrain
-            Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
+        //ROTATE ANT
+        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
+        Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
-            AdjustAntToGround(rayCastHits, rayCastDist, deltaRotation);
+        //MOVE ANT FORWARD
+        Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, surfaceNormalMedian); //Project movement over terrain
+        Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
 
-        }
-        //Si no esta grounded
-        else
-        {
-            Physics.gravity = new Vector3(0, -15.0F, 0);
-        }
+        //
+        AdjustAntToGround(rayCastHits, rayCastDist, deltaRotation);
+
     }
 
     private void DecideToPlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
@@ -417,24 +483,40 @@ public class Ant : MonoBehaviour
     private bool SenseDigPoint(CubePaths.CubeSurface antSurface)
     {
         int layermask = 1 << 9;
-        PriorityQueue<DigPoint, float> sensedDigPoints = new();
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 5, layermask);
-        foreach (var hitCollider in hitColliders)
+        PriorityQueue<GameObject, float> sensedDigPoints = new();
+        int maxColliders = 100;
+        Collider[] hitColliders = new Collider[maxColliders];
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
+        for (int i = 0; i < numColliders; i++)
         {
-            DigPoint digPoint = hitCollider.transform.gameObject.GetComponent<DigPoint>();
-            sensedDigPoints.Enqueue(digPoint, Vector3.Distance(digPoint.transform.position, transform.position));
+            DigPoint digPoint = hitColliders[i].transform.gameObject.GetComponent<DigPoint>();
+            sensedDigPoints.Enqueue(hitColliders[i].transform.gameObject, 100 - Vector3.Distance(digPoint.transform.position, transform.position));
         }
+
+        int minDepth = int.MaxValue;
+        int minLength = int.MaxValue;
 
         while (sensedDigPoints.Count > 0)
         {
-            DigPoint digPoint = sensedDigPoints.Dequeue();
-            
-            path = CubePaths.PathToPoint(antSurface, Vector3Int.FloorToInt(digPoint.transform.position), 10);
+            GameObject digObject = sensedDigPoints.Dequeue();
+            DigPoint digPoint = digObject.GetComponent<DigPoint>();
+            List<CubePaths.CubeSurface> newPath;
 
-            if (path.Count > 0) return true;
+            bool isReachable = CubePaths.PathToPoint(antSurface, Vector3Int.FloorToInt(digPoint.transform.position), 10, out newPath);
+            
+            if (isReachable && 
+                ((digPoint.depth < minDepth) ||
+                (digPoint.depth == minDepth && newPath.Count < minLength)))
+            {         
+                path = newPath;
+                digObjective = digObject;
+                minDepth = digPoint.depth;
+                minLength = path.Count;
+            }
+
         }
 
-        return false;
+        return minDepth != int.MaxValue;
     }
 
     //Pone el 
@@ -485,6 +567,7 @@ public class Ant : MonoBehaviour
         {
             Debug.Log("not found");
             path = new();
+            digObjective = null;
             return followState.Lost;
         }
 
@@ -522,8 +605,8 @@ public class Ant : MonoBehaviour
             List<CubePheromone> sensedPheromones = new();
             foreach (var surface in sensedRange)
             {
-                CubePaths.DrawSurface(surface, colors[range], 2);
-                CubePaths.DrawCube(surface.pos, colors[range], 2);
+                //CubePaths.DrawSurface(surface, colors[range], 2);
+                //CubePaths.DrawCube(surface.pos, colors[range], 2);
                 if (CubePaths.cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> surfacePhers))
                     sensedPheromones.AddRange(surfacePhers);
             }
@@ -596,7 +679,7 @@ public class Ant : MonoBehaviour
             {
                 nextRange.Add(son);
                 checkedSurfaces.Add(son, son);
-                CubePaths.DrawCube(son.pos, Color.magenta, 1);
+                //CubePaths.DrawCube(son.pos, Color.magenta, 1);
             }
             return nextRange;
         }
@@ -613,7 +696,7 @@ public class Ant : MonoBehaviour
                 {
                     nextRange.Add(son);
                     checkedSurfaces.Add(son, currentSurface);
-                    CubePaths.DrawCube(son.pos, Color.green, 1);
+                    //CubePaths.DrawCube(son.pos, Color.green, 1);
                 }
             }
         }

@@ -334,7 +334,7 @@ public class FlyCamera : MonoBehaviour
                 {
                     digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
                     digPoint.SetActive(true);
-                    digPoint.GetComponent<DigPoint>().setDesiredVal(entry.Value);
+                    digPoint.GetComponent<DigPoint>().SetDesiredVal(entry.Value);
                 }
                 else if (entry.Value < WorldGen.isolevel)// Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
                 {
@@ -346,7 +346,7 @@ public class FlyCamera : MonoBehaviour
                         {
                             digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
                             digPoint.SetActive(true);
-                            digPoint.GetComponent<DigPoint>().setDesiredVal(entry.Value);
+                            digPoint.GetComponent<DigPoint>().SetDesiredVal(entry.Value);
                             break; //Salgo del loop para no mirar el resto de dirs
                         }
                     }
@@ -468,9 +468,8 @@ public class FlyCamera : MonoBehaviour
             int terrainClickLayer = (1 << 6); //terrain layer
             if (clickObject(digPointClickLayer, out RaycastHit hit))
             {
-                hit.transform.gameObject.GetComponent<DigPoint>().dig();
-                Destroy(hit.transform.gameObject); //Error: items that have been checked twice in dig don't get destroyed.
-                //Theory: they do get destroyed but have a copy over it.
+                hit.transform.gameObject.GetComponent<DigPoint>().Dig();
+                Destroy(hit.transform.gameObject);
             }
             else if (clickObject(terrainClickLayer, out hit))
             {
@@ -510,13 +509,12 @@ public class FlyCamera : MonoBehaviour
                     case obj.test:
                         Vector3Int cube = Vector3Int.FloorToInt(hit.point);
                         
-
-
                         if (SelectedAnt != null)
                         {
-                            List<CubePaths.CubeSurface> path = CubePaths.PathToPoint(SelectedAnt.lastSurface, cube, 100);
+                            CubePaths.PathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
                             SelectedAnt.path = path;
                             SelectedAnt.haveGoal = false;
+                            SelectedAnt.digObjective = null;
                             SelectedAnt.state = Ant.AIState.FollowingPath;
                         }
 

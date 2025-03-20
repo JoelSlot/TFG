@@ -7,6 +7,7 @@ public class DigPoint : MonoBehaviour
 
     public WorldGen WG;
     public float desiredVal = 0;
+    public int depth = 0;
     public static Dictionary<Vector3Int, Tuple<float, GameObject>> digPointDict = new Dictionary<Vector3Int, Tuple<float, GameObject>>();
     //ORIGINALLY USED A HASHSET TO SEE WITCH ONES HADN?T BEEN INITIALIZED BUT NOW JUST USES TUPLE IN DICT
 
@@ -22,14 +23,14 @@ public class DigPoint : MonoBehaviour
         
     }
 
-    public void setDesiredVal(float newVal)
+    public void SetDesiredVal(float newVal)
     {
         desiredVal = newVal;
     }
 
-    public float getDesiredVal(){return desiredVal;}
+    public float GetDesiredVal(){return desiredVal;}
 
-    public void dig()
+    public void Dig()
     {
         //Comenzamos la lista de puntos a editar con el digPoint mismo
         Vector3Int pos = Vector3Int.CeilToInt(transform.position);
@@ -58,7 +59,8 @@ public class DigPoint : MonoBehaviour
                     {
                         GameObject digPoint = Instantiate(transform.gameObject, pos + direction, Quaternion.identity);
                         digPoint.SetActive(true);
-                        digPoint.GetComponent<DigPoint>().setDesiredVal(desiredVal);
+                        digPoint.GetComponent<DigPoint>().SetDesiredVal(desiredVal);
+                        digPoint.GetComponent<DigPoint>().depth = depth + 1;
                         digPointDict[pos + direction] = new Tuple<float, GameObject>(desiredVal, digPoint);
                     }
                     //Quitar un poco de los alrededores

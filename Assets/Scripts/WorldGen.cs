@@ -39,6 +39,7 @@ public class WorldGen : MonoBehaviour
         num_chunks_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
         PopulateTerrainMap();
         GenerateChunks();
+        Physics.gravity = new Vector3(0, -15.0F, 0);
     }
 
     /*
