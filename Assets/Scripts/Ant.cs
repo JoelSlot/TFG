@@ -531,8 +531,7 @@ public class Ant : MonoBehaviour
         }//Para evitar seguir camino nonexistente.
 
         List<CubePaths.CubeSurface> sensedRange = new();
-        bool foundPath = false;
-        CubePaths.CubeSurface goal = new();
+        int goalIndex = -1;
         int range = 0;
         Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
         
@@ -547,23 +546,19 @@ public class Ant : MonoBehaviour
             return followState.Reached;
         }
 
-        while (!foundPath && range < 5)
+        //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
+        while (goalIndex == -1 && range < 5)
         {
             range++;
             sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
 
             for (int i = 0; i < path.Count; i += 1)
             {
-                var index = sensedRange.FindIndex(x => x.Equals(path[i]));
-                if (index >= 0)
-                {
-                    foundPath = true;
-                    goal = sensedRange[index];
-                }
+                if (sensedRange.Exists(x => x.Equals(path[i]))) goalIndex = i;
             }
         }
 
-        if (!foundPath)
+        if (goalIndex == -1)
         {
             Debug.Log("not found");
             path = new();
@@ -571,11 +566,13 @@ public class Ant : MonoBehaviour
             return followState.Lost;
         }
 
-        CubePaths.CubeSurface firstStep = checkedSurfaces[goal];
+        CubePaths.CubeSurface firstStep = path[goalIndex];
 
         Debug.Log("First step: " + firstStep.pos);
 
         Vector3Int dir = firstStep.pos - antSurface.pos;
+
+        if (goalIndex < path.Count - 1) CubePaths.DrawCube(path[goalIndex+1].pos, Color.cyan, 2);//dir = dir + path[goalIndex+1].pos - path[goalIndex].pos;
 
         nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
 

@@ -181,9 +181,9 @@ public class CubePaths : MonoBehaviour
                 bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
                 Vector3Int newSurfaceCorner = TrueCorner(i, surface.surfaceGroup) - dir; //Get corner value
                 bool[] newGroup = GetGroup(newSurfaceCorner, newCornerValues);
-                int groupCount = 0;
+                /*int groupCount = 0;
                 foreach (bool corner in newGroup) if (corner) groupCount += 1;
-                if (groupCount > 1) adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
+                if (groupCount > 1) */adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
             }
         }
 
@@ -332,6 +332,8 @@ public class CubePaths : MonoBehaviour
     {
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
         {
+            DrawCube(surface.pos, Color.black, 2);
+            DrawCube(surface.pos + dir, Color.black, 2);
             Debug.Log("NOT VALID DIR: " + dir);
             return surface.pos + dir*4 + Vector3.one / 2;
         }
@@ -352,6 +354,7 @@ public class CubePaths : MonoBehaviour
         Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex]*4, Color.blue, 10);
         return goal + chunk.faceDirections[faceIndex]*4;
     }
+
     
     //Función que dado dos cubos y la subSuperficie del primero, devuelve si esa superficie conecta directamente con el segundo cubo
     public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
@@ -447,9 +450,11 @@ public class CubePaths : MonoBehaviour
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (current.pos == objective)
+            if (current.pos == objective){
+                reachedSurface = previo[previo[current]];
                 break;
-            
+            }
+                
             if (NextToPoint(current.pos, objective))
             {
                 reachedSurface = previo[current];
@@ -463,7 +468,7 @@ public class CubePaths : MonoBehaviour
             {
                 float newCost = coste[current] + 1;
                 int newLength = longitud[current] + 1;
-                if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
+                //if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
                 bool updateOrInsert = false;
                 if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
                 else if (newCost < prevCost) updateOrInsert = true;
@@ -490,7 +495,8 @@ public class CubePaths : MonoBehaviour
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedSurface = previo[reachedSurface];
         }
-        Debug.Log(path.Count);
+
+        Debug.Log("found path length: " + path.Count);
         return gotToPoint;
     }
 
