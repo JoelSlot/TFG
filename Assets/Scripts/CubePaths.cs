@@ -3,6 +3,7 @@ using Utils;
 using UnityEngine;
 using System;
 using System.Linq;
+using System.Security.Authentication.ExtendedProtection;
 
 public class CubePaths : MonoBehaviour
 {
@@ -330,12 +331,13 @@ public class CubePaths : MonoBehaviour
     //Dado la superficie actual y la dir en la que se quiere mover devuelve el punto a seguir para llegar
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
+        Debug.Log("MOVEMENT GOAL 1");
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
         {
-            DrawCube(surface.pos, Color.black, 2);
-            DrawCube(surface.pos + dir, Color.black, 2);
+            DrawCube(surface.pos, Color.black, 20);
+            DrawCube(surface.pos + dir, Color.black, 20);
             Debug.Log("NOT VALID DIR: " + dir);
-            return surface.pos + dir*4 + Vector3.one / 2;
+            return surface.pos + Vector3.one / 2 + dir*40;
         }
 
         Vector3 goal = Vector3.zero;
@@ -344,7 +346,7 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
-            if (surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
+            if (!surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
             {
                 goal += chunk.cornerTable[cornerIndex];
                 num++;
@@ -352,7 +354,73 @@ public class CubePaths : MonoBehaviour
         }
         goal = surface.pos + goal / num;
         Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex]*4, Color.blue, 10);
-        return goal + chunk.faceDirections[faceIndex]*4;
+        return goal + chunk.faceDirections[faceIndex]*40;
+    }
+
+    //Dado la superficie actual y las dos siguientes direcciones, devuelve el punto a seguir
+    public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir1, Vector3Int dir2)
+    {
+        Debug.Log("MOVEMENT GOAL 2");
+
+        //Si la segunda dir no es válida usamos solo dir 1
+        if (!chunk.reverseFaceDirections.TryGetValue(dir2, out int faceIndex2))
+        {
+            Debug.Log("DIR 2 NOT VALID: " + dir2);
+            return GetMovementGoal(surface, dir1);
+        }
+
+
+        if (!chunk.reverseFaceDirections.TryGetValue(dir1, out int faceIndex1))
+        {
+            DrawCube(surface.pos, Color.black, 20);
+            DrawCube(surface.pos + dir1, Color.black, 20);
+            Debug.Log("DIR 1 NOT VALID: " + dir1);
+            return surface.pos + Vector3.one / 2 + dir1*2;
+        }
+
+        //Si la segunda dir es igual o opuesto al primero, no es importante y podemos usar solo el primero.
+        if (faceIndex1 == faceIndex2 || faceIndex1 == -faceIndex2)
+        {
+            Debug.Log("DIR 2 == DIR 1: " + dir1);
+            return GetMovementGoal(surface, dir1);
+        };
+
+        Vector3 goal = Vector3.zero;
+        int num = 0;
+        //DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
+
+        int sharedEdge = 0;
+        int nonSharedEdge = 0;
+
+        for (int i = 0; i < 4; i++)
+        {
+            int cornerIndex1 = chunk.faceIndexes[faceIndex1, i];
+            if (!surface.surfaceGroup[cornerIndex1]) //Si el punto se encuentra bajo la superficie
+            {
+                goal += chunk.cornerTable[cornerIndex1];
+                num++;
+            }
+
+            int cornerIndex2 = chunk.faceIndexes[faceIndex2, i];
+            if (surface.surfaceGroup[cornerIndex2])
+            {
+                bool sharedCorner = false;
+                for (int j = 0; j < 4; j++) if (chunk.faceIndexes[faceIndex1, j] == cornerIndex2) sharedCorner = true;
+                if (sharedCorner) sharedEdge += 1;
+                else nonSharedEdge += 1;
+            }
+        }
+        goal = surface.pos + goal / num;
+
+        DrawFace(surface.pos, faceIndex1, Color.blue, 2);
+        DrawFace(surface.pos, faceIndex2, Color.red, 2);
+
+        //THIS SOLVED THE INNER TURN PROBLEM
+        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceDirections[faceIndex2]*4;
+
+        goal += chunk.faceDirections[faceIndex1]*4;
+
+        return goal;
     }
 
     
@@ -418,11 +486,11 @@ public class CubePaths : MonoBehaviour
 
     public static bool NextToPoint(Vector3Int cube, Vector3Int point)
     {
-        for (int i = 0; i < 8; i++) if (cube + chunk.cornerTable[i] == point) return true;
+        if ((point - cube).magnitude < 2) return true;
         return false;
     }
 
-    public static bool PathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit, out List<CubeSurface> path)
+    public static bool GetPathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit, out List<CubeSurface> path)
     {
         path = new List<CubeSurface>();
 
@@ -451,13 +519,13 @@ public class CubePaths : MonoBehaviour
             CubeSurface current = frontera.Dequeue();
 
             if (current.pos == objective){
-                reachedSurface = previo[previo[current]];
+                reachedSurface = current;
                 break;
             }
                 
             if (NextToPoint(current.pos, objective))
             {
-                reachedSurface = previo[current];
+                reachedSurface = current;
                 gotToPoint = true;
                 break;
             }
@@ -490,7 +558,7 @@ public class CubePaths : MonoBehaviour
 
         while (!reachedSurface.Equals(start))
         {
-            DrawCube(reachedSurface.pos, Color.blue, 4);
+            //DrawCube(reachedSurface.pos, Color.blue, 4);
             //DrawSurface(reachedSurface, Color.black, 40);
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedSurface = previo[reachedSurface];
@@ -509,6 +577,14 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 12; i++)
         {
             Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color, time);
+        }
+    }
+
+    public static void DrawCube(Vector3Int cube, Color color)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color);
         }
     }
 

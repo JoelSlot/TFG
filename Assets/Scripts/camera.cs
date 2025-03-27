@@ -511,7 +511,7 @@ public class FlyCamera : MonoBehaviour
                         
                         if (SelectedAnt != null)
                         {
-                            CubePaths.PathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
+                            CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
                             SelectedAnt.path = path;
                             SelectedAnt.haveGoal = false;
                             SelectedAnt.digObjective = null;

@@ -235,6 +235,7 @@ MonoBehaviour:
   state: 1
   speed_per_second: 2
   degrees_per_second: 67.5
+  minAngle: 70
 --- !u!114 &6207866
 MonoBehaviour:
   m_ObjectHideFlags: 0

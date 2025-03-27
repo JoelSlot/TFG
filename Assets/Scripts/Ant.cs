@@ -73,6 +73,8 @@ public class Ant : MonoBehaviour
     {
     }
 
+    Vector3Int nextPosDraw = Vector3Int.zero;
+
     int pathTimer = 0;
     // Update is called once per frame
     void FixedUpdate()
@@ -81,13 +83,16 @@ public class Ant : MonoBehaviour
         {
             Rigidbody.useGravity = false;
 
-            AIBehaviour(changedSurface, antSurface);
+            AIBehaviour(changedSurface, normalMedian, antSurface);
         
             if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
             lastSurface = antSurface;
+
+            CubePaths.DrawCube(nextPosDraw, Color.blue);
+            CubePaths.DrawCube(antSurface.pos, Color.black);
         }
         else Rigidbody.useGravity = true;
 
@@ -102,7 +107,7 @@ public class Ant : MonoBehaviour
 
     int senseTimer = 0;
     
-    void AIBehaviour(bool movedCube, CubePaths.CubeSurface antSurface) {
+    void AIBehaviour(bool movedCube, Vector3 surfaceNormal ,CubePaths.CubeSurface antSurface) {
 
         switch (state)
         {
@@ -126,7 +131,7 @@ public class Ant : MonoBehaviour
                         haveGoal = SensePheromones(antSurface);
                 }
 
-                if (haveGoal) FollowGoal();
+                if (haveGoal) FollowGoal(surfaceNormal);
                 else state = AIState.Passive;
             break;
 
@@ -148,7 +153,7 @@ public class Ant : MonoBehaviour
 
                     case followState.Following:
                         haveGoal = true;
-                        FollowGoal();
+                        FollowGoal(surfaceNormal);
                     break;
                 }
             break;
@@ -181,7 +186,7 @@ public class Ant : MonoBehaviour
                     {
                         haveGoal = true;
                         state = AIState.FollowingPher;
-                        FollowGoal();
+                        FollowGoal(surfaceNormal);
                     }
                 }
             break;
@@ -239,9 +244,11 @@ public class Ant : MonoBehaviour
         Animator.SetBool("walking", true);
     }
 
+    public float minAngle = 60f;
+
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
-    void FollowGoal()
+    void FollowGoal(Vector3 hitNormal)
     {
 
         if (!haveGoal)
@@ -257,7 +264,12 @@ public class Ant : MonoBehaviour
         relativeGoal.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
         float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
 
-        float minAngle = 35f;
+
+        //MOST IMPORTANT CHANGE: MAKES EVERYTHING A LOT SMOOTHER.
+        Vector3 goalVector = nextGoal - transform.position;
+        Vector3 proyectedGoal = Vector3.ProjectOnPlane(goalVector, hitNormal);
+        Vector3 proyectedForward = Vector3.ProjectOnPlane(transform.forward, hitNormal);
+        horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
 
         Debug.DrawLine(transform.position, nextGoal, Color.red, 0.35f);
     
@@ -502,7 +514,7 @@ public class Ant : MonoBehaviour
             DigPoint digPoint = digObject.GetComponent<DigPoint>();
             List<CubePaths.CubeSurface> newPath;
 
-            bool isReachable = CubePaths.PathToPoint(antSurface, Vector3Int.FloorToInt(digPoint.transform.position), 10, out newPath);
+            bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(digPoint.transform.position), 10, out newPath);
             
             if (isReachable && 
                 ((digPoint.depth < minDepth) ||
@@ -529,6 +541,13 @@ public class Ant : MonoBehaviour
             Debug.Log("no path to follow");
             return followState.Lost; 
         }//Para evitar seguir camino nonexistente.
+
+        if (CubePaths.NextToPoint(antSurface.pos, path.Last().pos))
+        {
+            path = new();
+            Debug.Log("Reached adyacent point");
+            return followState.Reached;
+        }
 
         List<CubePaths.CubeSurface> sensedRange = new();
         int goalIndex = -1;
@@ -568,13 +587,14 @@ public class Ant : MonoBehaviour
 
         CubePaths.CubeSurface firstStep = path[goalIndex];
 
-        Debug.Log("First step: " + firstStep.pos);
+        Debug.Log("First step: " + firstStep.pos + " at range " + range);
 
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
-        if (goalIndex < path.Count - 1) CubePaths.DrawCube(path[goalIndex+1].pos, Color.cyan, 2);//dir = dir + path[goalIndex+1].pos - path[goalIndex].pos;
+        if (goalIndex < path.Count - 1) nextGoal = CubePaths.GetMovementGoal(antSurface, dir, path[goalIndex+1].pos - path[goalIndex].pos);
+        else    nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
 
-        nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+        nextPosDraw = firstStep.pos;
 
         return followState.Following;
     }
@@ -649,6 +669,8 @@ public class Ant : MonoBehaviour
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
         nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+
+        nextPosDraw = firstStep.pos;
 
         return true;
 

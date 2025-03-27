@@ -215,8 +215,8 @@ public class chunk
 
     public static int[,] faceIndexes = new int[6,4]
     {
-        {0, 1, 2, 3}, // back face
-        {4, 5, 6, 7}, // forward face
+        {0, 1, 3, 2}, // back face
+        {4, 5, 7, 6}, // forward face
         {1, 2, 5, 6}, // right face
         {0, 3, 4, 7}, // left face
         {2, 3, 6, 7}, // up face
