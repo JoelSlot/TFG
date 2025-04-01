@@ -67,18 +67,44 @@ public class DigObject : MonoBehaviour
             transform.up = dir.normalized;
         }
         else if (mode == digType.Chamber)
+        //The chamber uses startpos as its center, and endPos as one of it's corners
         {
             Vector3 distance = endPos - startPos;
-            transform.position = startPos + distance/2;
+            transform.position = startPos;
             startSphere.transform.localPosition = Vector3.zero;
             startSphere.transform.localScale = new Vector3(Mathf.Abs(distance.x), Mathf.Abs(distance.y), Mathf.Abs(distance.z));
             transform.up = Vector3.up;
-            float a = Mathf.Abs(distance.x)/2;
-            float b = Mathf.Abs(distance.y)/2;
-            float c = Mathf.Abs(distance.z)/2;
+            float a = Mathf.Abs(distance.x);
+            float b = Mathf.Abs(distance.y);
+            float c = Mathf.Abs(distance.z);
             Debug.Log("a: " + a + ", b: " + b + ", c: " + c);
         }
     }
+
+    public void setPos(Vector3 pos)
+    {
+        if (mode == digType.Tunnel)
+        {
+            setPos(startPos, pos);
+        }
+        else if (mode == digType.Chamber)
+        //The chamber uses startpos as its center, and endPos as one of it's corners
+        {
+            Vector3 change = pos - transform.position;
+            setPos(pos, endPos + change);
+        }
+    }
+
+    public void addPos(Vector3 add)
+    {
+        setPos(startPos, endPos + add);
+    }
+
+    public void addStartPos(Vector3 add)
+    {
+        setPos(startPos + add, endPos + add);
+    }
+
 
     public void setRadius(float newRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
     {
@@ -87,6 +113,11 @@ public class DigObject : MonoBehaviour
         startSphere.transform.localScale = Vector3.one * radius * 2;
         endSphere.transform.localScale = Vector3.one * radius * 2;
         cilinder.transform.localScale = new Vector3(radius*2, dir.magnitude/2, radius*2);        
+    }
+
+    public void addRadius(float addRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
+    {
+        setRadius(radius + addRadius);       
     }
 
     public float getRadius()

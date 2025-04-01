@@ -484,11 +484,12 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    public static bool NextToPoint(Vector3Int cube, Vector3Int point)
+    public static bool NextToPoint(Vector3 pos, Vector3Int point)
     {
-        if ((point - cube).magnitude < 2) return true;
+        if ((point - pos).magnitude < 1.5) return true;
         return false;
     }
+
 
     public static bool GetPathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit, out List<CubeSurface> path)
     {
