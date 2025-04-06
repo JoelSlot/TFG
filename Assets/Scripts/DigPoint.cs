@@ -35,9 +35,9 @@ public class DigPoint : MonoBehaviour
         //Comenzamos la lista de puntos a editar con el digPoint mismo
         Vector3Int pos = Vector3Int.CeilToInt(transform.position);
         float val = digPointDict[pos].Item1;
-        List<Tuple<Vector3Int, float>> points = new List<Tuple<Vector3Int, float>>
+        List<Tuple<Vector3Int, float>> points = new()
         {
-            new Tuple<Vector3Int, float>(pos, val)
+            new(pos, val)
         };
         
         //Miramos todos los digPoints alrededores
@@ -74,5 +74,10 @@ public class DigPoint : MonoBehaviour
         WG.EditTerrainSet(points);
     }
     
+    public Objective getObjective()
+    {
+        return new Objective(this);
+    }
+
 }
 

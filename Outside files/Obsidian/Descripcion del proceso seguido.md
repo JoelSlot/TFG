@@ -267,3 +267,8 @@ https://sketchfab.com/3d-models/larva-14877198919544f5b43cef3e86e7b89f
 
 - Added an outline to the ant object. This will be used when selecting one, remember to add this information to the corresponding section. This used the free public asses Quick Outline.
 
+
+
+[Corn Seed](https://poly.pizza/m/2wLZeYBSfsH) by [apelab](https://poly.pizza/u/apelab) [[CC-BY](https://creativecommons.org/licenses/by/3.0/)] via Poly Pizza
+[Wheat](https://poly.pizza/m/4siom7-sFLN) by [Poly by Google](https://poly.pizza/u/Poly%20by%20Google) [[CC-BY](https://creativecommons.org/licenses/by/3.0/)] via Poly Pizza
+[Beetle](https://poly.pizza/m/4yufxgZ1QQ2) by [Poly by Google](https://poly.pizza/u/Poly%20by%20Google) [[CC-BY](https://creativecommons.org/licenses/by/3.0/)] via Poly Pizza

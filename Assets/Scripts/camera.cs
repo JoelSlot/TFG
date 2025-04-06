@@ -270,6 +270,7 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftArrow))        SelectedAnt.TurnLeft();
         else if (Input.GetKey(KeyCode.RightArrow))  SelectedAnt.TurnRight();
         else                                        SelectedAnt.DontTurn();
+        if(Input.GetKey(KeyCode.Comma))             SelectedAnt.LetGo();
 
         //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
     }
@@ -475,7 +476,6 @@ public class FlyCamera : MonoBehaviour
         Vector3 movement = Vector3.zero;
         if (Mathf.Abs(mouseForward) > 0.1f) movement += relFor * mouseForward;
         if (Mathf.Abs(mouseSideways) > 0.1f) movement -= relLeft * mouseSideways;
-        Debug.Log(movement);
 
         //resize the tunnel
         if (Input.mouseScrollDelta.y > 0)
@@ -578,8 +578,7 @@ public class FlyCamera : MonoBehaviour
                     {
                         CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
                         SelectedAnt.path = path;
-                        SelectedAnt.haveGoal = false;
-                        SelectedAnt.digObjective = null;
+                        SelectedAnt.objective = new(hit.point); 
                         SelectedAnt.state = Ant.AIState.FollowingPath;
                     }
 

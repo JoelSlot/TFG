@@ -3,6 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Utils;
 using NUnit.Framework;
+using UnityEditor;
+using Unity.VisualScripting;
 
 
 public class Ant : MonoBehaviour
@@ -25,23 +27,35 @@ public class Ant : MonoBehaviour
     public CubePaths.CubeSurface lastSurface;
     private CubePheromone placedPher = null; //Last placed pheromone by ant
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
-    public GameObject digObjective = null;
-    private Vector3 nextGoal; //Point in space the ant will try to move to.
-    public bool haveGoal = false; //only use in AIMovement case
-    public int stucktimer = 0;
+    private Vector3 nextGoal = Vector3.negativeInfinity; //Point in space the ant will try to move to.
+    public Objective objective = null;
+    public GameObject carriedObject = null;
 
+    private bool haveGoal()
+    {
+        if (nextGoal.Equals(Vector3.negativeInfinity)) return false;
+        return true;
+    }
+
+    private void setHaveGoalFalse()
+    {
+        nextGoal = Vector3.negativeInfinity;
+    }
 
     public enum AIState
     {
         Exploring,
         FollowingPher,
         FollowingPath, //Following a
-        DiggingAnim,
+        ReachedObjective,
         Controlled,
         Passive
     }
 
     public AIState state = AIState.FollowingPher;
+
+    
+
     //el animador
     private Animator Animator;
     public float speed_per_second = 2f;
@@ -96,7 +110,7 @@ public class Ant : MonoBehaviour
         }
         else Rigidbody.useGravity = true;
 
-        if (digObjective != null) Debug.DrawLine(transform.position, digObjective.transform.position, Color.black);
+        if (objective != null) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
 
     }
 
@@ -106,53 +120,46 @@ public class Ant : MonoBehaviour
     }
 
     int senseTimer = 0;
-    
-    void AIBehaviour(bool movedCube, Vector3 surfaceNormal ,CubePaths.CubeSurface antSurface) {
+    AIState prevState = AIState.Controlled;
 
+    void AIBehaviour(bool movedCube, Vector3 surfaceNormal ,CubePaths.CubeSurface antSurface) {
+        //Show state
+        if (prevState != state)
+        {
+            Debug.Log("I am in " + state.ToString());
+            prevState = state;
+        }
+        //
         switch (state)
         {
             //Si estamos siguiendo una feromona, buscamos siguiente paso al cambiar de cubo.
             //La gestión de cambiar de following a no following al perderse no se hace aqui?
             case AIState.FollowingPher:
-
-                if (movedCube)
+                if (movedCube || !haveGoal())
                 {
-                    if (SenseDigPoint(antSurface))
-                    {
-                        if (path.Count == 0) state = AIState.DiggingAnim;
-                        else
-                        {
-                            haveGoal = true;
-                            state = AIState.FollowingPath;
-                            SetGoalFromPath(antSurface);
-                        }
-                    }
-                    else
-                        haveGoal = SensePheromones(antSurface);
+                    Debug.Log("Sensing that shit.");
+                    SenseGeneral(antSurface);
                 }
-
-                if (haveGoal) FollowGoal(surfaceNormal);
-                else state = AIState.Passive;
+                if (state != AIState.Passive) FollowGoal(surfaceNormal);
             break;
 
             case AIState.FollowingPath:
                 followState followState = followState.Following;
-                if (movedCube || !haveGoal) followState = SetGoalFromPath(antSurface);
+                //I dont quite remember why it checks for no objective, other than solving oversights?
+                if (movedCube || !haveGoal()) followState = SetGoalFromPath(antSurface);
 
                 switch (followState){
 
                     case followState.Reached:
-                        haveGoal = false;
-                        state = AIState.DiggingAnim;
+                        state = AIState.ReachedObjective;
                     break;
 
                     case followState.Lost:
-                        haveGoal = false;
+                        objective = null;
                         state = AIState.Passive;
                     break;
 
                     case followState.Following:
-                        haveGoal = true;
                         FollowGoal(surfaceNormal);
                     break;
                 }
@@ -168,38 +175,31 @@ public class Ant : MonoBehaviour
                 DontTurn();
 
                 senseTimer++;
-                if (senseTimer == 100)
+                if (senseTimer > 50)
                 {
                     senseTimer = 0;
-                    if (SenseDigPoint(antSurface))
-                    {
-                        Debug.Log("THE PATH LENG IS " + path.Count);
-                        if (path.Count == 0) state = AIState.DiggingAnim;
-                        else
-                        {
-                            haveGoal = true;
-                            state = AIState.FollowingPath;
-                            SetGoalFromPath(antSurface);
-                        }
-                    }
-                    else if (SensePheromones(antSurface))
-                    {
-                        haveGoal = true;
-                        state = AIState.FollowingPher;
-                        FollowGoal(surfaceNormal);
-                    }
+                    SenseGeneral(antSurface);
                 }
             break;
 
-            case AIState.DiggingAnim:
-                if (digObjective == null) state = AIState.Passive;
+            case AIState.ReachedObjective:
+                if (objective == null) state = AIState.Passive; //Failsa
                 else
                 {
-                    if (!IsDigging())
+                    SetWalking(false);
+                    DontTurn();
+                    if (objective.isPos())
                     {
-                        SetWalking(false);
-                        if (Align(digObjective.transform.position)) SetDig(true);
+                        state = AIState.Passive;
+                        break;
                     }
+                    if (Align(objective.getPos()))
+                    {
+                        DontTurn();
+                        if (objective.isDigPoint()) Animator.SetTrigger("Dig");
+                        if (objective.isFood() && !Animator.GetNextAnimatorStateInfo(0).IsTag("holding")) Animator.SetTrigger("Pick up");
+                    }
+                    
                 }
             break;
 
@@ -210,14 +210,43 @@ public class Ant : MonoBehaviour
         turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
     }
 
-    public void PerformDig()
+    public void pickupAction() //function called by the animation
     {
-        SetDig(false);
-        if (digObjective == null) return;
+        Animator.ResetTrigger("Pick up"); //To avoid it repeating the pickup
+        if (objective == null) return;
 
-        digObjective.GetComponent<DigPoint>().Dig();
-        Destroy(digObjective);
-        digObjective = null;
+        bool succeed = objective.interact(out GameObject item);
+
+        if (item == null) return;
+
+        if (objective.isFood())
+        {
+            if (succeed)
+            {
+                item.transform.SetParent(carriedObject.transform);
+                Destroy(item.GetComponent<Rigidbody>());
+                item.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            }
+            else Animator.SetTrigger("Pick up fail");
+        }
+
+        objective = null;
+    }
+
+    public void PutDownAction()
+    {
+        //carriedObject.
+        foreach(Transform child in carriedObject.transform)
+        {
+            child.gameObject.AddComponent<Rigidbody>();
+        }
+        carriedObject.transform.DetachChildren();
+        Animator.ResetTrigger("Put down");
+    }
+
+    public void LetGo()
+    {
+        if (Animator.GetCurrentAnimatorStateInfo(0).IsTag("holding")) Animator.SetTrigger("Put down");
     }
 
     //Devuelve true si la hormiga llega alinearse con el punto
@@ -251,7 +280,7 @@ public class Ant : MonoBehaviour
     void FollowGoal(Vector3 hitNormal)
     {
 
-        if (!haveGoal)
+        if (!haveGoal())
         {
             DontTurn();
             SetWalking(false);
@@ -344,22 +373,6 @@ public class Ant : MonoBehaviour
 
     public void DontTurn(){
         Animator.SetInteger("turning", 0);
-    }
-
-    public void SetDig(bool dig)
-    {
-        if (dig)
-        {
-            SetWalking(false);
-            DontTurn();
-            Animator.SetBool("Digging", true);
-        }
-        else Animator.SetBool("Digging", false);
-    }
-
-    public bool IsDigging()
-    {
-        return Animator.GetBool("Digging");
     }
 
     private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface)
@@ -490,9 +503,72 @@ public class Ant : MonoBehaviour
             }
     }
 
+    private void SenseGeneral(CubePaths.CubeSurface antSurface)
+    {
+        setHaveGoalFalse();
+        if (SenseFood(antSurface))
+        {
+            if (path.Count == 0) state = AIState.ReachedObjective;
+            else
+            {
+                state = AIState.FollowingPath;
+            }
+        }
+        else if (SenseDigPoints(antSurface))
+        {
+            if (path.Count == 0) state = AIState.ReachedObjective;
+            else
+            {
+                state = AIState.FollowingPath;
+            }
+        }
+        else if (SensePheromones(antSurface))
+        {
+            state = AIState.FollowingPher;
+        }
+        else state = AIState.Passive;
+    }
+
     //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
     //Si no hay, devuelve false.
-    private bool SenseDigPoint(CubePaths.CubeSurface antSurface)
+    private bool SenseFood(CubePaths.CubeSurface antSurface)
+    {
+        int layermask = 1 << 10;
+        PriorityQueue<GameObject, float> sensedFood = new();
+        int maxColliders = 100;
+        Collider[] hitColliders = new Collider[maxColliders];
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
+        for (int i = 0; i < numColliders; i++)
+        {
+            GameObject food = hitColliders[i].transform.gameObject;
+            sensedFood.Enqueue(hitColliders[i].transform.gameObject, 100 - Vector3.Distance(food.transform.position, transform.position));
+        }
+
+        int minLength = int.MaxValue;
+        objective = null;
+
+        while (sensedFood.Count > 0)
+        {
+            GameObject food = sensedFood.Dequeue();
+            List<CubePaths.CubeSurface> newPath;
+
+            bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(food.transform.position), 10, out newPath);
+            
+            if (isReachable && newPath.Count < minLength)
+            {         
+                path = newPath;
+                objective = new Objective(food);
+                minLength = path.Count;
+            }
+
+        }
+
+        return objective != null;
+    }
+
+    //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
+    //Si no hay, devuelve false.
+    private bool SenseDigPoints(CubePaths.CubeSurface antSurface)
     {
         int layermask = 1 << 9;
         PriorityQueue<GameObject, float> sensedDigPoints = new();
@@ -508,6 +584,8 @@ public class Ant : MonoBehaviour
         int minDepth = int.MaxValue;
         int minLength = int.MaxValue;
 
+        objective = null;
+
         while (sensedDigPoints.Count > 0)
         {
             GameObject digObject = sensedDigPoints.Dequeue();
@@ -521,14 +599,14 @@ public class Ant : MonoBehaviour
                 (digPoint.depth == minDepth && newPath.Count < minLength)))
             {         
                 path = newPath;
-                digObjective = digObject;
+                objective = new Objective(digPoint);
                 minDepth = digPoint.depth;
                 minLength = path.Count;
             }
 
         }
 
-        return minDepth != int.MaxValue;
+        return objective != null;
     }
 
     //Pone el 
@@ -539,13 +617,15 @@ public class Ant : MonoBehaviour
         if (path.Count == 0)
         {
             Debug.Log("no path to follow");
+            setHaveGoalFalse();
             return followState.Lost; 
         }//Para evitar seguir camino nonexistente.
 
-        if (CubePaths.NextToPoint(antSurface.pos, path.Last().pos))
+        if (CubePaths.NextToPoint(transform.position, path.Last().pos))
         {
             path = new();
             Debug.Log("Reached adyacent point");
+            setHaveGoalFalse();
             return followState.Reached;
         }
 
@@ -562,6 +642,7 @@ public class Ant : MonoBehaviour
         {
             Debug.Log("Same");
             path = new();
+            setHaveGoalFalse();
             return followState.Reached;
         }
 
@@ -581,7 +662,7 @@ public class Ant : MonoBehaviour
         {
             Debug.Log("not found");
             path = new();
-            digObjective = null;
+            setHaveGoalFalse();
             return followState.Lost;
         }
 
@@ -592,7 +673,7 @@ public class Ant : MonoBehaviour
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
         if (goalIndex < path.Count - 1) nextGoal = CubePaths.GetMovementGoal(antSurface, dir, path[goalIndex+1].pos - path[goalIndex].pos);
-        else    nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
+        else nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
 
         nextPosDraw = firstStep.pos;
 
@@ -721,5 +802,7 @@ public class Ant : MonoBehaviour
         }
         return nextRange;
     }
+
+
 
 }
