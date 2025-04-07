@@ -20,6 +20,11 @@ namespace FluentBehaviourTree
         /// </summary>
         private List<IBehaviourTreeNode> children = new List<IBehaviourTreeNode>(); //todo: this could be optimized as a baked array.
 
+        /// <summary>
+        /// Index of child being executed.
+        /// </summary>
+        private int index = 0;
+
         public SequenceNode(string name)
         {
             this.name = name;
@@ -27,13 +32,24 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
-            foreach (var child in children)
+            var childStatus = children[index].Tick(time);
+            
+            switch (childStatus)
             {
-                var childStatus = child.Tick(time);
-                if (childStatus != BehaviourTreeStatus.Success)
-                {
-                    return childStatus;
-                }
+                case BehaviourTreeStatus.Success:
+                    index += 1;
+                    if (index >= children.Count)
+                    {
+                        index = 0;
+                        return BehaviourTreeStatus.Success;
+                    }
+                    Tick(time);
+                    break;
+                case BehaviourTreeStatus.Failure:
+                    index = 0;
+                    return BehaviourTreeStatus.Failure;
+                case BehaviourTreeStatus.Running:
+                    return BehaviourTreeStatus.Running;
             }
 
             return BehaviourTreeStatus.Success;
