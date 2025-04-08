@@ -47,8 +47,8 @@ namespace FluentBehaviourTree
                 var childStatus = child.Tick(time);
                 switch (childStatus)
                 {
-                    case BehaviourTreeStatus.Success: ++numChildrenSuceeded; break;
-                    case BehaviourTreeStatus.Failure: ++numChildrenFailed; break;
+                    case BehaviourTreeStatus.Success: ++numChildrenSuceeded; UnityEngine.Debug.Log(child.GetName() + "--> success"); break;
+                    case BehaviourTreeStatus.Failure: ++numChildrenFailed; UnityEngine.Debug.Log(child.GetName() + "--> failure"); break;
                 }
             }
 
@@ -69,5 +69,11 @@ namespace FluentBehaviourTree
         {
             children.Add(child);
         }
+
+        public string GetName()
+        {
+            return name;
+        }
+
     }
 }

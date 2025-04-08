@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace FluentBehaviourTree
 {
@@ -33,27 +35,32 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
-            var childStatus = children[index].Tick(time);
-            
-            switch (childStatus)
-            {
-                case BehaviourTreeStatus.Failure:
-                    index += 1;
-                    if (index >= children.Count)
-                    {
-                        index = 0;
-                        return BehaviourTreeStatus.Failure;
-                    }
-                    Tick(time);
-                    break;
-                case BehaviourTreeStatus.Success:
-                    index = 0;
-                    return BehaviourTreeStatus.Success;
-                case BehaviourTreeStatus.Running:
-                    return BehaviourTreeStatus.Running;
-            }
 
-            return BehaviourTreeStatus.Failure;
+            while (true)
+            {
+                var childStatus = children[index].Tick(time);
+                
+                switch (childStatus)
+                {
+                    case BehaviourTreeStatus.Failure:
+                        UnityEngine.Debug.Log(children[index].GetName() + "--> failure");
+                        index += 1;
+                        if (index >= children.Count)
+                        {
+                            index = 0;
+                            return BehaviourTreeStatus.Failure;
+                        }
+                        Tick(time);
+                        break;
+                    case BehaviourTreeStatus.Success:
+                        UnityEngine.Debug.Log(children[index].GetName() + "--> success");
+                        index = 0;
+                        return BehaviourTreeStatus.Success;
+                    case BehaviourTreeStatus.Running:
+                        return BehaviourTreeStatus.Running;
+                }
+
+            }
         }
 
         /// <summary>
@@ -63,5 +70,11 @@ namespace FluentBehaviourTree
         {
             children.Add(child);
         }
+
+        public string GetName()
+        {
+            return name;
+        }
+
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace FluentBehaviourTree
 {
@@ -14,5 +15,7 @@ namespace FluentBehaviourTree
         /// Update the time of the behaviour tree.
         /// </summary>
         BehaviourTreeStatus Tick(TimeData time);
+
+        string GetName();
     }
 }

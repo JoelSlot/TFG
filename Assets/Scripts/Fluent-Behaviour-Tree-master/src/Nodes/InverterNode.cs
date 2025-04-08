@@ -59,5 +59,11 @@ namespace FluentBehaviourTree
 
             this.childNode = child;
         }
+
+        public string GetName()
+        {
+            return name;
+        }
+
     }
 }
