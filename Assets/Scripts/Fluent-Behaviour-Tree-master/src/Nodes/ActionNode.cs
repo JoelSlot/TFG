@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -35,6 +36,12 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
+            return fn(time);
+        }
+
+        public BehaviourTreeStatus Tick(TimeData time, string parents)
+        {
+            UnityEngine.Debug.Log(parents + " --> " + name);
             return fn(time);
         }
     }

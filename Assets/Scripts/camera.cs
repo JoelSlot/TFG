@@ -80,7 +80,7 @@ public class FlyCamera : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (SelectedAnt != null) AntInputs();
+        //if (SelectedAnt != null) AntInputs();
     }
 
     void CameraMovement()
@@ -264,7 +264,7 @@ public class FlyCamera : MonoBehaviour
 
 
     void AntInputs() {
-        if (SelectedAnt.state != Ant.AIState.Controlled) return;
+        //if (SelectedAnt.state != Ant.AIState.Controlled) return;
         if (Input.GetKey(KeyCode.UpArrow))          SelectedAnt.SetWalking(true);
         else                                        SelectedAnt.SetWalking(false);
         if (Input.GetKey(KeyCode.LeftArrow))        SelectedAnt.TurnLeft();
@@ -412,7 +412,7 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
-        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
+        /*if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
             if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
             else
@@ -433,7 +433,7 @@ public class FlyCamera : MonoBehaviour
                 SelectedAnt.makingTrail = false;
                 //SelectedAnt.placedPheromone = null;
             }
-        }
+        }*/
     }
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
@@ -517,7 +517,7 @@ public class FlyCamera : MonoBehaviour
         {
             if (clickObject(antLayer, out RaycastHit hit))
             {
-                if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                //if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                 SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
                 Debug.Log("Selected an ant");
             }
@@ -532,7 +532,7 @@ public class FlyCamera : MonoBehaviour
             switch (objectMode)
             {
                 case obj.Ant:
-                    if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                    //if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                     GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
                     newAnt.layer = 7;
                     newAnt.SetActive(true);
@@ -576,10 +576,10 @@ public class FlyCamera : MonoBehaviour
                     
                     if (SelectedAnt != null)
                     {
-                        CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
-                        SelectedAnt.path = path;
-                        SelectedAnt.objective = new(hit.point); 
-                        SelectedAnt.state = Ant.AIState.FollowingPath;
+                        //CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
+                        //SelectedAnt.path = path;
+                        //SelectedAnt.objective = new(hit.point); 
+                        //SelectedAnt.state = Ant.AIState.FollowingPath;
                     }
 
                     CubePaths.DrawCube(cube, Color.red, 20);

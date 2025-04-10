@@ -16,6 +16,8 @@ namespace FluentBehaviourTree
         /// </summary>
         BehaviourTreeStatus Tick(TimeData time);
 
+        BehaviourTreeStatus Tick(TimeData time, string parents);
+
         string GetName();
     }
 }

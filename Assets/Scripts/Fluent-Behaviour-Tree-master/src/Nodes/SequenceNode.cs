@@ -34,6 +34,7 @@ namespace FluentBehaviourTree
         public BehaviourTreeStatus Tick(TimeData time)
         {
 
+
             while (true)
             {
                 var childStatus = children[index].Tick(time);
@@ -41,18 +42,14 @@ namespace FluentBehaviourTree
                 switch (childStatus)
                 {
                     case BehaviourTreeStatus.Success:
-                        UnityEngine.Debug.Log(children[index].GetName() + "--> success");
                         index += 1;
                         if (index >= children.Count)
                         {
-                            UnityEngine.Debug.Log( GetName() + " child count: " + children.Count + ", Index: " + index);
                             index = 0;
                             return BehaviourTreeStatus.Success;
                         }
-                        Tick(time);
                         break;
                     case BehaviourTreeStatus.Failure:
-                        UnityEngine.Debug.Log(children[index].GetName() + "--> failure, index: " + index);
                         index = 0;
                         return BehaviourTreeStatus.Failure;
                     case BehaviourTreeStatus.Running:
@@ -60,6 +57,35 @@ namespace FluentBehaviourTree
                 }
             }
         }
+
+        
+        public BehaviourTreeStatus Tick(TimeData time, string parents)
+        {
+            parents = parents + " --> " + name;
+
+            while (true)
+            {
+                var childStatus = children[index].Tick(time, parents);
+                
+                switch (childStatus)
+                {
+                    case BehaviourTreeStatus.Success:
+                        index += 1;
+                        if (index >= children.Count)
+                        {
+                            index = 0;
+                            return BehaviourTreeStatus.Success;
+                        }
+                        break;
+                    case BehaviourTreeStatus.Failure:
+                        index = 0;
+                        return BehaviourTreeStatus.Failure;
+                    case BehaviourTreeStatus.Running:
+                        return BehaviourTreeStatus.Running;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Add a child to the sequence.

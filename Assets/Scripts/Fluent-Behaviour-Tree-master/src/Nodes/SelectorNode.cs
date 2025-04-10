@@ -35,7 +35,6 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
-
             while (true)
             {
                 var childStatus = children[index].Tick(time);
@@ -43,17 +42,40 @@ namespace FluentBehaviourTree
                 switch (childStatus)
                 {
                     case BehaviourTreeStatus.Failure:
-                        UnityEngine.Debug.Log(children[index].GetName() + "--> failure");
                         index += 1;
                         if (index >= children.Count)
                         {
                             index = 0;
                             return BehaviourTreeStatus.Failure;
                         }
-                        Tick(time);
                         break;
                     case BehaviourTreeStatus.Success:
-                        UnityEngine.Debug.Log(children[index].GetName() + "--> success");
+                        index = 0;
+                        return BehaviourTreeStatus.Success;
+                    case BehaviourTreeStatus.Running:
+                        return BehaviourTreeStatus.Running;
+                }
+
+            }
+        }
+
+        public BehaviourTreeStatus Tick(TimeData time, string parents)
+        {
+            while (true)
+            {
+                var childStatus = children[index].Tick(time, parents + " --> " + name);
+                
+                switch (childStatus)
+                {
+                    case BehaviourTreeStatus.Failure:
+                        index += 1;
+                        if (index >= children.Count)
+                        {
+                            index = 0;
+                            return BehaviourTreeStatus.Failure;
+                        }
+                        break;
+                    case BehaviourTreeStatus.Success:
                         index = 0;
                         return BehaviourTreeStatus.Success;
                     case BehaviourTreeStatus.Running:

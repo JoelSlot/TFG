@@ -331,12 +331,12 @@ public class CubePaths : MonoBehaviour
     //Dado la superficie actual y la dir en la que se quiere mover devuelve el punto a seguir para llegar
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
-        Debug.Log("MOVEMENT GOAL 1");
+        //Debug.Log("MOVEMENT GOAL 1");
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
         {
             DrawCube(surface.pos, Color.black, 20);
             DrawCube(surface.pos + dir, Color.black, 20);
-            Debug.Log("NOT VALID DIR: " + dir);
+            //Debug.Log("NOT VALID DIR: " + dir);
             return surface.pos + Vector3.one / 2 + dir*40;
         }
 
@@ -360,12 +360,12 @@ public class CubePaths : MonoBehaviour
     //Dado la superficie actual y las dos siguientes direcciones, devuelve el punto a seguir
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir1, Vector3Int dir2)
     {
-        Debug.Log("MOVEMENT GOAL 2");
+        //Debug.Log("MOVEMENT GOAL 2");
 
         //Si la segunda dir no es válida usamos solo dir 1
         if (!chunk.reverseFaceDirections.TryGetValue(dir2, out int faceIndex2))
         {
-            Debug.Log("DIR 2 NOT VALID: " + dir2);
+            //Debug.Log("DIR 2 NOT VALID: " + dir2);
             return GetMovementGoal(surface, dir1);
         }
 
@@ -374,14 +374,14 @@ public class CubePaths : MonoBehaviour
         {
             DrawCube(surface.pos, Color.black, 20);
             DrawCube(surface.pos + dir1, Color.black, 20);
-            Debug.Log("DIR 1 NOT VALID: " + dir1);
+            //Debug.Log("DIR 1 NOT VALID: " + dir1);
             return surface.pos + Vector3.one / 2 + dir1*2;
         }
 
         //Si la segunda dir es igual o opuesto al primero, no es importante y podemos usar solo el primero.
         if (faceIndex1 == faceIndex2 || faceIndex1 == -faceIndex2)
         {
-            Debug.Log("DIR 2 == DIR 1: " + dir1);
+            //Debug.Log("DIR 2 == DIR 1: " + dir1);
             return GetMovementGoal(surface, dir1);
         };
 
@@ -428,16 +428,16 @@ public class CubePaths : MonoBehaviour
     public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
     {
         Vector3Int dir = cube2 - surface1.pos; //La dir al segundo cubo //This was reversed, so it caused problems
-        Debug.Log("pos: " + cube2 + " - " + surface1.pos);
+        //Debug.Log("pos: " + cube2 + " - " + surface1.pos);
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out int dirIndex))
         {
-            Debug.Log("Not adyacent");
+            //Debug.Log("Not adyacent");
             return false; //Si no son dayacente falso
         }
         //DrawFace(surface1.pos, dirIndex, Color.black, 10000);
         if (!FaceXOR(dirIndex, surface1.surfaceGroup))
         {
-            Debug.Log("FaceXor negative");
+            //Debug.Log("FaceXor negative");
             return false;
         }
         return true;
@@ -565,7 +565,7 @@ public class CubePaths : MonoBehaviour
             reachedSurface = previo[reachedSurface];
         }
 
-        Debug.Log("found path length: " + path.Count);
+        //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
     }
 

@@ -5,6 +5,7 @@ using Utils;
 using NUnit.Framework;
 using UnityEditor;
 using Unity.VisualScripting;
+using FluentBehaviourTree;
 
 
 public class Ant : MonoBehaviour
@@ -24,49 +25,39 @@ public class Ant : MonoBehaviour
     private bool followingForwards = false;
     private int pherId = -1; //if -1, not following a pheromone
     private Vector3Int lastCube;
+    CubePaths.CubeSurface antSurface;
+    Vector3 normalMedian = Vector3.up;
     public CubePaths.CubeSurface lastSurface;
     private CubePheromone placedPher = null; //Last placed pheromone by ant
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
-    private Vector3 nextGoal = Vector3.negativeInfinity; //Point in space the ant will try to move to.
     public Objective objective = null;
     public GameObject carriedObject = null;
+    private bool IsCarrying()
+    {
+        return Animator.GetCurrentAnimatorStateInfo(0).IsTag("holding");
+    }
 
+    private Vector3 nextGoal = Vector3.negativeInfinity; //Point in space the ant will try to move to.
     private bool haveGoal()
     {
         if (nextGoal.Equals(Vector3.negativeInfinity)) return false;
         return true;
     }
-
     private void setHaveGoalFalse()
     {
         nextGoal = Vector3.negativeInfinity;
     }
-
-    public enum AIState
-    {
-        Exploring,
-        FollowingPher,
-        FollowingPath, //Following a
-        ReachedObjective,
-        Controlled,
-        Passive
-    }
-
-    public AIState state = AIState.FollowingPher;
-
-    
 
     //el animador
     private Animator Animator;
     public float speed_per_second = 2f;
     public float degrees_per_second = 67.5f;
 
-    public enum followState
-    {
-        Reached,
-        Lost,
-        Following
-    }
+    IBehaviourTreeNode tree;
+
+    BehaviourTreeStatus pickupStatus = BehaviourTreeStatus.Running;
+
+    BehaviourTreeStatus digAnimStatus = BehaviourTreeStatus.Running;
 
 
     // Start is called before the first frame update
@@ -81,7 +72,74 @@ public class Ant : MonoBehaviour
         Animator.enabled = true; //Se habilita el animator
 
         lastCube = Vector3Int.FloorToInt(transform.position);
+
+        var builder = new BehaviourTreeBuilder();
+        this.tree = builder
+            .Parallel("Main", 0, 0)
+                .Selector("General tasks")
+                    .Sequence("Carry to nest")
+                        .Condition("Carrying food?", t => IsCarrying())
+                        .Do("Not impemented yet", t => BehaviourTreeStatus.Success)
+                    .End()
+                    .Sequence("Dig point")
+                        .Condition("Digpoint nearby?", t => SenseDigPoints())
+                        .Sequence("Dig the point")
+                            .Do("Go to digPoint", t => followPath())
+                            .Do("Align with digPoint", t => Align(objective.getPos()))
+                            .Do("Wait for dig", t => {Debug.Log("Waiting..."); if (digAnimStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return digAnimStatus;})
+                        .End()
+                    .End()
+                    .Sequence("Gather food")
+                        .Condition("Food nearby?", t => SenseFood())
+                        .Sequence("Pick up food")
+                            .Do("Go to food", t => followPath())
+                            .Do("Align with food", t => Align(objective.getPos()))
+                            .Do("Wait for pickup", t => {Debug.Log("Waiting..."); if (pickupStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return pickupStatus;})
+                        .End()
+                    .End()
+                .End()
+            .End()
+            .Build();
     }
+
+    private BehaviourTreeStatus followPath()
+    {
+        BehaviourTreeStatus status = SetGoalFromPath(antSurface);
+        //Debug.Log("FollowingPath");
+        if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian);
+        return status;
+    }
+
+    BehaviourTreeStatus Align(Vector3 point)
+    {
+        //Debug.Log("Alinging");
+        Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(point);
+        relativeGoal.y = 0;
+        float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
+
+        //Decidir si girar
+        if (horAngle > 5)
+        {
+            if (relativeGoal.x > 0) TurnRight();
+            else TurnLeft();
+            return BehaviourTreeStatus.Running;
+        }
+        DontTurn();
+        if (objective.stillValid())
+        {
+            if (objective.isFood()) Animator.SetTrigger("Pick up");
+            if (objective.isDigPoint()) Animator.SetTrigger("Dig");
+            if (objective.isPos()) return BehaviourTreeStatus.Failure;
+
+            pickupStatus = BehaviourTreeStatus.Running;
+            digAnimStatus = BehaviourTreeStatus.Running;
+
+            return BehaviourTreeStatus.Success;
+        }
+        Debug.Log("Objective not valid anymore");
+        return BehaviourTreeStatus.Failure;
+    }
+
 
     private void Update()
     {
@@ -89,15 +147,17 @@ public class Ant : MonoBehaviour
 
     Vector3Int nextPosDraw = Vector3Int.zero;
 
-    int pathTimer = 0;
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface))
+        if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
         {
             Rigidbody.useGravity = false;
 
-            AIBehaviour(changedSurface, normalMedian, antSurface);
+            DontTurn();
+            SetWalking(false);
+
+            tree.Tick(new TimeData(Time.deltaTime), "");
         
             if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
 
@@ -120,114 +180,35 @@ public class Ant : MonoBehaviour
     }
 
     int senseTimer = 0;
-    AIState prevState = AIState.Controlled;
 
-    void AIBehaviour(bool movedCube, Vector3 surfaceNormal ,CubePaths.CubeSurface antSurface) {
-        //Show state
-        if (prevState != state)
-        {
-            Debug.Log("I am in " + state.ToString());
-            prevState = state;
-        }
-        //
-        switch (state)
-        {
-            //Si estamos siguiendo una feromona, buscamos siguiente paso al cambiar de cubo.
-            //La gestión de cambiar de following a no following al perderse no se hace aqui?
-            case AIState.FollowingPher:
-                if (movedCube || !haveGoal())
-                {
-                    Debug.Log("Sensing that shit.");
-                    SenseGeneral(antSurface);
-                }
-                if (state != AIState.Passive) FollowGoal(surfaceNormal);
-            break;
 
-            case AIState.FollowingPath:
-                followState followState = followState.Following;
-                //I dont quite remember why it checks for no objective, other than solving oversights?
-                if (movedCube || !haveGoal()) followState = SetGoalFromPath(antSurface);
-
-                switch (followState){
-
-                    case followState.Reached:
-                        state = AIState.ReachedObjective;
-                    break;
-
-                    case followState.Lost:
-                        objective = null;
-                        state = AIState.Passive;
-                    break;
-
-                    case followState.Following:
-                        FollowGoal(surfaceNormal);
-                    break;
-                }
-            break;
-
-            case AIState.Exploring:
-                RandomMovement();
-            break;
-
-            case AIState.Passive:
-
-                SetWalking(false);
-                DontTurn();
-
-                senseTimer++;
-                if (senseTimer > 50)
-                {
-                    senseTimer = 0;
-                    SenseGeneral(antSurface);
-                }
-            break;
-
-            case AIState.ReachedObjective:
-                if (objective == null) state = AIState.Passive; //Failsa
-                else
-                {
-                    SetWalking(false);
-                    DontTurn();
-                    if (objective.isPos())
-                    {
-                        state = AIState.Passive;
-                        break;
-                    }
-                    if (Align(objective.getPos()))
-                    {
-                        DontTurn();
-                        if (objective.isDigPoint()) Animator.SetTrigger("Dig");
-                        if (objective.isFood() && !Animator.GetNextAnimatorStateInfo(0).IsTag("holding")) Animator.SetTrigger("Pick up");
-                    }
-                    
-                }
-            break;
-
-            default:
-            break;
-        }
-        //MODO CONTROLADO LO GESTIONA LA CÁMARA
-        turn = Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime;
-    }
-
-    public void pickupAction() //function called by the animation
+    public void PickupEvent() //function called by the animation
     {
-        Animator.ResetTrigger("Pick up"); //To avoid it repeating the pickup
-        if (objective == null) return;
 
-        bool succeed = objective.interact(out GameObject item);
-
-        if (item == null) return;
-
-        if (objective.isFood())
+        Debug.Log("I GOT TO PICK UP");
+        if (objective == null)
         {
-            if (succeed)
-            {
-                item.transform.SetParent(carriedObject.transform);
-                Destroy(item.GetComponent<Rigidbody>());
-                item.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            }
-            else Animator.SetTrigger("Pick up fail");
+            Debug.Log("Fail");
+            Animator.SetTrigger("Pick up fail");
+            pickupStatus = BehaviourTreeStatus.Failure;
+            return;
+        }
+
+        if (objective.stillValid())
+        {
+            Debug.Log("Valud");
+            GameObject food = objective.GetFood();
+            food.transform.SetParent(carriedObject.transform);
+            Destroy(food.GetComponent<Rigidbody>());
+            food.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            food.GetComponent<BoxCollider>().enabled = false;
+            pickupStatus = BehaviourTreeStatus.Success;
+        }
+        else
+        {
+            Debug.Log("Not valid i guess???");
+            Animator.SetTrigger("Pick up fail");
+            pickupStatus = BehaviourTreeStatus.Failure;
         }
 
         objective = null;
@@ -239,6 +220,7 @@ public class Ant : MonoBehaviour
         foreach(Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
+            child.GetComponent<BoxCollider>().enabled = true;
         }
         carriedObject.transform.DetachChildren();
         Animator.ResetTrigger("Put down");
@@ -246,27 +228,25 @@ public class Ant : MonoBehaviour
 
     public void LetGo()
     {
-        if (Animator.GetCurrentAnimatorStateInfo(0).IsTag("holding")) Animator.SetTrigger("Put down");
+        if (IsCarrying()) Animator.SetTrigger("Put down");
     }
 
-    //Devuelve true si la hormiga llega alinearse con el punto
-    bool Align(Vector3 point)
+    public void DigEvent()
     {
-        Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(point);
-        relativeGoal.y = 0;
-        float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
-
-        //Decidir si girar
-        if (horAngle > 5)
+        if (objective == null)
         {
-            if (relativeGoal.x > 0) TurnRight();
-            else TurnLeft();
-            return false;
+            return;
         }
-        DontTurn();
-        return true;
-    }
 
+        if (objective.stillValid() && objective.isDigPoint())
+        {
+            objective.GetDigPoint().Dig();
+            Destroy(objective.GetDigPoint());
+            objective = null;
+            digAnimStatus = BehaviourTreeStatus.Success;
+        }
+    }
+  
     void RandomMovement()
     {
         speed = speed_per_second * Time.fixedDeltaTime;
@@ -375,7 +355,7 @@ public class Ant : MonoBehaviour
         Animator.SetInteger("turning", 0);
     }
 
-    private bool SenseGround(out int numHits, out Vector3 normalMedian, out bool[] rayCastHits, out float[] rayCastDist, out CubePaths.CubeSurface antSurface, out bool changedSurface)
+    private bool SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface)
     {
         Color hitColor;
         numHits = 0;
@@ -436,7 +416,7 @@ public class Ant : MonoBehaviour
         Rigidbody.AddForce(-surfaceNormalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
 
         //ROTATE ANT
-        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,turn,0));
+        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime,0));
         Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
         //MOVE ANT FORWARD
@@ -503,35 +483,10 @@ public class Ant : MonoBehaviour
             }
     }
 
-    private void SenseGeneral(CubePaths.CubeSurface antSurface)
-    {
-        setHaveGoalFalse();
-        if (SenseFood(antSurface))
-        {
-            if (path.Count == 0) state = AIState.ReachedObjective;
-            else
-            {
-                state = AIState.FollowingPath;
-            }
-        }
-        else if (SenseDigPoints(antSurface))
-        {
-            if (path.Count == 0) state = AIState.ReachedObjective;
-            else
-            {
-                state = AIState.FollowingPath;
-            }
-        }
-        else if (SensePheromones(antSurface))
-        {
-            state = AIState.FollowingPher;
-        }
-        else state = AIState.Passive;
-    }
 
     //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
     //Si no hay, devuelve false.
-    private bool SenseFood(CubePaths.CubeSurface antSurface)
+    private bool SenseFood()
     {
         int layermask = 1 << 10;
         PriorityQueue<GameObject, float> sensedFood = new();
@@ -568,7 +523,7 @@ public class Ant : MonoBehaviour
 
     //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
     //Si no hay, devuelve false.
-    private bool SenseDigPoints(CubePaths.CubeSurface antSurface)
+    private bool SenseDigPoints()
     {
         int layermask = 1 << 9;
         PriorityQueue<GameObject, float> sensedDigPoints = new();
@@ -610,15 +565,15 @@ public class Ant : MonoBehaviour
     }
 
     //Pone el 
-    private followState SetGoalFromPath(CubePaths.CubeSurface antSurface)
+    private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface)
     {
-        Debug.Log("SettingGoal");
+        //Debug.Log("SettingGoal");
 
         if (path.Count == 0)
         {
             Debug.Log("no path to follow");
             setHaveGoalFalse();
-            return followState.Lost; 
+            return BehaviourTreeStatus.Failure; 
         }//Para evitar seguir camino nonexistente.
 
         if (CubePaths.NextToPoint(transform.position, path.Last().pos))
@@ -626,7 +581,7 @@ public class Ant : MonoBehaviour
             path = new();
             Debug.Log("Reached adyacent point");
             setHaveGoalFalse();
-            return followState.Reached;
+            return BehaviourTreeStatus.Success;
         }
 
         List<CubePaths.CubeSurface> sensedRange = new();
@@ -643,7 +598,7 @@ public class Ant : MonoBehaviour
             Debug.Log("Same");
             path = new();
             setHaveGoalFalse();
-            return followState.Reached;
+            return BehaviourTreeStatus.Success;
         }
 
         //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
@@ -663,12 +618,12 @@ public class Ant : MonoBehaviour
             Debug.Log("not found");
             path = new();
             setHaveGoalFalse();
-            return followState.Lost;
+            return BehaviourTreeStatus.Failure;
         }
 
         CubePaths.CubeSurface firstStep = path[goalIndex];
 
-        Debug.Log("First step: " + firstStep.pos + " at range " + range);
+        //Debug.Log("First step: " + firstStep.pos + " at range " + range);
 
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
@@ -677,7 +632,7 @@ public class Ant : MonoBehaviour
 
         nextPosDraw = firstStep.pos;
 
-        return followState.Following;
+        return BehaviourTreeStatus.Running;
     }
 
     

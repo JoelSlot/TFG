@@ -37,32 +37,28 @@ public class Objective
         }
 
         public bool isFood() {return Type.Food == type;}
+        public GameObject GetFood() {if (isFood()) return food; else return null;}
         public bool isDigPoint() {return Type.DigPoint == type;}
+        public DigPoint GetDigPoint() {if (isDigPoint()) return digPoint; else return null;}
         public bool isPos() {return Type.Pos == type;}
 
-        //Interacts with the objective.
-        //- digpoint: it is dug
-        //- food: it is picked up.
-        //If the object is not present anymore, return false. Otherwise return true
-        public bool interact(out GameObject toDestroy)
+
+        public bool stillValid()
         {
-            toDestroy = null;
             switch (type)
             {
                 case Type.DigPoint:
-                    if (digPoint.gameObject == null) return false;
-                    digPoint.Dig();
-                    toDestroy = digPoint.transform.gameObject;
-                    return true;
+                    if (digPoint  == null)
+                        return false;
+                    break;
                 case Type.Food:
                     if (Vector3.Distance(food.transform.position, pos) > 0.5f)
                         return false;
-                    toDestroy = food;
-                    return true;
+                    break;
                 case Type.Pos:
                     return true;
             }
-            return false;
+            return true;
         }
 
         public Vector3 getPos(){ return pos; }
