@@ -18,6 +18,11 @@ namespace FluentBehaviourTree
 
         BehaviourTreeStatus Tick(TimeData time, string parents);
 
+        /// <summary>
+        /// Reset the parallel and sequence nodes
+        /// </summary>
+        void refresh();
+
         string GetName();
     }
 }

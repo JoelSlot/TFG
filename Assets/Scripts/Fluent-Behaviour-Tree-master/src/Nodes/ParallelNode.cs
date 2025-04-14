@@ -114,5 +114,10 @@ namespace FluentBehaviourTree
             return name;
         }
 
+        public void refresh()
+        {
+            foreach (var child in children)
+                child.refresh();
+        }
     }
 }

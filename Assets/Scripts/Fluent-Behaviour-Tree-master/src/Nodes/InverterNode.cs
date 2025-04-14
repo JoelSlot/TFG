@@ -89,5 +89,9 @@ namespace FluentBehaviourTree
             return name;
         }
 
+        public void refresh()
+        {
+            //Nothing
+        }
     }
 }

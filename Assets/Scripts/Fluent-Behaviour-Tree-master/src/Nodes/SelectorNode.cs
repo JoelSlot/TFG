@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace FluentBehaviourTree
@@ -98,5 +99,11 @@ namespace FluentBehaviourTree
             return name;
         }
 
+        public void refresh()
+        {
+            foreach (var child in children)
+                child.refresh();
+            index = 0;
+        }
     }
 }

@@ -33,6 +33,10 @@ namespace FluentBehaviourTree
             return name;
         }
 
+        public void refresh()
+        {
+            //Nothing necessary
+        }
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
