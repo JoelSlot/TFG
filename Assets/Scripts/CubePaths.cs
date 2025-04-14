@@ -484,7 +484,7 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    public static bool NextToPoint(Vector3 pos, Vector3Int point)
+    public static bool NextToPoint(Vector3 pos, Vector3 point)
     {
         if ((point - pos).magnitude < 1.5) return true;
         return false;
@@ -568,6 +568,81 @@ public class CubePaths : MonoBehaviour
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
     }
+
+    public static bool GetPathToSurface(CubeSurface start, CubeSurface objective, int lengthLimit, out List<CubeSurface> path)
+    {
+        Debug.Log("Finding path...");
+        path = new List<CubeSurface>();
+
+        PriorityQueue<CubeSurface, float> frontera = new();
+        frontera.Enqueue(start, 0);
+        Dictionary<CubeSurface, CubeSurface> previo = new();
+        Dictionary<CubeSurface, float> coste = new();
+        Dictionary<CubeSurface, int> longitud = new();
+
+        previo[start] = start;
+        coste[start] = 0;
+        longitud[start] = 0;
+
+
+        float heuristic(Vector3Int point, Vector3Int objective)
+        {
+            return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
+        }
+
+        bool pathExists = false;
+
+        CubeSurface reachedSurface = start;
+
+        while (frontera.Count > 0)
+        {
+            CubeSurface current = frontera.Dequeue();
+
+            if (current.Equals(objective)){
+                reachedSurface = current;
+                pathExists = true;
+                break;
+            }
+
+            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+
+            foreach(var son in adyacentSurfaces)
+            {
+                float newCost = coste[current] + 1;
+                int newLength = longitud[current] + 1;
+                //if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
+                bool updateOrInsert = false;
+                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                else if (newCost < prevCost) updateOrInsert = true;
+
+                if (newLength > lengthLimit) updateOrInsert = false;
+
+                
+                if(updateOrInsert)
+                {
+                    //DrawCube(son.pos, Color.black, 5);
+                    coste[son] = newCost;
+                    longitud[son] = newLength;
+                    float prioridad = newCost + heuristic(son.pos, objective.pos);
+                    frontera.Enqueue(son, prioridad);
+                    previo[son] = current;
+                }
+            }
+        }
+
+        while (!reachedSurface.Equals(start))
+        {
+            //DrawCube(reachedSurface.pos, Color.blue, 4);
+            //DrawSurface(reachedSurface, Color.black, 40);
+            path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            reachedSurface = previo[reachedSurface];
+        }
+
+        //Debug.Log("found path length: " + path.Count);
+        if (!pathExists) Debug.Log("Not found!");
+        return pathExists;
+    }
+
 
     
     /*

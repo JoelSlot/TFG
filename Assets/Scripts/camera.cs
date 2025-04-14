@@ -28,7 +28,7 @@ public class FlyCamera : MonoBehaviour
     //Variables para sistema de excavacion
     public GameObject  origTunnel;
     public GameObject chamber;
-    List<DigObject> DigObjects =  new List<DigObject>();
+    List<NestPart> NestParts =  new();
     private bool placingDigZone = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
@@ -64,6 +64,7 @@ public class FlyCamera : MonoBehaviour
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
         origDigPoint.GetComponent<DigPoint>().WG = WG;
+        DigPoint.origDigPoint = origDigPoint;
         pathId = Pheromone.getNextPathId();
     }
 
@@ -80,7 +81,6 @@ public class FlyCamera : MonoBehaviour
 
     void FixedUpdate()
     {
-        //if (SelectedAnt != null) AntInputs();
     }
 
     void CameraMovement()
@@ -263,17 +263,7 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    void AntInputs() {
-        //if (SelectedAnt.state != Ant.AIState.Controlled) return;
-        if (Input.GetKey(KeyCode.UpArrow))          SelectedAnt.SetWalking(true);
-        else                                        SelectedAnt.SetWalking(false);
-        if (Input.GetKey(KeyCode.LeftArrow))        SelectedAnt.TurnLeft();
-        else if (Input.GetKey(KeyCode.RightArrow))  SelectedAnt.TurnRight();
-        else                                        SelectedAnt.DontTurn();
-        if(Input.GetKey(KeyCode.Comma))             SelectedAnt.LetGo();
-
-        //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
-    }
+    
 
     void setVertPlane() //ok so the using planos is not something i came up with inmediately, and eventhen i was gonna use 3 and adjust them. thank goodness i noticed thats not possible and also that it would be simpler to have one that is updating all the time as the camera orientation changes
     {
@@ -331,41 +321,27 @@ public class FlyCamera : MonoBehaviour
     
     public void toDigPoints()
     {
-        Dictionary<Vector3Int, float> points = DigObjects.Last().pointsInDigObject();
-        foreach(KeyValuePair<Vector3Int, float> entry in points)
+        Dictionary<Vector3Int, DigPoint.digPointData> points = NestParts.Last().pointsInDigObject();
+        foreach(var entry in points)
         {
-            if (DigPoint.digPointDict.ContainsKey(entry.Key)) //Si se encuentra en el diccionario, updatear
+            var newDigPointData = entry.Value;
+            var pos = entry.Key;
+            //Si se encuentra en el diccionario, updatear
+            if (DigPoint.digPointDict.ContainsKey(pos)) DigPoint.digPointDict[pos].update(newDigPointData);
+            //si no se encuentra en el diccionario, añadir al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
+            else
             {
-                //Actualizamos el valor que se quiere obtener
-                float maxDesiredVal = Mathf.Max(entry.Value, DigPoint.digPointDict[entry.Key].Item1);
-                GameObject existingObject = DigPoint.digPointDict[entry.Key].Item2;
-                DigPoint.digPointDict[entry.Key] = new Tuple<float, GameObject>(maxDesiredVal, existingObject);
-            }
-            else//si no se encuentra en el diccionario, añadir al diccionario. Si se encuentra adyacente a la superficie y no es parte de la pared lo instanciamos
-            {
-                GameObject digPoint = null;
-                if (WorldGen.IsAboveSurface(entry.Key) && entry.Value < WorldGen.isolevel) //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
-                {
-                    digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
-                    digPoint.SetActive(true);
-                    digPoint.GetComponent<DigPoint>().SetDesiredVal(entry.Value);
-                }
-                else if (entry.Value < WorldGen.isolevel)// Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
+                //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
+                if (WorldGen.IsAboveSurface(pos) && newDigPointData.value < WorldGen.isolevel) newDigPointData.InstantiatePoint(pos);
+                // Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
+                else if (newDigPointData.value < WorldGen.isolevel)
                 {
                     Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
+                    //Si algun punto del alrededor se encuentra sobre la superficie lo instanciamos
                     foreach (Vector3Int direction in directions)
-                    {
-                        //Si algun punto del alrededor se encuentra sobre la superficie
-                        if (WorldGen.IsAboveSurface(entry.Key + direction))
-                        {
-                            digPoint = Instantiate(origDigPoint, entry.Key, Quaternion.identity);
-                            digPoint.SetActive(true);
-                            digPoint.GetComponent<DigPoint>().SetDesiredVal(entry.Value);
-                            break; //Salgo del loop para no mirar el resto de dirs
-                        }
-                    }
+                        if (WorldGen.IsAboveSurface(pos + direction)) newDigPointData.InstantiatePoint(pos);
                 }
-                DigPoint.digPointDict.Add(entry.Key, new Tuple<float, GameObject>(entry.Value, digPoint));
+                DigPoint.digPointDict.Add(pos, newDigPointData);
             }
         }
     }
@@ -374,7 +350,7 @@ public class FlyCamera : MonoBehaviour
         List<Tuple<Vector3Int, float>> points = new List<Tuple<Vector3Int, float>>();
         foreach (var entry in DigPoint.digPointDict)
         {
-            points.Add(new Tuple<Vector3Int, float>(entry.Key, entry.Value.Item1));
+            points.Add(new Tuple<Vector3Int, float>(entry.Key, entry.Value.value));
         }
         WG.EditTerrainSet(points);
     }
@@ -412,18 +388,13 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
-        /*if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
+        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
         { 
-            if (SelectedAnt.state != Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Controlled;
-            else
-            {
-                SelectedAnt.state = Ant.AIState.Passive;
-                SelectedAnt.makingTrail = false;
-            }
+            SelectedAnt.isControlled = !SelectedAnt.isControlled;
         }
         if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
         {
-            if (SelectedAnt.state == Ant.AIState.Controlled && !SelectedAnt.makingTrail)
+            if (SelectedAnt.isControlled && !SelectedAnt.makingTrail)
             {
                 SelectedAnt.makingTrail = true;
                 //SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
@@ -433,7 +404,7 @@ public class FlyCamera : MonoBehaviour
                 SelectedAnt.makingTrail = false;
                 //SelectedAnt.placedPheromone = null;
             }
-        }*/
+        }
     }
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
@@ -461,7 +432,7 @@ public class FlyCamera : MonoBehaviour
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        DigObject placeDigObject = DigObjects.Last();
+        NestPart placeDigObject = NestParts.Last();
 
         
         //Move the digObject
@@ -487,7 +458,7 @@ public class FlyCamera : MonoBehaviour
 
         switch (placeDigObject.mode)
         {
-            case DigObject.digType.Tunnel:
+            case NestPart.NestPartType.Tunnel:
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
                     placeDigObject.addPos(new Vector3(0, movement.x, 0));
@@ -498,7 +469,7 @@ public class FlyCamera : MonoBehaviour
                     placeDigObject.addPos(movement);
                 }
             break;
-            case DigObject.digType.Chamber:
+            case NestPart.NestPartType.FoodChamber:
                 if (Input.GetKey(KeyCode.LeftShift))
                     placeDigObject.addPos(movement);
                 else
@@ -517,7 +488,7 @@ public class FlyCamera : MonoBehaviour
         {
             if (clickObject(antLayer, out RaycastHit hit))
             {
-                //if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.state = Ant.AIState.Passive; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                 SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
                 Debug.Log("Selected an ant");
             }
@@ -532,7 +503,7 @@ public class FlyCamera : MonoBehaviour
             switch (objectMode)
             {
                 case obj.Ant:
-                    //if (SelectedAnt != null) if (SelectedAnt.state == Ant.AIState.Controlled) SelectedAnt.state = Ant.AIState.Passive; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                    if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                     GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
                     newAnt.layer = 7;
                     newAnt.SetActive(true);
@@ -549,17 +520,17 @@ public class FlyCamera : MonoBehaviour
                         digEndPoint = hit.point;
                         GameObject digObj = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
                         digObj.SetActive(true);
-                        DigObject digObjScript = digObj.GetComponent<DigObject>();
+                        NestPart digObjScript = digObj.GetComponent<NestPart>();
                         digObjScript.setRadius(1);
 
                         if (objectMode == obj.digTunnel)
                         {
-                            digObjScript.setMode(DigObject.digType.Tunnel);
+                            digObjScript.setMode(NestPart.NestPartType.Tunnel);
                             digObjScript.setPos(digStartPoint, digEndPoint);
                         }
                         else
                         {
-                            digObjScript.setMode(DigObject.digType.Chamber);
+                            digObjScript.setMode(NestPart.NestPartType.FoodChamber);
                             digObjScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                         }
 
@@ -567,7 +538,7 @@ public class FlyCamera : MonoBehaviour
                         
                         digObjScript.setActive(true);
                         setVertPlane();
-                        DigObjects.Add(digObjScript);
+                        NestParts.Add(digObjScript);
                         Debug.Log("Set Plane Pos");
                     }
                     break;

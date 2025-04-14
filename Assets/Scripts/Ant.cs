@@ -32,6 +32,7 @@ public class Ant : MonoBehaviour
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
     public Objective objective = null;
     public GameObject carriedObject = null;
+    public bool isControlled = false;
     private bool IsCarrying()
     {
         return Animator.GetCurrentAnimatorStateInfo(0).IsTag("holding");
@@ -140,7 +141,6 @@ public class Ant : MonoBehaviour
         return BehaviourTreeStatus.Failure;
     }
 
-
     private void Update()
     {
     }
@@ -157,7 +157,12 @@ public class Ant : MonoBehaviour
             DontTurn();
             SetWalking(false);
 
-            tree.Tick(new TimeData(Time.deltaTime), "");
+            if (isControlled){
+                AntInputs();
+                tree.refresh();
+                objective = null;
+            }
+            else tree.Tick(new TimeData(Time.deltaTime), "");
         
             if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
 
@@ -180,7 +185,6 @@ public class Ant : MonoBehaviour
     }
 
     int senseTimer = 0;
-
 
     public void PickupEvent() //function called by the animation
     {
@@ -443,12 +447,23 @@ public class Ant : MonoBehaviour
             }
             else //Si la hormiga se ha separado de su anterior camino
             {
-                placedPher = CubePaths.StartPheromoneTrail(antSurface);
+                //si ha sido un salto corto, se rellena la distancia con la pheromona
+                if (CubePaths.GetPathToSurface(placedPher.GetSurface(), antSurface, 3, out List<CubePaths.CubeSurface> path))
+                {
+                    Debug.Log("DISCONECTED BUT NOT BY MUCH");
+                    CubePheromone prev = placedPher;
+                    foreach (var surface in path)
+                    {
+                        prev = CubePaths.ContinuePheromoneTrail(surface, prev);
+                    }
+                    placedPher = prev;
+                }
+                else
+                    placedPher = CubePaths.StartPheromoneTrail(antSurface);
             }
         }
     }
 
-    
     private void AdjustAntToGround(bool[] rayCastHits, float[] rayCastDist, Quaternion deltaRotation)
     {
         if (!rayCastHits[4])
@@ -536,7 +551,7 @@ public class Ant : MonoBehaviour
             sensedDigPoints.Enqueue(hitColliders[i].transform.gameObject, 100 - Vector3.Distance(digPoint.transform.position, transform.position));
         }
 
-        int minDepth = int.MaxValue;
+        //int minDepth = int.MaxValue;
         int minLength = int.MaxValue;
 
         objective = null;
@@ -549,13 +564,13 @@ public class Ant : MonoBehaviour
 
             bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(digPoint.transform.position), 10, out newPath);
             
-            if (isReachable && 
-                ((digPoint.depth < minDepth) ||
-                (digPoint.depth == minDepth && newPath.Count < minLength)))
+            if (isReachable && newPath.Count < minLength)
+                //((digPoint.depth < minDepth) ||
+                //(digPoint.depth == minDepth && newPath.Count < minLength)))
             {         
                 path = newPath;
                 objective = new Objective(digPoint);
-                minDepth = digPoint.depth;
+                //minDepth = digPoint.depth;
                 minLength = path.Count;
             }
 
@@ -569,6 +584,15 @@ public class Ant : MonoBehaviour
     {
         //Debug.Log("SettingGoal");
 
+        if (objective != null)
+            if (CubePaths.NextToPoint(transform.position, objective.getPos()))
+            {
+                path = new();
+                Debug.Log("Reached adyacent point");
+                setHaveGoalFalse();
+                return BehaviourTreeStatus.Success;
+            }
+
         if (path.Count == 0)
         {
             Debug.Log("no path to follow");
@@ -576,6 +600,7 @@ public class Ant : MonoBehaviour
             return BehaviourTreeStatus.Failure; 
         }//Para evitar seguir camino nonexistente.
 
+        /*
         if (CubePaths.NextToPoint(transform.position, path.Last().pos))
         {
             path = new();
@@ -583,6 +608,7 @@ public class Ant : MonoBehaviour
             setHaveGoalFalse();
             return BehaviourTreeStatus.Success;
         }
+        */
 
         List<CubePaths.CubeSurface> sensedRange = new();
         int goalIndex = -1;
@@ -634,8 +660,7 @@ public class Ant : MonoBehaviour
 
         return BehaviourTreeStatus.Running;
     }
-
-    
+ 
     //Devuelve true si ha encontrado una pheromona
     private bool SensePheromones(CubePaths.CubeSurface antSurface) 
     {
@@ -758,6 +783,17 @@ public class Ant : MonoBehaviour
         return nextRange;
     }
 
+    void AntInputs() {
+        //if (SelectedAnt.state != Ant.AIState.Controlled) return;
+        if (Input.GetKey(KeyCode.UpArrow))          SetWalking(true);
+        else                                        SetWalking(false);
+        if (Input.GetKey(KeyCode.LeftArrow))        TurnLeft();
+        else if (Input.GetKey(KeyCode.RightArrow))  TurnRight();
+        else                                        DontTurn();
+        if(Input.GetKey(KeyCode.Comma))             LetGo();
+
+        //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
+    }
 
 
 }

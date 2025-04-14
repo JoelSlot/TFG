@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class DigObject : MonoBehaviour
+public class NestPart : MonoBehaviour
 {
 
     public GameObject cilinder;
     public GameObject startSphere;
     public GameObject endSphere;
 
-    public enum digType {Tunnel,Chamber}
+    public enum NestPartType {Tunnel, FoodChamber}
 
-    public digType mode = digType.Tunnel;
+    public NestPartType mode = NestPartType.Tunnel;
+
+    public List<NestPart> ConnectedParts = new();
 
     private Vector3 dir = Vector3.up;
     private Vector3 startPos = Vector3.zero;
@@ -31,11 +34,11 @@ public class DigObject : MonoBehaviour
         
     }
 
-    public void setMode(digType newMode)
+    public void setMode(NestPartType newMode)
     {
         if (newMode == mode) return;
         mode = newMode;
-        if (newMode == digType.Tunnel)
+        if (newMode == NestPartType.Tunnel)
         {
             startSphere.GetComponent<MeshRenderer>().enabled = true;
             endSphere.GetComponent<MeshRenderer>().enabled = true;
@@ -43,7 +46,7 @@ public class DigObject : MonoBehaviour
             transform.localRotation = Quaternion.Euler(dir);
             setPos(transform.position, endPos);
         }
-        else if (newMode == digType.Chamber)
+        else if (newMode == NestPartType.FoodChamber)
         {
             startSphere.GetComponent<MeshRenderer>().enabled = true;
             endSphere.GetComponent<MeshRenderer>().enabled = false;
@@ -56,7 +59,7 @@ public class DigObject : MonoBehaviour
     {
         endPos = end;
         startPos = start;
-        if (mode == digType.Tunnel)
+        if (mode == NestPartType.Tunnel)
         {
             dir = end - start;
             transform.position = startPos;
@@ -66,7 +69,7 @@ public class DigObject : MonoBehaviour
             cilinder.transform.localScale = new Vector3(radius*2, dir.magnitude/2, radius*2);
             transform.up = dir.normalized;
         }
-        else if (mode == digType.Chamber)
+        else if (mode == NestPartType.FoodChamber)
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
             Vector3 distance = endPos - startPos;
@@ -83,11 +86,11 @@ public class DigObject : MonoBehaviour
 
     public void setPos(Vector3 pos)
     {
-        if (mode == digType.Tunnel)
+        if (mode == NestPartType.Tunnel)
         {
             setPos(startPos, pos);
         }
-        else if (mode == digType.Chamber)
+        else if (mode == NestPartType.FoodChamber)
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
             Vector3 change = pos - transform.position;
@@ -108,10 +111,10 @@ public class DigObject : MonoBehaviour
 
     public void setRadius(float newRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
     {
-        if (newRadius < 1 || newRadius > 2 || mode != digType.Tunnel) return; //Min and max radius or wrong mode
+        if (newRadius < 1 || newRadius > 2 || mode != NestPartType.Tunnel) return; //Min and max radius or wrong mode
         radius = newRadius;
-        startSphere.transform.localScale = Vector3.one * radius * 2;
-        endSphere.transform.localScale = Vector3.one * radius * 2;
+        startSphere.transform.localScale = 2 * radius * Vector3.one;
+        endSphere.transform.localScale = 2 * radius * Vector3.one;
         cilinder.transform.localScale = new Vector3(radius*2, dir.magnitude/2, radius*2);        
     }
 
@@ -136,54 +139,55 @@ public class DigObject : MonoBehaviour
     private bool gotPoints = false;
 
     //Devuelve los puntos que componen el área que se quiere excavar.
-    public Dictionary<Vector3Int, float> pointsInDigObject(){
-        if (gotPoints) return new Dictionary<Vector3Int, float>();
+    public Dictionary<Vector3Int, DigPoint.digPointData> pointsInDigObject(){
+        if (gotPoints) return new Dictionary<Vector3Int, DigPoint.digPointData>();
         else gotPoints = true;
         cilinder.GetComponent<MeshRenderer>().enabled = false;
         startSphere.GetComponent<MeshRenderer>().enabled = false;
         endSphere.GetComponent<MeshRenderer>().enabled = false;
 
 
-        Dictionary<Vector3Int, float> points = new Dictionary<Vector3Int, float>();
-        HashSet<Vector3Int> checkedPoints = new HashSet<Vector3Int>();
-        Queue<Vector3Int> pointsToCheck = new Queue<Vector3Int>();
+        Dictionary<Vector3Int, DigPoint.digPointData> points = new();
+        HashSet<Vector3Int> checkedPoints = new();
+        Queue<Vector3Int> pointsToCheck = new();
         Vector3Int start = Vector3Int.FloorToInt(transform.position);
-        Vector3 startPos = transform.position;
 
         float desiredVal = getMarchingValue(start);
         checkedPoints.Add(start);
         pointsToCheck.Enqueue(start);
-        points.Add(start, desiredVal); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
+        points.Add(start, new DigPoint.digPointData(desiredVal, this)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
 
         Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
 
         while (pointsToCheck.Count > 0)
         {
             Vector3Int father = pointsToCheck.Dequeue();
+            //Se mira cada punto adyacente
             foreach (Vector3Int direction in directions)
             {
                 Vector3Int son = father + direction;
                 if (!checkedPoints.Contains(son)) // si no se ha visto aun
                 { 
                     desiredVal = getMarchingValue(son);
+                    //Si el punto se encuentra dentro de la forma que se excavará miraremos sus adyacentes
                     if (desiredVal < WorldGen.isolevel)
                     {
                         pointsToCheck.Enqueue(son);
                     }
-                    //Check to see if it would increase empty val
-                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, desiredVal); 
+                    //Si el punto realmente cambiará el terreno, lo guardamos para ser excavado
+                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, new DigPoint.digPointData(desiredVal, this)); 
+                    //Registramos que ya hemos mirado este punto
                     checkedPoints.Add(son);
                 }
             }
         }
         
-        Debug.Log("After while");
         return points;
     }
 
     float getMarchingValue(Vector3Int pos)
     {
-        if (mode == digType.Tunnel)
+        if (mode == NestPartType.Tunnel)
         {
             float dist = DistancePointLine(pos, transform.position, endPos);
             return Mathf.Clamp01(dist / (2*radius));

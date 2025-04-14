@@ -6,15 +6,49 @@ public class DigPoint : MonoBehaviour
 {
 
     public WorldGen WG;
-    public float desiredVal = 0;
-    public int depth = 0;
-    public static Dictionary<Vector3Int, Tuple<float, GameObject>> digPointDict = new Dictionary<Vector3Int, Tuple<float, GameObject>>();
+    digPointData data;
+
+    static public GameObject origDigPoint;
+
+
+    public struct digPointData{
+        public float value;
+        public List<NestPart> parents;
+        public bool instantiated;
+
+        public digPointData(float val, NestPart parent)
+        {
+            value = val;
+            parents = new();
+            if (parent != null) parents.Add(parent);
+            instantiated = false;
+        }
+
+        public void update(digPointData newData)
+        {
+            value = Mathf.Min(newData.value, value);
+            foreach (var parent in newData.parents)
+                parents.Add(parent);
+        }
+
+        public void InstantiatePoint(Vector3 pos)
+        {
+            if (!instantiated)
+            {
+                GameObject digPoint = Instantiate(origDigPoint, pos, Quaternion.identity);
+                digPoint.SetActive(true);
+                instantiated = true;
+            }
+        }
+    }
+
+    public static Dictionary<Vector3Int, digPointData> digPointDict = new();
     //ORIGINALLY USED A HASHSET TO SEE WITCH ONES HADN?T BEEN INITIALIZED BUT NOW JUST USES TUPLE IN DICT
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        data = new(0, null);
     }
 
     // Update is called once per frame
@@ -25,20 +59,18 @@ public class DigPoint : MonoBehaviour
 
     public void SetDesiredVal(float newVal)
     {
-        desiredVal = newVal;
+        data.value = newVal;
     }
 
-    public float GetDesiredVal(){return desiredVal;}
+    public float GetDesiredVal(){return data.value;}
 
     public void Dig()
     {
         //Comenzamos la lista de puntos a editar con el digPoint mismo
-        Vector3Int pos = Vector3Int.CeilToInt(transform.position);
-        float val = digPointDict[pos].Item1;
-        List<Tuple<Vector3Int, float>> points = new()
-        {
-            new(pos, val)
-        };
+        Vector3Int pos = Vector3Int.RoundToInt(transform.position);
+        float val = digPointDict[pos].value;
+        List<Tuple<Vector3Int, float>> terrainEdit = new();
+        if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, float>(pos, val));
         
         //Miramos todos los digPoints alrededores
         Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
@@ -46,32 +78,25 @@ public class DigPoint : MonoBehaviour
         {
             if (digPointDict.ContainsKey(pos + direction))
             {
-                float desiredVal = digPointDict[pos + direction].Item1;
-                if ( desiredVal > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
+                digPointData nextDigData = digPointDict[pos + direction];
+                if ( nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
-                    points.Add(new Tuple<Vector3Int, float>(pos + direction, digPointDict[pos+direction].Item1));
+                    if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, float>(pos + direction, nextDigData.value));
                     digPointDict.Remove(pos + direction);
                 }
                 else
                 {
                     //Inicializamos si no lo está
-                    if(digPointDict[pos + direction].Item2 == null)
-                    {
-                        GameObject digPoint = Instantiate(transform.gameObject, pos + direction, Quaternion.identity);
-                        digPoint.SetActive(true);
-                        digPoint.GetComponent<DigPoint>().SetDesiredVal(desiredVal);
-                        digPoint.GetComponent<DigPoint>().depth = depth + 1;
-                        digPointDict[pos + direction] = new Tuple<float, GameObject>(desiredVal, digPoint);
-                    }
+                    nextDigData.InstantiatePoint(pos + direction);
                     //Quitar un poco de los alrededores
                     float newVal = WorldGen.SampleTerrain(pos + direction) - 0.2f;
-                    if (newVal > digPointDict[pos+direction].Item1) //Si el valor no excede o iguala a el valor que se queire obtener:
-                        points.Add(new Tuple<Vector3Int, float>(pos+direction, newVal)); //Lo ponemos al valor obtenido
+                    if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:
+                        if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, float>(pos+direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }
         }
         digPointDict.Remove(pos);
-        WG.EditTerrainSet(points);
+        if (terrainEdit.Count > 0) WG.EditTerrainSet(terrainEdit);
     }
     
     public Objective getObjective()
