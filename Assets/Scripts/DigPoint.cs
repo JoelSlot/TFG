@@ -6,12 +6,10 @@ public class DigPoint : MonoBehaviour
 {
 
     public WorldGen WG;
-    digPointData data;
 
     static public GameObject origDigPoint;
 
-
-    public struct digPointData{
+    public class digPointData{
         public float value;
         public List<NestPart> parents;
         public bool instantiated;
@@ -35,8 +33,10 @@ public class DigPoint : MonoBehaviour
         {
             if (!instantiated)
             {
-                GameObject digPoint = Instantiate(origDigPoint, pos, Quaternion.identity);
+                Debug.Log("I HAVE BEEN CREATED AT " + pos);
+                GameObject digPoint = Instantiate(DigPoint.origDigPoint, pos, Quaternion.identity);
                 digPoint.SetActive(true);
+                digPoint.name = "DigPoint (" + pos.x + ", " + pos.y + ", " + pos.z + ")";
                 instantiated = true;
             }
         }
@@ -48,7 +48,6 @@ public class DigPoint : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        data = new(0, null);
     }
 
     // Update is called once per frame
@@ -56,13 +55,6 @@ public class DigPoint : MonoBehaviour
     {
         
     }
-
-    public void SetDesiredVal(float newVal)
-    {
-        data.value = newVal;
-    }
-
-    public float GetDesiredVal(){return data.value;}
 
     public void Dig()
     {
@@ -86,6 +78,7 @@ public class DigPoint : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("AM instantiated: " + nextDigData.instantiated);
                     //Inicializamos si no lo está
                     nextDigData.InstantiatePoint(pos + direction);
                     //Quitar un poco de los alrededores

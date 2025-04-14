@@ -105,10 +105,17 @@ public class Ant : MonoBehaviour
 
     private BehaviourTreeStatus followPath()
     {
-        BehaviourTreeStatus status = SetGoalFromPath(antSurface);
-        //Debug.Log("FollowingPath");
-        if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian);
-        return status;
+        if (objective != null)
+        {
+            BehaviourTreeStatus status;
+            if (path.Count == 0) status = BehaviourTreeStatus.Success;
+            else status = SetGoalFromPath(antSurface);
+            if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian);
+            else {DontTurn(); SetWalking(false);}
+            return status;
+        }
+        else return BehaviourTreeStatus.Failure;
+        
     }
 
     BehaviourTreeStatus Align(Vector3 point)
@@ -128,12 +135,17 @@ public class Ant : MonoBehaviour
         DontTurn();
         if (objective.stillValid())
         {
-            if (objective.isFood()) Animator.SetTrigger("Pick up");
-            if (objective.isDigPoint()) Animator.SetTrigger("Dig");
+            if (objective.isFood())
+            {
+                Animator.SetTrigger("Pick up");
+                pickupStatus = BehaviourTreeStatus.Running;
+            }
+            if (objective.isDigPoint()) 
+            {
+                Animator.SetTrigger("Dig");
+                digAnimStatus = BehaviourTreeStatus.Running;
+            }
             if (objective.isPos()) return BehaviourTreeStatus.Failure;
-
-            pickupStatus = BehaviourTreeStatus.Running;
-            digAnimStatus = BehaviourTreeStatus.Running;
 
             return BehaviourTreeStatus.Success;
         }
@@ -239,16 +251,18 @@ public class Ant : MonoBehaviour
     {
         if (objective == null)
         {
+            digAnimStatus = BehaviourTreeStatus.Failure;
             return;
         }
 
         if (objective.stillValid() && objective.isDigPoint())
         {
             objective.GetDigPoint().Dig();
-            Destroy(objective.GetDigPoint());
+            Destroy(objective.GetDigPoint().transform.gameObject);
             objective = null;
             digAnimStatus = BehaviourTreeStatus.Success;
         }
+        else digAnimStatus = BehaviourTreeStatus.Failure;
     }
   
     void RandomMovement()
@@ -562,6 +576,7 @@ public class Ant : MonoBehaviour
             DigPoint digPoint = digObject.GetComponent<DigPoint>();
             List<CubePaths.CubeSurface> newPath;
 
+            //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(digPoint.transform.position), 10, out newPath);
             
             if (isReachable && newPath.Count < minLength)
@@ -582,7 +597,6 @@ public class Ant : MonoBehaviour
     //Pone el 
     private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface)
     {
-        //Debug.Log("SettingGoal");
 
         if (objective != null)
             if (CubePaths.NextToPoint(transform.position, objective.getPos()))
@@ -593,6 +607,8 @@ public class Ant : MonoBehaviour
                 return BehaviourTreeStatus.Success;
             }
 
+
+        //Debug.Log("SettingGoal");
         if (path.Count == 0)
         {
             Debug.Log("no path to follow");

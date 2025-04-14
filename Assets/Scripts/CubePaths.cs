@@ -491,7 +491,7 @@ public class CubePaths : MonoBehaviour
     }
 
 
-    public static bool GetPathToPoint(CubeSurface start, Vector3Int objective, int lengthLimit, out List<CubeSurface> path)
+    public static bool GetPathToPoint(CubeSurface start, Vector3 objective, int lengthLimit, out List<CubeSurface> path)
     {
         path = new List<CubeSurface>();
 
@@ -506,7 +506,7 @@ public class CubePaths : MonoBehaviour
         longitud[start] = 0;
 
 
-        float heuristic(Vector3Int point, Vector3Int objective)
+        float heuristic(Vector3 point, Vector3 objective)
         {
             return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
         }
