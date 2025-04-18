@@ -11,7 +11,7 @@ namespace FluentBehaviourTree
     /// <summary>
     /// Selects the first node that succeeds. Tries successive nodes until it finds one that doesn't fail.
     /// </summary>
-    public class SelectorNode : IParentBehaviourTreeNode
+    public class ForgetfulSelectorNode : IParentBehaviourTreeNode
     {
         /// <summary>
         /// The name of the node.
@@ -23,19 +23,15 @@ namespace FluentBehaviourTree
         /// </summary>
         private List<IBehaviourTreeNode> children = new List<IBehaviourTreeNode>(); //todo: optimization, bake this to an array.
 
-        /// <summary>
-        /// Index of child being executed.
-        /// </summary>
-        private int index = 0;
-
-
-        public SelectorNode(string name)
+        public ForgetfulSelectorNode(string name)
         {
             this.name = name;
         }
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
+            int index = 0;
+
             while (true)
             {
                 var childStatus = children[index].Tick(time);
@@ -62,6 +58,8 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time, string parents)
         {
+            int index = 0;
+
             while (true)
             {
                 var childStatus = children[index].Tick(time, parents + " --> " + name);
@@ -83,7 +81,6 @@ namespace FluentBehaviourTree
                         return BehaviourTreeStatus.Running;
                 }
 
-
             }
         }
 
@@ -104,7 +101,6 @@ namespace FluentBehaviourTree
         {
             foreach (var child in children)
                 child.refresh();
-            index = 0;
         }
     }
 }

@@ -45,12 +45,12 @@ namespace FluentBehaviourTree
                         index += 1;
                         if (index >= children.Count)
                         {
-                            index = 0;
+                            refresh();
                             return BehaviourTreeStatus.Success;
                         }
                         break;
                     case BehaviourTreeStatus.Failure:
-                        index = 0;
+                        refresh();
                         return BehaviourTreeStatus.Failure;
                     case BehaviourTreeStatus.Running:
                         return BehaviourTreeStatus.Running;
@@ -73,12 +73,12 @@ namespace FluentBehaviourTree
                         index += 1;
                         if (index >= children.Count)
                         {
-                            index = 0;
+                            refresh();
                             return BehaviourTreeStatus.Success;
                         }
                         break;
                     case BehaviourTreeStatus.Failure:
-                        index = 0;
+                        refresh();
                         return BehaviourTreeStatus.Failure;
                     case BehaviourTreeStatus.Running:
                         return BehaviourTreeStatus.Running;
