@@ -643,6 +643,68 @@ public class CubePaths : MonoBehaviour
         return pathExists;
     }
 
+    //For now only looks for path to outside.
+    public static bool GetPathInNest(CubeSurface start, out List<CubeSurface> path)
+    {
+        Debug.Log("Finding path...");
+        path = new List<CubeSurface>();
+
+        PriorityQueue<CubeSurface, float> frontera = new();
+        frontera.Enqueue(start, 0);
+        Dictionary<CubeSurface, CubeSurface> previo = new();
+        Dictionary<CubeSurface, float> coste = new();
+
+        previo[start] = start;
+        coste[start] = 0;
+
+        bool pathExists = false;
+
+        CubeSurface reachedOutside = start;
+
+        while (frontera.Count > 0)
+        {
+            CubeSurface current = frontera.Dequeue();
+
+            if (!Nest.InNest(current.pos + Vector3.one * 0.5f)){
+                reachedOutside = current;
+                pathExists = true;
+                break;
+            }
+
+            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+
+            foreach(var son in adyacentSurfaces)
+            {
+                float newCost = coste[current] + 1;
+                bool updateOrInsert = false;
+                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                else if (newCost < prevCost) updateOrInsert = true;
+
+                
+                if(updateOrInsert)
+                {
+                    //DrawCube(son.pos, Color.black, 5);
+                    coste[son] = newCost;
+                    float prioridad = newCost;
+                    frontera.Enqueue(son, prioridad);
+                    previo[son] = current;
+                }
+            }
+        }
+
+        while (!reachedOutside.Equals(start))
+        {
+            //DrawCube(reachedSurface.pos, Color.blue, 4);
+            //DrawSurface(reachedSurface, Color.black, 40);
+            path.Insert(0, reachedOutside); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            reachedOutside = previo[reachedOutside];
+        }
+
+        //Debug.Log("found path length: " + path.Count);
+        if (!pathExists) Debug.Log("Not found!");
+        return pathExists;
+    }
+
 
     
     /*

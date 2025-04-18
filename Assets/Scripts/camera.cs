@@ -28,7 +28,7 @@ public class FlyCamera : MonoBehaviour
     //Variables para sistema de excavacion
     public GameObject  origTunnel;
     public GameObject chamber;
-    List<NestPart> NestParts =  new();
+    
     private bool placingDigZone = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
@@ -321,7 +321,7 @@ public class FlyCamera : MonoBehaviour
     
     public void toDigPoints()
     {
-        Dictionary<Vector3Int, DigPoint.digPointData> points = NestParts.Last().pointsInDigObject();
+        Dictionary<Vector3Int, DigPoint.digPointData> points = Nest.NestParts.Last().pointsInDigObject();
         foreach(var entry in points)
         {
             var newDigPointData = entry.Value;
@@ -432,7 +432,7 @@ public class FlyCamera : MonoBehaviour
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        NestPart placeDigObject = NestParts.Last();
+        NestPart placeDigObject = Nest.NestParts.Last();
 
         
         //Move the digObject
@@ -520,28 +520,29 @@ public class FlyCamera : MonoBehaviour
                         digEndPoint = hit.point;
                         GameObject digObj = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
                         digObj.SetActive(true);
-                        NestPart digObjScript = digObj.GetComponent<NestPart>();
-                        digObjScript.setRadius(1);
+                        NestPart nestPartScript = digObj.GetComponent<NestPart>();
+                        nestPartScript.setRadius(1);
 
                         if (objectMode == obj.digTunnel)
                         {
-                            digObjScript.setMode(NestPart.NestPartType.Tunnel);
-                            digObjScript.setPos(digStartPoint, digEndPoint);
+                            nestPartScript.setMode(NestPart.NestPartType.Tunnel);
+                            nestPartScript.setPos(digStartPoint, digEndPoint);
                         }
                         else
                         {
-                            digObjScript.setMode(NestPart.NestPartType.FoodChamber);
-                            digObjScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                            nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
+                            nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                         }
 
 
                         
-                        digObjScript.setActive(true);
+                        nestPartScript.setActive(true);
                         setVertPlane();
-                        NestParts.Add(digObjScript);
+                        Nest.NestParts.Add(nestPartScript);
                         Debug.Log("Set Plane Pos");
                     }
                     break;
+                    
                 case obj.test:
                     Vector3Int cube = Vector3Int.FloorToInt(hit.point);
                     
