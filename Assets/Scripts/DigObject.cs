@@ -76,6 +76,7 @@ public class NestPart : MonoBehaviour
             transform.position = startPos;
             startSphere.transform.localPosition = Vector3.zero;
             startSphere.transform.localScale = new Vector3(Mathf.Abs(distance.x), Mathf.Abs(distance.y), Mathf.Abs(distance.z));
+            
             transform.up = Vector3.up;
             float a = Mathf.Abs(distance.x);
             float b = Mathf.Abs(distance.y);
@@ -136,6 +137,7 @@ public class NestPart : MonoBehaviour
         cilinder.SetActive(active);
     }
 
+
     private bool gotPoints = false;
 
     //Devuelve los puntos que componen el área que se quiere excavar.
@@ -185,7 +187,7 @@ public class NestPart : MonoBehaviour
         return points;
     }
 
-    float getMarchingValue(Vector3Int pos)
+    public float getMarchingValue(Vector3 pos)
     {
         if (mode == NestPartType.Tunnel)
         {
@@ -220,7 +222,7 @@ public class NestPart : MonoBehaviour
     }
 
     //Función que devuelve 0.5 dado un punto en el eje del elipse, menor de 0.5 cuanto mas se aleja del centro y 1 en el centro
-    float EllipseDistance(Vector3Int point)
+    float EllipseDistance(Vector3 point)
     {
         Vector3 distance = endPos - startPos;
         float a = Mathf.Abs(distance.x)/2;

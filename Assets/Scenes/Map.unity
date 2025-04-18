@@ -426,7 +426,7 @@ GameObject:
   - component: {fileID: 196003841}
   - component: {fileID: 196003840}
   - component: {fileID: 196003839}
-  - component: {fileID: 196003838}
+  - component: {fileID: 196003842}
   m_Layer: 2
   m_Name: DigSphereStart
   m_TagString: Untagged
@@ -434,27 +434,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!135 &196003838
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 196003837}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &196003839
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -523,6 +502,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 856479751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &196003842
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196003837}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.001, y: 1.001, z: 1.001}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &443493903 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6347991791931707743, guid: 95624e558c85b814ca25ad9cfac1d1fb, type: 3}
@@ -1258,7 +1258,6 @@ GameObject:
   - component: {fileID: 1396928764}
   - component: {fileID: 1396928763}
   - component: {fileID: 1396928762}
-  - component: {fileID: 1396928761}
   m_Layer: 2
   m_Name: DigSphereEnd
   m_TagString: Untagged
@@ -1266,27 +1265,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!135 &1396928761
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1396928760}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1396928762
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1712,7 +1690,7 @@ GameObject:
   - component: {fileID: 2009118851}
   - component: {fileID: 2009118850}
   - component: {fileID: 2009118849}
-  - component: {fileID: 2009118848}
+  - component: {fileID: 2009118852}
   m_Layer: 2
   m_Name: DigCilinder
   m_TagString: Untagged
@@ -1720,29 +1698,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!136 &2009118848
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2009118847}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &2009118849
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1811,6 +1766,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 856479751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &2009118852
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2009118847}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Radius: 0.6
+  m_Height: 0.5
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2026811054
 GameObject:
   m_ObjectHideFlags: 0
