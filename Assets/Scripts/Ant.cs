@@ -6,6 +6,10 @@ using NUnit.Framework;
 using UnityEditor;
 using Unity.VisualScripting;
 using FluentBehaviourTree;
+using System.Runtime.Serialization;
+using System;
+using System.IO;
+using Unity.VisualScripting.Antlr3.Runtime;
 
 
 public class Ant : MonoBehaviour
@@ -29,8 +33,7 @@ public class Ant : MonoBehaviour
     Vector3 normalMedian = Vector3.up;
     public CubePaths.CubeSurface lastSurface;
     private CubePheromone placedPher = null; //Last placed pheromone by ant
-    public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
-    public Objective objective = null;
+    public Task objective = null;
     public GameObject carriedObject = null;
     public bool isControlled = false;
     private bool IsCarrying()
@@ -76,29 +79,59 @@ public class Ant : MonoBehaviour
 
         var builder = new BehaviourTreeBuilder();
         this.tree = builder
-            .Parallel("Main", 0, 0)
-                .Selector("General tasks")
-                    .Sequence("Carry to nest")
-                        .Condition("Carrying food?", t => IsCarrying())
-                        .Do("Not impemented yet", t => BehaviourTreeStatus.Success)
-                    .End()
-                    .Sequence("Dig point")
-                        .Condition("Digpoint nearby?", t => SenseDigPoints())
-                        .Sequence("Dig the point")
-                            .Do("Go to digPoint", t => followPath())
-                            .Do("Align with digPoint", t => Align(objective.getPos()))
-                            .Do("Wait for dig", t => {Debug.Log("Waiting..."); if (digAnimStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return digAnimStatus;})
+            .ForgetfulSequence("Main") //Todo: rename forgetful to normal and normal to forgetful.
+                .ForgetfulSelector("Get task if none")
+                    .Condition("I have a task", t => {return objective != null;})
+                    
+                    //If im holding food, go send food.
+                    .ForgetfulSelector("If carrying bring to nest") //To do: expand this into giving food to larva?
+                        .Condition("Not carrying food check", t => !IsCarrying())
+                        .ForgetfulSelector("If not in nest go to nest")
+                            .Condition("Am I in nest?", t => Nest.InNest(transform.position))
+                            .Do("Set to go to nest", t => {objective = Task.GoInsideTask(); return BehaviourTreeStatus.Success;})
                         .End()
+                        .Do("Set to go to food room", t => {Debug.Log("I GOTTA PUT THIS SOMEWHERE"); return BehaviourTreeStatus.Success;})
                     .End()
-                    .Sequence("Gather food")
-                        .Condition("Food nearby?", t => SenseFood())
-                        .Sequence("Pick up food")
-                            .Do("Go to food", t => followPath())
-                            .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => {Debug.Log("Waiting..."); if (pickupStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return pickupStatus;})
-                        .End()
+
+                    .Do("Get requested task", t => RequestTask())
+                    .Do("Sense nearby task", t => SenseTask())
+                    //Go foraging
+                    //Go explore
+                    .Do("Go outside", t => {objective = Task.GoOutsideTask(); return BehaviourTreeStatus.Success;})
+                .End()
+
+                .ForgetfulSequence("Pick up food routine")
+                    .Condition("My task is picking up food?", t => objective.isTaskType(TaskType.GetFood))
+                    .Condition("Is my task valid", t => objective.isValid(this))
+                    .Sequence("Pick up sequence")
+                        .Do("Go to food", t => followPath())
+                        .Do("Align with food", t => Align(objective.getPos()))
+                        .Do("Wait for pickup", t => {Debug.Log("Waiting..."); if (pickupStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return pickupStatus;})
                     .End()
                 .End()
+
+                .ForgetfulSequence("Dig routine")
+                    .Condition("My task is digging?", t => objective.isTaskType(TaskType.DigPoint))
+                    .Condition("Is my task valid", t => objective.isValid(this))
+                    .Sequence("Dig sequence")
+                        .Do("Go to digPoint", t => followPath())
+                        .Do("Align with digPoint", t => Align(objective.getPos()))
+                        .Do("Wait for dig", t => {Debug.Log("Waiting..."); if (digAnimStatus==BehaviourTreeStatus.Success) Debug.Log("GOT IT----------------------------"); return digAnimStatus;})
+                    .End()
+                .End()
+
+                .Sequence("Carry to nest")
+                    .Do("Not impemented yet", t => BehaviourTreeStatus.Success)
+                .End()
+                    
+                .Sequence("Go outside")
+                    .Condition("Am i inside?", t => Nest.InNest(antSurface.pos))
+                    .Selector("Make path if I don't already have it.")
+                        .Condition("I have a path to outside", t => {Debug.Log("NOT IMPLEMENTED"); return true;})
+                        .Do("A", t => {return BehaviourTreeStatus.Success;})
+                    .End()
+                .End()
+                
             .End()
             .Build();
     }
@@ -108,7 +141,7 @@ public class Ant : MonoBehaviour
         if (objective != null)
         {
             BehaviourTreeStatus status;
-            if (path.Count == 0) status = BehaviourTreeStatus.Success;
+            if (objective.path.Count == 0) status = BehaviourTreeStatus.Success;
             else status = SetGoalFromPath(antSurface);
             if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian);
             else {DontTurn(); SetWalking(false);}
@@ -116,6 +149,74 @@ public class Ant : MonoBehaviour
         }
         else return BehaviourTreeStatus.Failure;
         
+    }
+
+    private BehaviourTreeStatus SenseTask()
+    {
+        int digPointMask = (1 << 9);
+        int foodMask = (1 << 10);
+
+        //BUscamos colisiones con todos los objetos comida y punto de excavación alrededor de la hormiga
+        int layermask = digPointMask + foodMask; //Capa de comida y digpoint
+        PriorityQueue<GameObject, float> sensedItems = new();
+        int maxColliders = 100;
+        Collider[] hitColliders = new Collider[maxColliders];
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
+        for (int i = 0; i < numColliders; i++)
+        {
+            sensedItems.Enqueue(hitColliders[i].gameObject, Vector3.Distance(hitColliders[i].transform.position, transform.position));
+        }
+
+        int minLength = int.MaxValue;
+        Task newTask = null;
+        bool foundDigPoint = false;
+        while (sensedItems.Count > 0)
+        {
+            GameObject sensedItem = sensedItems.Dequeue();
+            //DigPoints tienen prioridad sobre comida
+            if (sensedItem.gameObject.layer == foodMask && foundDigPoint) break;
+            //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
+            if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
+            {
+                minLength = objective.path.Count;
+                if (sensedItem.gameObject.layer == digPointMask)
+                {
+                    //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
+                    if (!foundDigPoint) {foundDigPoint = true; minLength = int.MaxValue;}
+
+                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                }
+                else
+                {
+                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.GetFood, newPath);
+                }
+            }
+        }
+
+        if (newTask != null)
+        {
+            objective = newTask;
+            return BehaviourTreeStatus.Success;
+        }
+        return BehaviourTreeStatus.Failure;
+    }
+
+    private bool CheckTaskValidity()
+    {
+        if (objective != null)
+            if (objective.isValid(this)) return true;
+        
+        tree.refresh();
+        return false;
+    }
+
+    //If there is a requested task, it is selected. Otherwise return failure.
+    private BehaviourTreeStatus RequestTask()
+    {
+        if (Task.ToDo.TryDequeue(out objective)) return BehaviourTreeStatus.Success;
+
+        objective = null;
+        return BehaviourTreeStatus.Failure;
     }
 
     BehaviourTreeStatus Align(Vector3 point)
@@ -133,24 +234,19 @@ public class Ant : MonoBehaviour
             return BehaviourTreeStatus.Running;
         }
         DontTurn();
-        if (objective.stillValid())
-        {
-            if (objective.isFood())
-            {
-                Animator.SetTrigger("Pick up");
-                pickupStatus = BehaviourTreeStatus.Running;
-            }
-            if (objective.isDigPoint()) 
-            {
-                Animator.SetTrigger("Dig");
-                digAnimStatus = BehaviourTreeStatus.Running;
-            }
-            if (objective.isPos()) return BehaviourTreeStatus.Failure;
 
-            return BehaviourTreeStatus.Success;
+        if (objective.isTaskType(TaskType.GetFood))
+        {
+            Animator.SetTrigger("Pick up");
+            pickupStatus = BehaviourTreeStatus.Running;
         }
-        Debug.Log("Objective not valid anymore");
-        return BehaviourTreeStatus.Failure;
+        if (objective.isTaskType(TaskType.DigPoint)) 
+        {
+            Animator.SetTrigger("Dig");
+            digAnimStatus = BehaviourTreeStatus.Running;
+        }
+
+        return BehaviourTreeStatus.Success;
     }
 
     private void Update()
@@ -210,9 +306,9 @@ public class Ant : MonoBehaviour
             return;
         }
 
-        if (objective.stillValid())
+        if (objective.isValid(this) && objective.isTaskType(TaskType.GetFood))
         {
-            Debug.Log("Valud");
+            Debug.Log("Valid");
             GameObject food = objective.GetFood();
             food.transform.SetParent(carriedObject.transform);
             Destroy(food.GetComponent<Rigidbody>());
@@ -222,7 +318,7 @@ public class Ant : MonoBehaviour
         }
         else
         {
-            Debug.Log("Not valid i guess???");
+            Debug.Log("Not valid or changed i guess???");
             Animator.SetTrigger("Pick up fail");
             pickupStatus = BehaviourTreeStatus.Failure;
         }
@@ -255,7 +351,7 @@ public class Ant : MonoBehaviour
             return;
         }
 
-        if (objective.stillValid() && objective.isDigPoint())
+        if (objective.isValid(this) && objective.isTaskType(TaskType.DigPoint))
         {
             objective.GetDigPoint().Dig();
             Destroy(objective.GetDigPoint().transform.gameObject);
@@ -513,9 +609,9 @@ public class Ant : MonoBehaviour
     }
 
 
-    //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
+    //Si hay Comida cerca, pone como task recoger la comida con el path hacia la comida
     //Si no hay, devuelve false.
-    private bool SenseFood()
+    private Task SenseFood()
     {
         int layermask = 1 << 10;
         PriorityQueue<GameObject, float> sensedFood = new();
@@ -529,7 +625,7 @@ public class Ant : MonoBehaviour
         }
 
         int minLength = int.MaxValue;
-        objective = null;
+        Task newTask = null;
 
         while (sensedFood.Count > 0)
         {
@@ -540,19 +636,19 @@ public class Ant : MonoBehaviour
             
             if (isReachable && newPath.Count < minLength)
             {         
-                path = newPath;
-                objective = new Objective(food);
-                minLength = path.Count;
+                newTask = new Task(food);
+                objective.path = newPath;
+                minLength = objective.path.Count;
             }
 
         }
 
-        return objective != null;
+        return newTask;
     }
 
     //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
     //Si no hay, devuelve false.
-    private bool SenseDigPoints()
+    private Task SenseDigPoints()
     {
         int layermask = 1 << 9;
         PriorityQueue<GameObject, float> sensedDigPoints = new();
@@ -561,14 +657,14 @@ public class Ant : MonoBehaviour
         int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
         for (int i = 0; i < numColliders; i++)
         {
-            DigPoint digPoint = hitColliders[i].transform.gameObject.GetComponent<DigPoint>();
-            sensedDigPoints.Enqueue(hitColliders[i].transform.gameObject, 100 - Vector3.Distance(digPoint.transform.position, transform.position));
+            DigPoint digPoint = hitColliders[i].gameObject.GetComponent<DigPoint>();
+            sensedDigPoints.Enqueue(hitColliders[i].gameObject, 100 - Vector3.Distance(digPoint.transform.position, transform.position));
         }
 
         //int minDepth = int.MaxValue;
         int minLength = int.MaxValue;
 
-        objective = null;
+        Task newTask = null;
 
         while (sensedDigPoints.Count > 0)
         {
@@ -583,15 +679,15 @@ public class Ant : MonoBehaviour
                 //((digPoint.depth < minDepth) ||
                 //(digPoint.depth == minDepth && newPath.Count < minLength)))
             {         
-                path = newPath;
-                objective = new Objective(digPoint);
+                newTask = new Task(digPoint);
+                newTask.path = newPath;
                 //minDepth = digPoint.depth;
-                minLength = path.Count;
+                minLength = objective.path.Count;
             }
 
         }
 
-        return objective != null;
+        return newTask;
     }
 
     //Pone el 
@@ -601,15 +697,15 @@ public class Ant : MonoBehaviour
         if (objective != null)
             if (CubePaths.NextToPoint(transform.position, objective.getPos()))
             {
-                path = new();
                 Debug.Log("Reached adyacent point");
+                objective.path = new();
                 setHaveGoalFalse();
                 return BehaviourTreeStatus.Success;
             }
-
+        else return BehaviourTreeStatus.Failure;
 
         //Debug.Log("SettingGoal");
-        if (path.Count == 0)
+        if (objective.path.Count == 0)
         {
             Debug.Log("no path to follow");
             setHaveGoalFalse();
@@ -635,10 +731,10 @@ public class Ant : MonoBehaviour
 
         var sameCube = sensedRange[0];
 
-        if (sameCube.Equals(path.Last()))
+        if (sameCube.Equals(objective.path.Last()))
         {
             Debug.Log("Same");
-            path = new();
+            objective.path = new();
             setHaveGoalFalse();
             return BehaviourTreeStatus.Success;
         }
@@ -649,27 +745,27 @@ public class Ant : MonoBehaviour
             range++;
             sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
 
-            for (int i = 0; i < path.Count; i += 1)
+            for (int i = 0; i < objective.path.Count; i += 1)
             {
-                if (sensedRange.Exists(x => x.Equals(path[i]))) goalIndex = i;
+                if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
             }
         }
 
         if (goalIndex == -1)
         {
             Debug.Log("not found");
-            path = new();
+            objective.path = new();
             setHaveGoalFalse();
             return BehaviourTreeStatus.Failure;
         }
 
-        CubePaths.CubeSurface firstStep = path[goalIndex];
+        CubePaths.CubeSurface firstStep = objective.path[goalIndex];
 
         //Debug.Log("First step: " + firstStep.pos + " at range " + range);
 
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
-        if (goalIndex < path.Count - 1) nextGoal = CubePaths.GetMovementGoal(antSurface, dir, path[goalIndex+1].pos - path[goalIndex].pos);
+        if (goalIndex < objective.path.Count - 1) nextGoal = CubePaths.GetMovementGoal(antSurface, dir, objective.path[goalIndex+1].pos - objective.path[goalIndex].pos);
         else nextGoal = CubePaths.GetMovementGoal(antSurface, dir);
 
         nextPosDraw = firstStep.pos;

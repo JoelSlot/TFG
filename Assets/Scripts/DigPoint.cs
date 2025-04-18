@@ -92,9 +92,9 @@ public class DigPoint : MonoBehaviour
         if (terrainEdit.Count > 0) WG.EditTerrainSet(terrainEdit);
     }
     
-    public Objective getObjective()
+    public Task getObjective()
     {
-        return new Objective(this);
+        return new Task(this);
     }
 
 }
