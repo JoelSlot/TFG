@@ -14,7 +14,6 @@ using Unity.VisualScripting.Antlr3.Runtime;
 
 public class Ant : MonoBehaviour
 {
-
     public GameObject antObj;
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
