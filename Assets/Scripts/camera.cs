@@ -39,7 +39,6 @@ public class FlyCamera : MonoBehaviour
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
-    int pathId;
 
     public enum obj {None, Ant, Grub, digTunnel, digChamber, test}
     public GameObject origAnt; //Base ant that will be copied
@@ -65,7 +64,6 @@ public class FlyCamera : MonoBehaviour
         else sphere.GetComponent<MeshRenderer>().enabled = true;
         origDigPoint.GetComponent<DigPoint>().WG = WG;
         DigPoint.origDigPoint = origDigPoint;
-        pathId = Pheromone.getNextPathId();
     }
 
     void Update()
