@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace FluentBehaviourTree
 {
@@ -15,14 +14,5 @@ namespace FluentBehaviourTree
         /// Update the time of the behaviour tree.
         /// </summary>
         BehaviourTreeStatus Tick(TimeData time);
-
-        BehaviourTreeStatus Tick(TimeData time, string parents);
-
-        /// <summary>
-        /// Reset the parallel and sequence nodes
-        /// </summary>
-        void refresh();
-
-        string GetName();
     }
 }

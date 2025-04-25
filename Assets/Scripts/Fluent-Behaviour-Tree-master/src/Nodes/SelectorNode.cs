@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using UnityEditor.Animations;
-using UnityEngine;
 
 namespace FluentBehaviourTree
 {
@@ -23,12 +20,6 @@ namespace FluentBehaviourTree
         /// </summary>
         private List<IBehaviourTreeNode> children = new List<IBehaviourTreeNode>(); //todo: optimization, bake this to an array.
 
-        /// <summary>
-        /// Index of child being executed.
-        /// </summary>
-        private int index = 0;
-
-
         public SelectorNode(string name)
         {
             this.name = name;
@@ -36,55 +27,16 @@ namespace FluentBehaviourTree
 
         public BehaviourTreeStatus Tick(TimeData time)
         {
-            while (true)
+            foreach (var child in children)
             {
-                var childStatus = children[index].Tick(time);
-                
-                switch (childStatus)
+                var childStatus = child.Tick(time);
+                if (childStatus != BehaviourTreeStatus.Failure)
                 {
-                    case BehaviourTreeStatus.Failure:
-                        index += 1;
-                        if (index >= children.Count)
-                        {
-                            refresh();
-                            return BehaviourTreeStatus.Failure;
-                        }
-                        break;
-                    case BehaviourTreeStatus.Success:
-                        refresh();
-                        return BehaviourTreeStatus.Success;
-                    case BehaviourTreeStatus.Running:
-                        return BehaviourTreeStatus.Running;
+                    return childStatus;
                 }
-
             }
-        }
 
-        public BehaviourTreeStatus Tick(TimeData time, string parents)
-        {
-            while (true)
-            {
-                var childStatus = children[index].Tick(time, parents + " --> " + name);
-                
-                switch (childStatus)
-                {
-                    case BehaviourTreeStatus.Failure:
-                        index += 1;
-                        if (index >= children.Count)
-                        {
-                            refresh();
-                            return BehaviourTreeStatus.Failure;
-                        }
-                        break;
-                    case BehaviourTreeStatus.Success:
-                        refresh();
-                        return BehaviourTreeStatus.Success;
-                    case BehaviourTreeStatus.Running:
-                        return BehaviourTreeStatus.Running;
-                }
-
-
-            }
+            return BehaviourTreeStatus.Failure;
         }
 
         /// <summary>
@@ -93,18 +45,6 @@ namespace FluentBehaviourTree
         public void AddChild(IBehaviourTreeNode child)
         {
             children.Add(child);
-        }
-
-        public string GetName()
-        {
-            return name;
-        }
-
-        public void refresh()
-        {
-            foreach (var child in children)
-                child.refresh();
-            index = 0;
         }
     }
 }

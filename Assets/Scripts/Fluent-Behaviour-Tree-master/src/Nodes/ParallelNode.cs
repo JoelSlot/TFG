@@ -47,47 +47,8 @@ namespace FluentBehaviourTree
                 var childStatus = child.Tick(time);
                 switch (childStatus)
                 {
-                    case BehaviourTreeStatus.Success:
-                        ++numChildrenSuceeded;
-                        break;
-                    case BehaviourTreeStatus.Failure:
-                        ++numChildrenFailed;
-                        break;
-                }
-            }
-
-            if (numRequiredToSucceed > 0 && numChildrenSuceeded >= numRequiredToSucceed)
-            {
-                return BehaviourTreeStatus.Success;
-            }
-
-            if (numRequiredToFail > 0 && numChildrenFailed >= numRequiredToFail)
-            {
-                return BehaviourTreeStatus.Failure;
-            }
-
-            return BehaviourTreeStatus.Running;
-        }
-
-
-        public BehaviourTreeStatus Tick(TimeData time, string parents)
-        {
-            parents = parents + " --> " + name;
-
-            var numChildrenSuceeded = 0;
-            var numChildrenFailed = 0;
-
-            foreach (var child in children)
-            {
-                var childStatus = child.Tick(time, parents);
-                switch (childStatus)
-                {
-                    case BehaviourTreeStatus.Success:
-                        ++numChildrenSuceeded;
-                        break;
-                    case BehaviourTreeStatus.Failure:
-                        ++numChildrenFailed;
-                        break;
+                    case BehaviourTreeStatus.Success: ++numChildrenSuceeded; break;
+                    case BehaviourTreeStatus.Failure: ++numChildrenFailed; break;
                 }
             }
 
@@ -107,17 +68,6 @@ namespace FluentBehaviourTree
         public void AddChild(IBehaviourTreeNode child)
         {
             children.Add(child);
-        }
-
-        public string GetName()
-        {
-            return name;
-        }
-
-        public void refresh()
-        {
-            foreach (var child in children)
-                child.refresh();
         }
     }
 }

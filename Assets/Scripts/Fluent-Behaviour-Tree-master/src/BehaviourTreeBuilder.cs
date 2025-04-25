@@ -76,22 +76,6 @@ namespace FluentBehaviourTree
         }
 
         /// <summary>
-        /// Create a forgetfull sequence node (starts from beginning each call).
-        /// </summary>
-        public BehaviourTreeBuilder ForgetfulSequence(string name)
-        {
-            var sequenceNode = new ForgetfulSequenceNode(name);
-
-            if (parentNodeStack.Count > 0)
-            {
-                parentNodeStack.Peek().AddChild(sequenceNode);
-            }
-
-            parentNodeStack.Push(sequenceNode);
-            return this;
-        }
-
-        /// <summary>
         /// Create a parallel node.
         /// </summary>
         public BehaviourTreeBuilder Parallel(string name, int numRequiredToFail, int numRequiredToSucceed)
@@ -113,22 +97,6 @@ namespace FluentBehaviourTree
         public BehaviourTreeBuilder Selector(string name)
         {
             var selectorNode = new SelectorNode(name);
-
-            if (parentNodeStack.Count > 0)
-            {
-                parentNodeStack.Peek().AddChild(selectorNode);
-            }
-
-            parentNodeStack.Push(selectorNode);
-            return this;
-        }
-
-        /// <summary>
-        /// Create a forgetfull selector node (starts from beginning each call).
-        /// </summary>
-        public BehaviourTreeBuilder ForgetfulSelector(string name)
-        {
-            var selectorNode = new ForgetfulSelectorNode(name);
 
             if (parentNodeStack.Count > 0)
             {

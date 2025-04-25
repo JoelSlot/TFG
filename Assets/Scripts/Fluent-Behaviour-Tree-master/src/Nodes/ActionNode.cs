@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -28,24 +27,8 @@ namespace FluentBehaviourTree
             this.fn=fn;
         }
 
-        public string GetName()
-        {
-            return name;
-        }
-
-        public void refresh()
-        {
-            //Nothing necessary
-        }
-
         public BehaviourTreeStatus Tick(TimeData time)
         {
-            return fn(time);
-        }
-
-        public BehaviourTreeStatus Tick(TimeData time, string parents)
-        {
-            UnityEngine.Debug.Log(parents + " --> " + name);
             return fn(time);
         }
     }
