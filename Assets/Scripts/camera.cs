@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using UnityEditor.Search;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.ComponentModel.Design;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -124,8 +125,8 @@ public class FlyCamera : MonoBehaviour
             sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
         }
 
-        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, -0.8f);
-        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, 0.8f);
+        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, -1);
+        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, 1);
 
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -288,10 +289,11 @@ public class FlyCamera : MonoBehaviour
     }
 
     //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
-    void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int,float>> points)
+    void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int,int>> points)
     {
-        points = new List<Tuple<Vector3Int,float>>();
+        points = new List<Tuple<Vector3Int,int>>();
 
+        //check all points in the cube containing the sphere
         int radiusCeil = Mathf.CeilToInt(radius);
         for (int x = -radiusCeil; x < radiusCeil; x++)
         {
@@ -303,7 +305,7 @@ public class FlyCamera : MonoBehaviour
                     float distPoint = point.magnitude;
                     if (distPoint <= radius)
                     { //changed it to do ciel with the x and pos added (shouldn't change anything actually, hmm)
-                        points.Add(new Tuple<Vector3Int,float>(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)), (float)(1f - distPoint / radius)/10));
+                        points.Add(new Tuple<Vector3Int,int>(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)),Mathf.Clamp(Mathf.RoundToInt((255 - (127.5f * distPoint)/radius)/15), 0, 255)));
                     }
                 }
             }
@@ -311,8 +313,8 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    public void terrainEditSphere(Vector3 pos, float radius, float degree){
-        PointsInSphere(pos, radius, out List<Tuple<Vector3Int, float>> points);
+    public void terrainEditSphere(Vector3 pos, float radius, int degree){
+        PointsInSphere(pos, radius, out List<Tuple<Vector3Int, int>> points);
         WG.EditTerrainAdd(points, degree);
     }
 
@@ -345,10 +347,10 @@ public class FlyCamera : MonoBehaviour
     }
 
     private void digAllPoints(){
-        List<Tuple<Vector3Int, float>> points = new List<Tuple<Vector3Int, float>>();
+        List<Tuple<Vector3Int, int>> points = new();
         foreach (var entry in DigPoint.digPointDict)
         {
-            points.Add(new Tuple<Vector3Int, float>(entry.Key, entry.Value.value));
+            points.Add(new Tuple<Vector3Int, int>(entry.Key, entry.Value.value));
         }
         WG.EditTerrainSet(points);
     }

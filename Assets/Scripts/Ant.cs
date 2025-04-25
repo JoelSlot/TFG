@@ -18,7 +18,6 @@ public class Ant : MonoBehaviour
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
     public float speed = 0;
-    public float turn = 1;
     public float tiltSpeed = 10;
     public float sep = 0.35f;
 

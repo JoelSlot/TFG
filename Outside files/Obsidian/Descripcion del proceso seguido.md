@@ -276,3 +276,49 @@ https://sketchfab.com/3d-models/larva-14877198919544f5b43cef3e86e7b89f
 
 
 Error when trying to make a capsule collider be consistent with the tunnel cilinder. It just wouldn't resize at the same rate. So intead of using colliders to check if a point is in the nest part, i decided to reuse the marchingValue Function.
+
+## IA
+
+Desde el principio, la hormiga ha funcionado con un sistema de estados simple para poder probar su funcionalidad mientras desarollaba el juego. Inicialmente el foco era en hacer que la hormiga pudiera seguir un camino de feromonas, por lo que los estados iniciales era simplemente PASSIVE, FOLLOWING y LOST.
+- LOST cuando la hormiga estaba siguiendo un camino de phermonas, 
+- FOLLOWING: La hormiga está siguiendo un camino específico.
+- PASSIVE: La hormiga no ha encontrado un camino de feromonas a seguir.
+
+AL implementar más funciones, como la capacidad de recoger alimentos, dejar alimentos y excavar áreas, la cantidad de estados aumentó. Se empezaba a mostrar un problema de complejidad: Cada estado debería tener transiciones a todos los demás estados en los que podía caer. //YOU CAN DRONE ABOUT THE TYPES OF STATES IN MORE DETAIL.
+
+La solución: un árbol de comportamiento que comprendiera todos los comportamientos de la hormiga. Esto ayudaba tanto a que el código fuera más inteligible, ya que cada nodo hoja llamaría solo una función específica; como a simplificar el proceso de diseño de la hormiga. Ahora se podría insertar más comportamientos sin tener que editar de nuevo todo el esquema. El árbol de comportamiento usado ... etc
+## Guardar y cargar el mundo
+
+Cuando implementé marching cubes, creé una función de guardado y carga de los niveles de marching cubes. Era muy simple, y hasta ahora solo estaba mapeado el guardado de un solo nivel a la vez. La forma era simple: para cada punto en la matriz que representa el mundo, guardar su valor en el archivo que representa el mapa. Debido a no usar ningún tipo de formateo ni compresión, el archivo es bastante grande (1 MB). Esto es sin embargo un fichero de texto normal, y es preferible buscar guardar la información tanto de forma comprimida como en un formato ordenado e inteligible: JSON.
+
+Se empezó a usar SharpSerializer (Link?) para guardar los datos, probando primero guardar los datos del terreno. Todos los datos están modo static en WorldGen, pero no se puede serializar datos estáticos. Por eso se creó un script aparte llamado GameData en el que se guardarían todos los datos de forma no estática para serializarlo, y que se deserializaría para que WorldGen pudiera absorber la información en sus variables estáticas.
+
+(show code?)
+
+Inicialmente el archivo no contendría datos, debido a que la clase GameData guardaba los datos como variables en vez de propiedades. Al arreglar ese problema, se pudo ver que el archivo guardado tenía tamaño 43 MB. Esto se debía a que cada float de la matriz de terreno se guardaba con el formato:
+
+`<Item indexes="60,21,92">`
+    `<Simple value="1" />`
+    `</Item>`
+
+Obviamente no es la intención, asi que se pasó a usar la compresión de los datos en formato binario. Sin embargo, el tamaño de archivo seguia siendo alto: 9 MB.
+
+Tenemos que encontrar una forma más eficiente de guardar los datos. Diseñé un modelo de compresión de la matríz usando el hecho de que hay muchisimos valores repetidos (el cielo son casi todos 0, y el suelo casi todos 1) (Map data image?). Explain how the array of bytes is organized in tagBytes that indicate whether the next 8 members are single bytes or double bytes, the latter of which has the first show the amount of members in each of the 8 next groups (1 or 2).
+
+Also desarrolla sobre como has pasado ed usar valores entre 0 y 1 con 0.5 como el entremedio a 0-255 con 127,5 como entremedio para simplificar el guardado como bytes.
+
+Show decode/encode graphs and the code that has been simplified.
+
+Usando el método final, el archivo resultante pesa 40Kb incluso en modo de guardado XML, ya que el array de bits además de ser más corto solo es una entrada en el archivo.
+
+
+Lo que necesito hacer es poder guardar y cargar el estado del resto del juego:
+- Las hormigas
+	- Su posición e orientación
+	- Su task actual
+	- El objeto que lleva (si lleva)
+	- El camino de feromonas que está siguiendo
+	- El camino de 
+
+
+

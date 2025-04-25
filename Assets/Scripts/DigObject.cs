@@ -154,7 +154,7 @@ public class NestPart : MonoBehaviour
         Queue<Vector3Int> pointsToCheck = new();
         Vector3Int start = Vector3Int.FloorToInt(transform.position);
 
-        float desiredVal = getMarchingValue(start);
+        int desiredVal = getMarchingValue(start);
         checkedPoints.Add(start);
         pointsToCheck.Enqueue(start);
         points.Add(start, new DigPoint.digPointData(desiredVal, this)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
@@ -187,16 +187,16 @@ public class NestPart : MonoBehaviour
         return points;
     }
 
-    public float getMarchingValue(Vector3 pos)
+    public int getMarchingValue(Vector3 pos)
     {
         if (mode == NestPartType.Tunnel)
         {
             float dist = DistancePointLine(pos, transform.position, endPos);
-            return Mathf.Clamp01(dist / (2*radius));
+            return Mathf.RoundToInt(Mathf.Clamp(dist * 127.5f / radius, 0, 255));
         }
         else //if (mode == digType.Chamber)
         {
-            return EllipseDistance(pos);
+            return Mathf.RoundToInt(Mathf.Clamp(255 * EllipseDistance(pos), 0, 255));
         }
     }
 

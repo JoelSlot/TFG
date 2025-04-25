@@ -10,11 +10,11 @@ public class DigPoint : MonoBehaviour
     static public GameObject origDigPoint;
 
     public class digPointData{
-        public float value;
+        public int value;
         public List<NestPart> parents;
         public bool instantiated;
 
-        public digPointData(float val, NestPart parent)
+        public digPointData(int val, NestPart parent)
         {
             value = val;
             parents = new();
@@ -60,9 +60,9 @@ public class DigPoint : MonoBehaviour
     {
         //Comenzamos la lista de puntos a editar con el digPoint mismo
         Vector3Int pos = Vector3Int.RoundToInt(transform.position);
-        float val = digPointDict[pos].value;
-        List<Tuple<Vector3Int, float>> terrainEdit = new();
-        if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, float>(pos, val));
+        int val = digPointDict[pos].value;
+        List<Tuple<Vector3Int, int>> terrainEdit = new();
+        if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, int>(pos, val));
         
         //Miramos todos los digPoints alrededores
         Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
@@ -73,7 +73,7 @@ public class DigPoint : MonoBehaviour
                 digPointData nextDigData = digPointDict[pos + direction];
                 if ( nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
-                    if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, float>(pos + direction, nextDigData.value));
+                    if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, nextDigData.value));
                     digPointDict.Remove(pos + direction);
                 }
                 else
@@ -82,9 +82,9 @@ public class DigPoint : MonoBehaviour
                     //Inicializamos si no lo está
                     nextDigData.InstantiatePoint(pos + direction);
                     //Quitar un poco de los alrededores
-                    float newVal = WorldGen.SampleTerrain(pos + direction) - 0.2f;
+                    int newVal = WorldGen.SampleTerrain(pos + direction) - 2;
                     if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:
-                        if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, float>(pos+direction, newVal)); //Lo ponemos al valor obtenido
+                        if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, int>(pos+direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }
         }
