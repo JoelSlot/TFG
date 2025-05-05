@@ -18,8 +18,6 @@ public class FlyCamera : MonoBehaviour
     public Camera camera; // Objeto cámara que se usa ingame
 
 
-    public Plane projectPlane = new Plane(new Vector3(0,0,1), -10);
-
 
     Vector3 velocity; // current velocity
 
@@ -27,8 +25,7 @@ public class FlyCamera : MonoBehaviour
     public WorldGen WG;
 
     //Variables para sistema de excavacion
-    public GameObject  origTunnel;
-    public GameObject chamber;
+   
     
     private bool placingDigZone = false;
     private Vector3 digStartPoint;
@@ -41,9 +38,8 @@ public class FlyCamera : MonoBehaviour
     float sphereScale = 1f;
 
 
-    public enum obj {None, Ant, Grub, digTunnel, digChamber, test}
-    public GameObject origAnt; //Base ant that will be copied
-    //public GameObject Grub; //Base grub that will be copied
+    public enum obj {None, Ant, Corn, digTunnel, digChamber, test}
+    
     public obj objectMode = obj.None;
     public Ant SelectedAnt;
 
@@ -261,33 +257,6 @@ public class FlyCamera : MonoBehaviour
         return new Vector3Int(Mathf.FloorToInt(nearest.x), Mathf.FloorToInt(nearest.y), Mathf.FloorToInt(nearest.z));
     }
 
-
-    
-
-    void setVertPlane() //ok so the using planos is not something i came up with inmediately, and eventhen i was gonna use 3 and adjust them. thank goodness i noticed thats not possible and also that it would be simpler to have one that is updating all the time as the camera orientation changes
-    {
-        //ESTO HA TENIDO MUCHAS ITERACIONES; DEBIDO A LA COMPLEJIDAD MATEMÄTICA.  
-        //UN PROBLEMA= CUANDO DIGENDPOINT Y DIGSTARTPOINT SE ALINEAN EN CUANTO A PERSPECTIVA DE LA CAMARA; EL PLANO NO RECIBE 3 PUNTOS LO SUFICIENTEMENTE DISTINTOS
-        //Se crea el plano
-        Vector3 camToStart = digStartPoint - transform.position;
-        Vector3 camToEnd = digEndPoint - transform.position;
-        Vector3 camToNearest = Vector3.Project(camToEnd, camToStart);
-        Vector3 Nearest = transform.position + camToNearest;
-        Debug.DrawRay(transform.position, camToStart, Color.red);
-        Debug.DrawRay(transform.position, camToEnd, Color.blue);
-        Debug.DrawLine(digEndPoint, Nearest, Color.green);
-        Vector3 hor  = Vector3.Cross(camToStart, Vector3.up);
-        projectPlane = new Plane(digEndPoint + hor, digEndPoint + Vector3.up*2, digEndPoint);
-        Debug.DrawLine(digEndPoint + Vector3.up*2, digEndPoint, Color.magenta);
-        Debug.DrawLine(digEndPoint + Vector3.up*2, digEndPoint + hor.normalized *2, Color.magenta);
-        Debug.DrawLine(digEndPoint, digEndPoint + hor.normalized *2, Color.magenta);
-    }
-
-    void setHorPlane()
-    {
-        projectPlane = new Plane(digEndPoint, digEndPoint + Vector3.left, digEndPoint + Vector3.forward);
-    }
-
     //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
     void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int,int>> points)
     {
@@ -315,7 +284,7 @@ public class FlyCamera : MonoBehaviour
 
     public void terrainEditSphere(Vector3 pos, float radius, int degree){
         PointsInSphere(pos, radius, out List<Tuple<Vector3Int, int>> points);
-        WG.EditTerrainAdd(points, degree);
+        WorldGen.EditTerrainAdd(points, degree);
     }
 
     
@@ -352,7 +321,7 @@ public class FlyCamera : MonoBehaviour
         {
             points.Add(new Tuple<Vector3Int, int>(entry.Key, entry.Value.value));
         }
-        WG.EditTerrainSet(points);
+        WorldGen.EditTerrainSet(points);
     }
 
 
@@ -373,8 +342,10 @@ public class FlyCamera : MonoBehaviour
 
         }
         //Keys to load/save map
-        if (Input.GetKeyDown(KeyCode.L))
+        /*if (Input.GetKeyDown(KeyCode.L))
+        {
             WG.LoadMap();
+        }*/
         if (Input.GetKeyDown(KeyCode.O))
             WG.SaveMap();
         //Move the camera
@@ -383,6 +354,7 @@ public class FlyCamera : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
             if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
+            if (Input.GetKeyDown(KeyCode.Alpha2)){objectMode = obj.Corn; Debug.Log("Modo corn");} //Cambiar al modo poner comida
             if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
             if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
             if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
@@ -392,7 +364,7 @@ public class FlyCamera : MonoBehaviour
         { 
             SelectedAnt.isControlled = !SelectedAnt.isControlled;
         }
-        if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
+        /*if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
         {
             if (SelectedAnt.isControlled && !SelectedAnt.makingTrail)
             {
@@ -405,6 +377,7 @@ public class FlyCamera : MonoBehaviour
                 //SelectedAnt.placedPheromone = null;
             }
         }
+        */
     }
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
@@ -504,12 +477,10 @@ public class FlyCamera : MonoBehaviour
             {
                 case obj.Ant:
                     if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                    GameObject newAnt = Instantiate(origAnt, hit.point, Quaternion.Euler(hit.normal)); 
-                    newAnt.layer = 7;
-                    newAnt.SetActive(true);
-                    SelectedAnt = newAnt.GetComponent<Ant>();
+                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal));
                     break;
-                case obj.Grub:
+                case obj.Corn:
+                        WorldGen.InstantiateCorn(hit.point + hit.normal.normalized*0.3f, Quaternion.Euler(hit.normal));
                     break;
                 case obj.digTunnel:
                 case obj.digChamber:
@@ -518,11 +489,7 @@ public class FlyCamera : MonoBehaviour
                         placingDigZone = true;
                         digStartPoint = hit.point;
                         digEndPoint = hit.point;
-                        GameObject digObj = Instantiate(origTunnel, digStartPoint, Quaternion.identity);
-                        digObj.SetActive(true);
-                        NestPart nestPartScript = digObj.GetComponent<NestPart>();
-                        nestPartScript.setRadius(1);
-
+                        NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
                         if (objectMode == obj.digTunnel)
                         {
                             nestPartScript.setMode(NestPart.NestPartType.Tunnel);
@@ -533,13 +500,6 @@ public class FlyCamera : MonoBehaviour
                             nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
                             nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                         }
-
-
-                        
-                        nestPartScript.setActive(true);
-                        setVertPlane();
-                        Nest.NestParts.Add(nestPartScript);
-                        Debug.Log("Set Plane Pos");
                     }
                     break;
                     
@@ -585,6 +545,9 @@ public class FlyCamera : MonoBehaviour
             }
         }
     }
+
+
+    
 
 }
 

@@ -1,10 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Polenter.Serialization;
+using Polenter.Serialization.Core;
+using Unity.VisualScripting;
 using UnityEngine;
+
 
 public class GameData 
 {
@@ -20,20 +25,271 @@ public class GameData
     public int chunk_y_dim {get; set;}
     public int chunk_z_dim  {get; set;}
 
-    public GameData()
+    public HashSet<AntInfo> antInfoDict {get; set;}
+    public HashSet<CornInfo> cornInfoDict {get; set;}
+    public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
+    public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict {get; set;}
+    public HashSet<serializableVector3Int> initializedDigPoints {get; set;}
+    /* hashset gave:
+    <Items>
+        <Reference id="12" />
+        <Reference id="16" />
+        <Reference id="18" />
+        <Reference id="20" />
+        <Reference id="36" />
+        <Reference id="42" />
+        <Reference id="46" />
+        <Reference id="74" />
+        <Reference id="76" />
+        <Reference id="5" />
+      </Items>
+    So i guess im using a list for the initializedDigPoints
+    with list getting thsi:
+    <Collection name="initializedDigPoints">
+      <Properties>
+        <Simple name="Capacity" value="16" />
+      </Properties>
+      <Items>
+        <Reference id="12" />
+        <Reference id="16" />
+        <Reference id="18" />
+        <Reference id="20" />
+        <Reference id="22" />
+        <Reference id="36" />
+        <Reference id="40" />
+        <Reference id="42" />
+        <Reference id="44" />
+        <Reference id="46" />
+        <Reference id="82" />
+        <Reference id="5" />
+      </Items>
+    </Collection>
+    So no luck
+
+    throws InvalidOperationException: Property type is not defined. Property: "" execption
+
+    Apparenlty vector3 does not return name.
+    So solution? create another serializable class... despite Vector3Int working in other places
+
+    now using serializableVector3Int it works!
+     */
+    public void saveAnts()
     {
-        x_dim = WorldGen.x_dim;
-        y_dim = WorldGen.y_dim;
-        z_dim = WorldGen.z_dim;
-
-        chunk_x_dim = WorldGen.chunk_x_dim;
-        chunk_y_dim = WorldGen.chunk_y_dim;
-        chunk_z_dim = WorldGen.chunk_z_dim;
-
-        terrainMapStream = EnCode(WorldGen.terrainMap, x_dim, y_dim, z_dim).ToArray();
+        antInfoDict = new();
+        foreach(var (id, ant) in Ant.antDictionary)
+        {
+            antInfoDict.Add(AntInfo.ToData(ant));
+        }
+        Debug.Log("Num ants: " + antInfoDict.Count);
     }
 
-    public void Load()
+    //Save all corn to the dictionary, and add links between held coins and the ants holding them
+    public void saveCorn()
+    {
+        cornInfoDict = new();
+        cornHeldAntDict = new();
+        foreach(var (id, corn) in Corn.cornDictionary)
+        {
+            cornInfoDict.Add(CornInfo.ToData(corn));
+            int holderAntIndex = corn.holderAntIndex();
+            if (holderAntIndex != -1)
+            {
+                cornHeldAntDict.Add(id, holderAntIndex);
+            }
+        }
+    }
+
+    public void saveDigPoints()
+    {
+        digPointDict = DigPoint.digPointDict;
+        initializedDigPoints = new();
+        foreach(var (id, digPointData) in digPointDict)
+        {
+            if (digPointData.digPoint != null)
+            {
+                initializedDigPoints.Add(new serializableVector3Int(id));
+            }
+        }
+    }
+
+    [Serializable]
+    public class serializableVector3Int
+    {
+        public int x {get; set;}
+        public int y {get; set;}
+        public int z {get; set;}
+
+        public serializableVector3Int(Vector3Int original)
+        {
+            x = original.x;
+            y = original.y;
+            z = original.z;
+        }
+
+        private serializableVector3Int(){}
+
+        public Vector3Int ToVector3Int()
+        {
+            return new Vector3Int(x, y, z);
+        }
+    }
+
+    [Serializable]
+    public class serializableVector3
+    {
+        public float x {get; set;}
+        public float y {get; set;}
+        public float z {get; set;}
+
+        public serializableVector3(Vector3 original)
+        {
+            x = original.x;
+            y = original.y;
+            z = original.z;
+        }
+
+        private serializableVector3(){}
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3(x, y, z);
+        }
+    }
+
+    [Serializable]
+    public class serializableQuaternion
+    {
+        public float x {get; set;}
+        public float y {get; set;}
+        public float z {get; set;}
+        public float w {get; set;}
+
+        public serializableQuaternion(Quaternion original)
+        {
+            x = original.x;
+            y = original.y;
+            z = original.z;
+            w = original.w;
+        }
+
+        private serializableQuaternion() {}
+
+        public Quaternion ToQuaternion()
+        {
+            return new Quaternion(x, y, z, w);
+        }
+    }
+
+    [Serializable]
+    public class CornInfo
+    {
+        public int id {get; set;}
+        public serializableVector3 pos {get; set;}
+        public serializableQuaternion orientation {get; set;}
+        
+
+        private CornInfo()
+        {
+
+        }
+
+        public static CornInfo ToData(Corn corn)
+        {
+            CornInfo info = new();
+            info.id = corn.id;
+            info.pos = new (corn.transform.position);
+            info.orientation = new(corn.transform.rotation);
+            return info;
+        }
+    }
+
+    [Serializable]
+    public class AntInfo
+    {
+        public int id {get; set;}
+        public TaskInfo objective {get; set;} //This was task, but since it didnt serialize the task's enum and shit properly
+        public bool isControlled {get; set;}
+        public int followingPheromone {get; set;}
+        public int creatingPheromone {get; set;}
+        public serializableVector3 pos {get; set;}
+        public serializableQuaternion orientation {get; set;}
+
+        private AntInfo()
+        {
+
+        }
+
+        public static AntInfo ToData(Ant ant)
+        {
+            AntInfo info = new();
+            info.id = ant.id;
+            info.objective = TaskInfo.ToData(ant.objective);
+            info.isControlled = ant.isControlled;
+            info.followingPheromone = ant.followingPheromone;
+            info.creatingPheromone = ant.creatingPheromone;
+            info.pos = new (ant.transform.position);
+            info.orientation = new(ant.transform.rotation);
+            return info;
+        }
+
+    }
+
+    [Serializable]
+    public class TaskInfo
+    {        
+        public Vector3Int digPointId {get; set;}
+        public int foodId {get; set;}
+        public serializableVector3 pos {get; set;}
+        public int typeIndex {get; set;}
+
+
+
+        private TaskInfo()
+        {
+
+        }
+
+        public static TaskInfo ToData(Task task)
+        {
+            TaskInfo info = new();
+            info.digPointId = task.digPointId;
+            info.foodId = task.foodId;
+            info.pos = new(task.pos);
+            info.typeIndex = Task.TypeToIndex(task.type);
+            return info;
+        }
+
+    }
+
+    public GameData()
+    {
+        
+    }
+
+    public static GameData Save()
+    {
+        GameData data = new();
+
+        data.x_dim = WorldGen.x_dim;
+        data.y_dim = WorldGen.y_dim;
+        data.z_dim = WorldGen.z_dim;
+
+        data.chunk_x_dim = WorldGen.chunk_x_dim;
+        data.chunk_y_dim = WorldGen.chunk_y_dim;
+        data.chunk_z_dim = WorldGen.chunk_z_dim;
+
+        data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
+
+        data.saveAnts();
+
+        data.saveCorn();
+
+        data.saveDigPoints();
+
+        return data;
+    }
+
+    public void LoadMap()
     {
         WorldGen.x_dim = x_dim;
         WorldGen.y_dim = y_dim;
@@ -45,7 +301,34 @@ public class GameData
 
         WorldGen.terrainMap = Decode(new MemoryStream(terrainMapStream), x_dim, y_dim, z_dim);
         Debug.Log("length: " + terrainMapStream.Count());
+
     }
+
+    public void LoadGameObjects()
+    {
+        foreach (AntInfo info in antInfoDict)
+        {
+            WorldGen.InstantiateAnt(info);
+        }
+
+        foreach (CornInfo info in cornInfoDict)
+        {
+            Corn corn = WorldGen.InstantiateCorn(info);
+            if (cornHeldAntDict.ContainsKey(corn.id))
+            {
+                Ant holderAnt = Ant.antDictionary[cornHeldAntDict[corn.id]];
+                holderAnt.SetToHold(corn.gameObject);
+            }
+        }
+
+        DigPoint.digPointDict = digPointDict;
+        foreach (var id in initializedDigPoints)
+        {
+            
+            DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
+        }
+    }
+
 
 
     private MemoryStream EnCode(int[,,] terrainMap, int x_dim, int y_dim, int z_dim)

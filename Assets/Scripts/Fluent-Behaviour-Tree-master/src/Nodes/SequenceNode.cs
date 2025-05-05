@@ -39,6 +39,20 @@ namespace FluentBehaviourTree
             return BehaviourTreeStatus.Success;
         }
 
+        public BehaviourTreeStatus Tick(TimeData time, string pos)
+        {
+            foreach (var child in children)
+            {
+                var childStatus = child.Tick(time, pos + " --> " + name);
+                if (childStatus != BehaviourTreeStatus.Success)
+                {
+                    return childStatus;
+                }
+            }
+
+            return BehaviourTreeStatus.Success;
+        }
+
         /// <summary>
         /// Add a child to the sequence.
         /// </summary>

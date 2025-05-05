@@ -8,46 +8,46 @@ public class DigPoint : MonoBehaviour
     public WorldGen WG;
 
     static public GameObject origDigPoint;
+    
+    public static Dictionary<Vector3Int, digPointData> digPointDict = new();
+
 
     public class digPointData{
-        public int value;
-        public List<NestPart> parents;
-        public bool instantiated;
+        public int value {get; set;}
+        public DigPoint digPoint = null;
 
         public digPointData(int val, NestPart parent)
         {
             value = val;
-            parents = new();
-            if (parent != null) parents.Add(parent);
-            instantiated = false;
+            digPoint = null;
         }
+
+        private digPointData(){digPoint = null;}
 
         public void update(digPointData newData)
         {
             value = Mathf.Min(newData.value, value);
-            foreach (var parent in newData.parents)
-                parents.Add(parent);
         }
 
-        public void InstantiatePoint(Vector3 pos)
+        public void InstantiatePoint(Vector3Int pos)
         {
-            if (!instantiated)
+            if (digPoint == null)
             {
                 Debug.Log("I HAVE BEEN CREATED AT " + pos);
-                GameObject digPoint = Instantiate(DigPoint.origDigPoint, pos, Quaternion.identity);
-                digPoint.SetActive(true);
-                digPoint.name = "DigPoint (" + pos.x + ", " + pos.y + ", " + pos.z + ")";
-                instantiated = true;
+                digPoint = WorldGen.InstantiateDigPoint(pos);
             }
         }
     }
 
-    public static Dictionary<Vector3Int, digPointData> digPointDict = new();
-    //ORIGINALLY USED A HASHSET TO SEE WITCH ONES HADN?T BEEN INITIALIZED BUT NOW JUST USES TUPLE IN DICT
+    void OnDestroy()
+    {
+        digPointDict.Remove(Vector3Int.RoundToInt(transform.position));
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+
     }
 
     // Update is called once per frame
@@ -68,33 +68,34 @@ public class DigPoint : MonoBehaviour
         Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
         foreach (Vector3Int direction in directions)
         {
-            if (digPointDict.ContainsKey(pos + direction))
+            Vector3Int key = pos + direction;
+            if (digPointDict.ContainsKey(key))
             {
-                digPointData nextDigData = digPointDict[pos + direction];
+                digPointData nextDigData = digPointDict[key];
                 if ( nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
                     if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, nextDigData.value));
-                    digPointDict.Remove(pos + direction);
+                    digPointDict.Remove(key);
                 }
                 else
                 {
-                    Debug.Log("AM instantiated: " + nextDigData.instantiated);
+                    Debug.Log("AM instantiated: " + nextDigData.digPoint != null);
                     //Inicializamos si no lo está
-                    nextDigData.InstantiatePoint(pos + direction);
+                    nextDigData.InstantiatePoint(key);
                     //Quitar un poco de los alrededores
-                    int newVal = WorldGen.SampleTerrain(pos + direction) - 2;
+                    int newVal = WorldGen.SampleTerrain(key) - 2;
                     if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:
                         if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, int>(pos+direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }
         }
         digPointDict.Remove(pos);
-        if (terrainEdit.Count > 0) WG.EditTerrainSet(terrainEdit);
+        if (terrainEdit.Count > 0) WorldGen.EditTerrainSet(terrainEdit);
     }
     
     public Task getObjective()
     {
-        return new Task(this);
+        return new Task(this.transform.position);
     }
 
 }

@@ -14,8 +14,6 @@ public class NestPart : MonoBehaviour
 
     public NestPartType mode = NestPartType.Tunnel;
 
-    public List<NestPart> ConnectedParts = new();
-
     private Vector3 dir = Vector3.up;
     private Vector3 startPos = Vector3.zero;
     private Vector3 endPos = Vector3.up;

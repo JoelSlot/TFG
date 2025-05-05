@@ -27,20 +27,44 @@ public class WorldGen : MonoBehaviour
     int num_chunks_z;
 
     public static int[,,] terrainMap;
-    Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
+    static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
+
+    public GameObject origAnt;
+    public static GameObject originalAnt;
+
+     public GameObject origTunnel;
+     public static GameObject originalTunnel;
+
+     public GameObject origCorn;
+     public static GameObject originalCorn;
+
+     public GameObject origDigPoint;
+     public static GameObject originalDigPoint;
 
 
     // Start is called before the first frame update
     void Start()
     {
+        
+        //Turn all non static members into static ones:
+        originalAnt = origAnt;
+        originalTunnel = origTunnel;
+        originalCorn = origCorn;
+        originalDigPoint = origDigPoint;
 
-        terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-        num_chunks_x = Mathf.FloorToInt(x_dim / chunk_x_dim);
-        num_chunks_y = Mathf.FloorToInt(y_dim / chunk_y_dim);
-        num_chunks_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
-        PopulateTerrainMap();
-        GenerateChunks();
+        if (MainMenu.GameSettings.saveFile == "none")
+        {
+            terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+            PopulateTerrainMap();
+            GenerateChunks();
+        }
+        else
+        {
+            LoadMap(MainMenu.GameSettings.saveFile);
+        }
         Physics.gravity = new Vector3(0, -15.0F, 0);
+        
+
     }
 
     /*
@@ -48,6 +72,9 @@ public class WorldGen : MonoBehaviour
      */
     public void GenerateChunks()
     {
+        num_chunks_x = Mathf.FloorToInt(x_dim / chunk_x_dim);
+        num_chunks_y = Mathf.FloorToInt(y_dim / chunk_y_dim);
+        num_chunks_z = Mathf.FloorToInt(z_dim / chunk_z_dim);
         //Itera sobre todas las secciones de tama�o de chunk del mapa
         for (int x = 0; x < num_chunks_x; x++)
         {
@@ -103,7 +130,7 @@ public class WorldGen : MonoBehaviour
     }
 
 
-    public void EditTerrainAdd(List<Tuple<Vector3Int, int>> points, int degree)
+    public static void EditTerrainAdd(List<Tuple<Vector3Int, int>> points, int degree)
     {
         var affectedChunks = new HashSet<Vector3Int>();
 
@@ -146,7 +173,7 @@ public class WorldGen : MonoBehaviour
         }
 
     }
-    public void EditTerrainSet(List<Tuple<Vector3Int, int>> points)
+    public static void EditTerrainSet(List<Tuple<Vector3Int, int>> points)
     {
         var affectedChunks = new HashSet<Vector3Int>();
 
@@ -270,13 +297,13 @@ public class WorldGen : MonoBehaviour
         return direction.normalized;
     }
 
-    public void LoadMap()
+    public void LoadMap(string saveFile)
     {
         Debug.Log("Starting loading");
 
         //XML
         var serializer = new SharpSerializer();
-        GameData loadedData = (GameData)serializer.Deserialize("Encoded.xml");
+        GameData loadedData = (GameData)serializer.Deserialize(saveFile);
 
         //BINARY
         //var serializer = new SharpSerializer(true);
@@ -288,15 +315,21 @@ public class WorldGen : MonoBehaviour
 
         //GameData loadedData = (GameData)sizeOptimizedSerializer2.Deserialize("GameDataOptimized.bin");
 
-        loadedData.Load();
+        loadedData.LoadMap();
 
+        //eliminar chunks existentes
         foreach (var item in chunks.Values)
         {
             item.Destroy();
         }
         chunks.Clear();
 
+        //Crear nuevos chunks
         GenerateChunks();
+
+        //Generar objetos del juego
+        loadedData.LoadGameObjects();
+
         Debug.Log("Loaded succesfully!");
         GC.Collect();
 
@@ -305,10 +338,8 @@ public class WorldGen : MonoBehaviour
     public void SaveMap()
     {
         Debug.Log("Starting save");
-
-
         
-        GameData newData = new();
+        GameData newData = GameData.Save();
 
         //1st attempt
         var serializer = new SharpSerializer(); //this is not binary
@@ -329,6 +360,89 @@ public class WorldGen : MonoBehaviour
     }
 
 
+    public static NestPart InstantiateNestPart(Vector3 originPoint)
+    {
+        GameObject nestObj = Instantiate(originalTunnel, originPoint, Quaternion.identity);
+        nestObj.SetActive(true);
+        NestPart nestPartScript = nestObj.GetComponent<NestPart>();
+        nestPartScript.setRadius(1);
+        nestPartScript.setActive(true);
+        Nest.NestParts.Add(nestPartScript);
+        return nestPartScript;
+    }
     
+    public static Ant InstantiateAnt(Vector3 pos, Quaternion orientation)
+    {
+        GameObject newAnt = Instantiate(originalAnt, pos, orientation); 
+        newAnt.layer = 7;
+        newAnt.SetActive(true);
+        Ant newAntScript = newAnt.GetComponent<Ant>();
+        Ant.registerAnt(newAntScript);
+
+        newAnt.name = "Ant " + newAntScript.id;
+
+        return newAntScript;
+    }
+
+    public static void InstantiateAnt(GameData.AntInfo antInfo)
+    {
+        Vector3 pos = antInfo.pos.ToVector3();
+        Quaternion orientation = antInfo.orientation.ToQuaternion();
+
+        GameObject newAnt = Instantiate(originalAnt, pos, orientation); 
+        newAnt.layer = 7;
+        newAnt.SetActive(true);
+        Ant newAntScript = newAnt.GetComponent<Ant>();
+
+        newAntScript.id = antInfo.id;
+        newAntScript.objective = new Task(antInfo.objective);
+        newAntScript.isControlled = antInfo.isControlled;
+        newAntScript.followingPheromone = antInfo.followingPheromone;
+        newAntScript.creatingPheromone = antInfo.creatingPheromone;
+
+        newAnt.name = "Ant " + antInfo.id;
+
+        Ant.antDictionary.Add(antInfo.id, newAntScript);
+    }
+
+    public static Corn InstantiateCorn(Vector3 pos, Quaternion orientation)
+    {
+        GameObject newCorn = Instantiate(originalCorn, pos, orientation); 
+        newCorn.SetActive(true);
+        newCorn.layer = 10; //Food layer0
+        Corn newCornScript = newCorn.GetComponent<Corn>();
+        Corn.registerCorn(newCornScript);
+        newCorn.name = "Corn " + newCornScript.id;
+        return newCornScript;
+    }
+
+    public static Corn InstantiateCorn(GameData.CornInfo cornInfo)
+    {
+        Vector3 pos = cornInfo.pos.ToVector3();
+        Quaternion orientation = cornInfo.orientation.ToQuaternion();
+
+        GameObject newCorn = Instantiate(originalCorn, pos, orientation); 
+        newCorn.SetActive(true);
+        newCorn.layer = 10; //Food layer0
+        Corn newCornScript = newCorn.GetComponent<Corn>();
+
+        newCornScript.id = cornInfo.id;
+        newCorn.name = "Corn " + cornInfo.id;
+
+        Corn.cornDictionary.Add(cornInfo.id, newCornScript);
+        return newCornScript;
+    }
+
+    public static DigPoint InstantiateDigPoint(Vector3Int pos)
+    {
+        GameObject newDigPoint = Instantiate(originalDigPoint, pos, Quaternion.identity); 
+        
+        newDigPoint.layer = 9;
+        newDigPoint.SetActive(true);
+        newDigPoint.name = "DigPoint (" + pos.x + ", " + pos.y + ", " + pos.z + ")";
+
+        DigPoint newDigPointScript = newDigPoint.GetComponent<DigPoint>();
+        return newDigPointScript;
+    }
 
 }

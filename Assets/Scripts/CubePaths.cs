@@ -486,13 +486,21 @@ public class CubePaths : MonoBehaviour
 
     public static bool NextToPoint(Vector3 pos, Vector3 point)
     {
-        if ((point - pos).magnitude < 1.5) return true;
+        if ((point - pos).magnitude < 1.2f) return true;
         return false;
+    }
+
+    public static bool PointIsInCube(Vector3Int pos, Vector3 point)
+    {
+        if (point.x < pos.x || point.x > pos.x + 1) return false;
+        if (point.y < pos.y || point.y > pos.y + 1) return false;
+        if (point.z < pos.z || point.z > pos.z + 1) return false;
+        return true;
     }
 
 
     public static bool GetPathToPoint(CubeSurface start, Vector3 objective, int lengthLimit, out List<CubeSurface> path)
-    {
+    { ///UHHH NO PATHW EHN GO TO FOOD SO LIKE DRAW CUBES WHEN MAKING FINDING PATH SOU KNWO WHAT IS HAPPENIGN-
         path = new List<CubeSurface>();
 
         PriorityQueue<CubeSurface, float> frontera = new();
@@ -524,7 +532,7 @@ public class CubePaths : MonoBehaviour
                 break;
             }
                 
-            if (NextToPoint(current.pos, objective))
+            if (NextToPoint(current.pos + Vector3.one * 0.5f, objective))
             {
                 reachedSurface = current;
                 gotToPoint = true;
@@ -557,13 +565,16 @@ public class CubePaths : MonoBehaviour
             }
         }
 
+        
+
         while (!reachedSurface.Equals(start))
         {
-            //DrawCube(reachedSurface.pos, Color.blue, 4);
-            //DrawSurface(reachedSurface, Color.black, 40);
+            DrawCube(reachedSurface.pos, Color.blue, 40);
+            DrawSurface(reachedSurface, Color.black, 40);
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedSurface = previo[reachedSurface];
         }
+        DrawCube(reachedSurface.pos, Color.blue, 40);
 
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;

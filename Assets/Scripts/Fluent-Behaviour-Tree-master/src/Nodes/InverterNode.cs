@@ -47,6 +47,28 @@ namespace FluentBehaviourTree
             }
         }
 
+        public BehaviourTreeStatus Tick(TimeData time, string pos)
+        {
+            if (childNode == null)
+            {
+                throw new ApplicationException("InverterNode must have a child node!");
+            }
+
+            var result = childNode.Tick(time, pos + " --> " + name);
+            if (result == BehaviourTreeStatus.Failure)
+            {
+                return BehaviourTreeStatus.Success;
+            }
+            else if (result == BehaviourTreeStatus.Success)
+            {
+                return BehaviourTreeStatus.Failure;
+            }
+            else
+            {
+                return result;
+            }
+        }
+
         /// <summary>
         /// Add a child to the parent node.
         /// </summary>

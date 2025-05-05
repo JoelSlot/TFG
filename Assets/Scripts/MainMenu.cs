@@ -8,9 +8,10 @@ public class MainMenu : MonoBehaviour
     //Guarda los settings del juego
     public static class GameSettings
     {
-        public static int gameMode= 0;
+        public static int gameMode = 0;
             //0: map builder
             //1: map tester
+        public static string saveFile = "none";
     }
 
     public void StartMapBuilder()
@@ -22,6 +23,13 @@ public class MainMenu : MonoBehaviour
     public void StartMapTester()
     {
         GameSettings.gameMode = 1;
+        SceneManager.LoadSceneAsync("Map");
+    }
+
+    public void LoadMapTester()
+    {
+        GameSettings.gameMode = 1;
+        GameSettings.saveFile = "Encoded.xml";
         SceneManager.LoadSceneAsync("Map");
     }
 

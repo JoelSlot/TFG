@@ -224,15 +224,11 @@ MonoBehaviour:
   antObj: {fileID: 6207855}
   Rigidbody: {fileID: 6207858}
   PherSenseRange: {fileID: 0}
-  speed: 10
-  turn: 0
-  tiltSpeed: 20
-  sep: 0.2
-  makingTrail: 0
   carriedObject: {fileID: 1569687929}
+  id: 0
   isControlled: 0
-  speed_per_second: 2
-  degrees_per_second: 67.5
+  followingPheromone: -1
+  creatingPheromone: -1
   minAngle: 70
 --- !u!114 &6207866
 MonoBehaviour:
@@ -343,6 +339,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a068f96a302e9a94faa4adea731694ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  origAnt: {fileID: 6207855}
+  origTunnel: {fileID: 856479749}
+  origCorn: {fileID: 1465707527}
+  origDigPoint: {fileID: 2026811054}
 --- !u!4 &35091246
 Transform:
   m_ObjectHideFlags: 0
@@ -519,7 +519,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1.001, y: 1.001, z: 1.001}
   m_Center: {x: 0, y: 0, z: 0}
@@ -878,6 +878,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7826695230289184442, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
       propertyPath: m_Layer
       value: 10
@@ -892,6 +896,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1465707528}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1465707530}
   m_SourcePrefab: {fileID: 100100000, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
 --- !u!1 &705507993
 GameObject:
@@ -1023,7 +1030,6 @@ MonoBehaviour:
   startSphere: {fileID: 196003837}
   endSphere: {fileID: 1396928760}
   mode: 0
-  ConnectedParts: []
   interval: 0.1
 --- !u!4 &856479751
 Transform:
@@ -1190,10 +1196,7 @@ MonoBehaviour:
   camera: {fileID: 1164272996}
   sphere: {fileID: 1997694910}
   WG: {fileID: 35091245}
-  origTunnel: {fileID: 856479749}
-  chamber: {fileID: 0}
   origDigPoint: {fileID: 2026811054}
-  origAnt: {fileID: 6207855}
   objectMode: 0
   SelectedAnt: {fileID: 0}
 --- !u!20 &1164272996
@@ -1386,6 +1389,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1465707530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1465707527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a34cfa5e15e2ae04ba72e4b712f3df1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: 0
 --- !u!1 &1505364012
 GameObject:
   m_ObjectHideFlags: 0
@@ -1535,11 +1551,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d59682ec68ad57741aeec69f4d251bcc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pathId: -1
-  age: 100
-  pos: {x: 0, y: 0, z: 0}
-  aux: 0
-  upDir: {x: 0, y: 0, z: 0}
 --- !u!1 &1569687929
 GameObject:
   m_ObjectHideFlags: 0
