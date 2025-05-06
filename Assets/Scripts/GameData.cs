@@ -25,6 +25,10 @@ public class GameData
     public int chunk_y_dim {get; set;}
     public int chunk_z_dim  {get; set;}
 
+    public float saved_cam_x {get; set;}
+    public  float saved_cam_y {get; set;}
+    public  float saved_cam_z {get; set;}
+
     public HashSet<AntInfo> antInfoDict {get; set;}
     public HashSet<CornInfo> cornInfoDict {get; set;}
     public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
@@ -213,6 +217,7 @@ public class GameData
         public int creatingPheromone {get; set;}
         public serializableVector3 pos {get; set;}
         public serializableQuaternion orientation {get; set;}
+        public bool isHolding {get; set;}
 
         private AntInfo()
         {
@@ -229,6 +234,9 @@ public class GameData
             info.creatingPheromone = ant.creatingPheromone;
             info.pos = new (ant.transform.position);
             info.orientation = new(ant.transform.rotation);
+
+            info.isHolding = ant.IsHolding();
+
             return info;
         }
 
@@ -278,6 +286,11 @@ public class GameData
         data.chunk_y_dim = WorldGen.chunk_y_dim;
         data.chunk_z_dim = WorldGen.chunk_z_dim;
 
+        data.saved_cam_x = WorldGen.saved_cam_x;
+        data.saved_cam_y = WorldGen.saved_cam_y;
+        data.saved_cam_z = WorldGen.saved_cam_z;
+
+
         data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
 
         data.saveAnts();
@@ -298,6 +311,10 @@ public class GameData
         WorldGen.chunk_x_dim = chunk_x_dim;
         WorldGen.chunk_y_dim = chunk_y_dim;
         WorldGen.chunk_z_dim = chunk_z_dim;
+
+        WorldGen.saved_cam_x = saved_cam_x;
+        WorldGen.saved_cam_y = saved_cam_y;
+        WorldGen.saved_cam_z = saved_cam_z;
 
         WorldGen.terrainMap = Decode(new MemoryStream(terrainMapStream), x_dim, y_dim, z_dim);
         Debug.Log("length: " + terrainMapStream.Count());

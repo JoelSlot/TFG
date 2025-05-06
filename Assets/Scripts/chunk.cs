@@ -167,6 +167,7 @@ public class chunk
     //Destruye todos los gameobjects incluidos en el chunk.
     public void Destroy()
     {
+        if (chunkObject == null) return;
         UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshFilter>());
         UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshCollider>());
         UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshRenderer>());

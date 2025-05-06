@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class DigPoint : MonoBehaviour
 {
-
-    public WorldGen WG;
-
     static public GameObject origDigPoint;
     
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
@@ -16,7 +13,7 @@ public class DigPoint : MonoBehaviour
         public int value {get; set;}
         public DigPoint digPoint = null;
 
-        public digPointData(int val, NestPart parent)
+        public digPointData(int val)
         {
             value = val;
             digPoint = null;

@@ -59,8 +59,9 @@ public class FlyCamera : MonoBehaviour
     {
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
-        origDigPoint.GetComponent<DigPoint>().WG = WG;
         DigPoint.origDigPoint = origDigPoint;
+
+        transform.position = new Vector3(WorldGen.saved_cam_x, WorldGen.saved_cam_y,WorldGen.saved_cam_z);
     }
 
     void Update()

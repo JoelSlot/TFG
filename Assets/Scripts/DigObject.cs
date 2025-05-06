@@ -155,7 +155,7 @@ public class NestPart : MonoBehaviour
         int desiredVal = getMarchingValue(start);
         checkedPoints.Add(start);
         pointsToCheck.Enqueue(start);
-        points.Add(start, new DigPoint.digPointData(desiredVal, this)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
+        points.Add(start, new DigPoint.digPointData(desiredVal)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
 
         Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
 
@@ -175,7 +175,7 @@ public class NestPart : MonoBehaviour
                         pointsToCheck.Enqueue(son);
                     }
                     //Si el punto realmente cambiará el terreno, lo guardamos para ser excavado
-                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, new DigPoint.digPointData(desiredVal, this)); 
+                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, new DigPoint.digPointData(desiredVal)); 
                     //Registramos que ya hemos mirado este punto
                     checkedPoints.Add(son);
                 }

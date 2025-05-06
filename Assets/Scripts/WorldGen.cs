@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Linq;
 using Polenter.Serialization;
+using UnityEngine.Rendering;
 
 public class WorldGen : MonoBehaviour
 {
@@ -26,6 +27,12 @@ public class WorldGen : MonoBehaviour
     int num_chunks_y;
     int num_chunks_z;
 
+
+    public static float saved_cam_x = 0;
+    public static float saved_cam_y = 0;
+    public static float saved_cam_z = 0;
+    
+
     public static int[,,] terrainMap;
     static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
 
@@ -40,6 +47,8 @@ public class WorldGen : MonoBehaviour
 
      public GameObject origDigPoint;
      public static GameObject originalDigPoint;
+
+
 
 
     // Start is called before the first frame update
@@ -397,12 +406,19 @@ public class WorldGen : MonoBehaviour
         newAntScript.id = antInfo.id;
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
-        newAntScript.followingPheromone = antInfo.followingPheromone;
-        newAntScript.creatingPheromone = antInfo.creatingPheromone;
 
         newAnt.name = "Ant " + antInfo.id;
 
         Ant.antDictionary.Add(antInfo.id, newAntScript);
+
+        //antes de ver que usar la funcion PlayAnimation no hace 
+        //newAntScript.followingPheromone = antInfo.followingPheromone;
+        //newAntScript.creatingPheromone = antInfo.creatingPheromone;
+
+
+        //newAntScript.playAnimation(antInfo.animationStateHash, antInfo.animationStateNormalizedTime);
+        //ANtes de darme cuenta de que ni siquiera se ha ejecutado start() de la hormiga en este punto y por tanto
+        //el animator no está asignado.
     }
 
     public static Corn InstantiateCorn(Vector3 pos, Quaternion orientation)

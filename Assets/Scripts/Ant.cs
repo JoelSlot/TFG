@@ -31,6 +31,7 @@ public class Ant : MonoBehaviour
     public bool isControlled = false;
     public int followingPheromone = -1; //if -1, not following a pheromone
     public int creatingPheromone = -1; //id of the pheormone the ant is creating. -1 if none
+    
 
     //el animador
     private Animator Animator;
@@ -41,7 +42,6 @@ public class Ant : MonoBehaviour
     public static float speed = 0;
     public static float tiltSpeed = 10;
     public static float sep = 0.35f;
-    static int idIndex = 0;
 
     //static ant dictionary
     public static Dictionary<int, Ant> antDictionary = new();
@@ -71,9 +71,9 @@ public class Ant : MonoBehaviour
         return true;
     }
 
-    private bool IsCarrying()
+    public bool IsHolding()
     {
-        return Animator.GetCurrentAnimatorStateInfo(0).IsTag("holding");
+        return Animator.GetBool("Holding");
     }
 
 
@@ -94,6 +94,9 @@ public class Ant : MonoBehaviour
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
         Animator.enabled = true; //Se habilita el animator
 
+        UpdateHolding();
+
+
         lastCube = Vector3Int.FloorToInt(transform.position);
 
         var builder = new BehaviourTreeBuilder();
@@ -104,7 +107,7 @@ public class Ant : MonoBehaviour
                     
                     //If im holding food, go send food.
                     .Sequence("If carrying bring to nest") //To do: expand this into giving food to larva?
-                        .Condition("Carrying food check", t => IsCarrying())
+                        .Condition("Carrying food check", t => IsHolding())
                         .Sequence("If not in nest go to nest")
                             .Condition("Am I out of nest?", t => !Nest.InNest(transform.position))
                             .Do("Set to go to nest", t => {objective = Task.GoInsideTask(); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success;})
@@ -333,6 +336,7 @@ public class Ant : MonoBehaviour
             Debug.Log("Valid");
             GameObject food = objective.GetFood();
             SetToHold(food);
+            UpdateHolding();
         }
         else
         {
@@ -353,12 +357,19 @@ public class Ant : MonoBehaviour
         }
         carriedObject.transform.DetachChildren();
         Animator.SetBool("Put down", false);
+        UpdateHolding();
+    }
+
+    public void UpdateHolding()
+    {
+        if (carriedObject.transform.childCount == 0) Animator.SetBool("Holding", false);
+        else Animator.SetBool("Holding", true);
     }
 
     //Manual put down function when controlling ant
     public void LetGo()
     {
-        if (IsCarrying()) Animator.SetBool("Put down", false);
+        if (IsHolding()) Animator.SetBool("Put down", true);
     }
 
 
@@ -906,5 +917,20 @@ public class Ant : MonoBehaviour
 
         //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
     }
+
+    public AnimatorStateInfo GetAnimatorStateInfo()
+    {
+        return Animator.GetCurrentAnimatorStateInfo(0);
+    }
+
+    /* Da igual lo que probe, play no pone a la hormiga en ese state, simplemente juega el state y se queda pillado hasta que interactuar con el animator lo lleva al state original inmediatamente.
+    private void playLoadedAnimation()
+    {
+        if (loadedAnimHashPath != -1)
+            if (Animator != null)
+                Animator.Play(loadedAnimHashPath, 0, loadedAnimHashPath);
+            else Debug.Log("NO ANIMATOR");
+    }
+    */
 
 }
