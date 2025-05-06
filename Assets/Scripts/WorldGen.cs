@@ -27,11 +27,9 @@ public class WorldGen : MonoBehaviour
     int num_chunks_y;
     int num_chunks_z;
 
-
-    public static float saved_cam_x = 0;
-    public static float saved_cam_y = 0;
-    public static float saved_cam_z = 0;
-    
+    public static bool newCameraPosInfo = false;
+    public static GameData.serializableVector3 camera_pos = new(Vector3.zero);
+    public static GameData.serializableVector3 camera_euler = new (Vector3.zero);    
 
     public static int[,,] terrainMap;
     static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();

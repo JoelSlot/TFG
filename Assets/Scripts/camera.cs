@@ -61,11 +61,17 @@ public class FlyCamera : MonoBehaviour
         else sphere.GetComponent<MeshRenderer>().enabled = true;
         DigPoint.origDigPoint = origDigPoint;
 
-        transform.position = new Vector3(WorldGen.saved_cam_x, WorldGen.saved_cam_y,WorldGen.saved_cam_z);
     }
 
     void Update()
     {
+        if (WorldGen.newCameraPosInfo)
+        {
+            transform.position = WorldGen.camera_pos.ToVector3();
+            transform.eulerAngles = WorldGen.camera_euler.ToVector3();
+            WorldGen.newCameraPosInfo = false;
+        }
+
         ReadInputs();
 
         if (WorldGen.IsAboveSurface(transform.position))
@@ -340,7 +346,6 @@ public class FlyCamera : MonoBehaviour
             rotateAllowed = false;
             lockCursor(false);
             SceneManager.LoadSceneAsync(0);
-
         }
         //Keys to load/save map
         /*if (Input.GetKeyDown(KeyCode.L))
@@ -348,7 +353,11 @@ public class FlyCamera : MonoBehaviour
             WG.LoadMap();
         }*/
         if (Input.GetKeyDown(KeyCode.O))
+        {
+            WorldGen.camera_pos = new(transform.position);
+            WorldGen.camera_euler = new(transform.eulerAngles);
             WG.SaveMap();
+        }
         //Move the camera
         CameraMovement();
         if (!placingDigZone)
