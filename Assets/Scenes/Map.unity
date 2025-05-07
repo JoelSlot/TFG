@@ -340,7 +340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origAnt: {fileID: 6207855}
-  origTunnel: {fileID: 856479749}
+  origNestPart: {fileID: 856479749}
   origCorn: {fileID: 1465707527}
   origDigPoint: {fileID: 2026811054}
 --- !u!4 &35091246
@@ -1008,7 +1008,7 @@ GameObject:
   - component: {fileID: 856479751}
   - component: {fileID: 856479750}
   m_Layer: 0
-  m_Name: Tunnel
+  m_Name: NestPart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1832,7 +1832,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41104be904bbd25438fd56189981d634, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WG: {fileID: 0}
 --- !u!135 &2026811056
 SphereCollider:
   m_ObjectHideFlags: 0

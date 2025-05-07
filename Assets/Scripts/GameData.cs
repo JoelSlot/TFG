@@ -33,6 +33,7 @@ public class GameData
     public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict {get; set;}
     public HashSet<serializableVector3Int> initializedDigPoints {get; set;}
+    public HashSet<NestPartInfo> nestPartInfoDict {get; set;}
     /* hashset gave:
     <Items>
         <Reference id="12" />
@@ -113,6 +114,16 @@ public class GameData
                 initializedDigPoints.Add(new serializableVector3Int(id));
             }
         }
+    }
+
+    public void saveNestParts()
+    {
+        nestPartInfoDict = new();
+        foreach(var nestPart in Nest.NestParts)
+        {
+            nestPartInfoDict.Add(NestPartInfo.ToData(nestPart));
+        }
+        Debug.Log("Num nestParts: " + nestPartInfoDict.Count);
     }
 
     [Serializable]
@@ -268,6 +279,34 @@ public class GameData
 
     }
 
+    [Serializable]
+    public class NestPartInfo
+    {
+        public serializableVector3 startPos {get; set;}
+        public serializableVector3 endPos {get; set;}
+        public float radius {get; set;}
+        public int mode {get; set;}
+
+        private NestPartInfo()
+        {
+
+        }
+
+        public static NestPartInfo ToData(NestPart nestPart)
+        {
+            NestPartInfo info = new()
+            {
+                mode = NestPart.NestPartTypeToIndex(nestPart.getMode()),
+                startPos = new(nestPart.getStartPos()),
+                endPos = new(nestPart.getEndPos()),
+                radius = nestPart.getRadius()
+            };
+
+            return info;
+        }
+    }
+
+
     public GameData()
     {
         
@@ -295,6 +334,8 @@ public class GameData
         data.saveCorn();
 
         data.saveDigPoints();
+
+        data.saveNestParts();
 
         return data;
     }
@@ -340,6 +381,11 @@ public class GameData
         {
             
             DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
+        }
+
+        foreach (NestPartInfo info in nestPartInfoDict)
+        {
+            WorldGen.InstantiateNestPart(info);
         }
     }
 

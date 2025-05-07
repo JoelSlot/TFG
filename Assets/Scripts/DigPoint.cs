@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class DigPoint : MonoBehaviour
 {
-    static public GameObject origDigPoint;
     
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
 

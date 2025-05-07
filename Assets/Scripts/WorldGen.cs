@@ -37,16 +37,14 @@ public class WorldGen : MonoBehaviour
     public GameObject origAnt;
     public static GameObject originalAnt;
 
-     public GameObject origTunnel;
-     public static GameObject originalTunnel;
+    public GameObject origNestPart;
+    public static GameObject originalNestPart;
 
-     public GameObject origCorn;
-     public static GameObject originalCorn;
+    public GameObject origCorn;
+    public static GameObject originalCorn;
 
-     public GameObject origDigPoint;
-     public static GameObject originalDigPoint;
-
-
+    public GameObject origDigPoint;
+    public static GameObject originalDigPoint;
 
 
     // Start is called before the first frame update
@@ -55,7 +53,7 @@ public class WorldGen : MonoBehaviour
         
         //Turn all non static members into static ones:
         originalAnt = origAnt;
-        originalTunnel = origTunnel;
+        originalNestPart = origNestPart;
         originalCorn = origCorn;
         originalDigPoint = origDigPoint;
 
@@ -369,11 +367,30 @@ public class WorldGen : MonoBehaviour
 
     public static NestPart InstantiateNestPart(Vector3 originPoint)
     {
-        GameObject nestObj = Instantiate(originalTunnel, originPoint, Quaternion.identity);
+        GameObject nestObj = Instantiate(originalNestPart, originPoint, Quaternion.identity);
         nestObj.SetActive(true);
         NestPart nestPartScript = nestObj.GetComponent<NestPart>();
         nestPartScript.setRadius(1);
         nestPartScript.setActive(true);
+        Nest.NestParts.Add(nestPartScript);
+        return nestPartScript;
+    }
+
+    public static NestPart InstantiateNestPart(GameData.NestPartInfo info)
+    {
+        GameObject nestObj = Instantiate(originalNestPart, info.startPos.ToVector3(), Quaternion.identity);
+        nestObj.SetActive(true);
+        NestPart nestPartScript = nestObj.GetComponent<NestPart>();
+        nestPartScript.setMode(NestPart.IndexToNestPartType(info.mode));
+        nestPartScript.setPos(info.startPos.ToVector3(), info.endPos.ToVector3());
+        nestPartScript.setRadius(info.radius);
+        nestPartScript.setActive(true);
+
+        //Se asume que el objeto ya ha sido colocado.
+        nestPartScript.gotPoints = true;
+        nestPartScript.SetVisible(false);
+
+
         Nest.NestParts.Add(nestPartScript);
         return nestPartScript;
     }
@@ -408,15 +425,6 @@ public class WorldGen : MonoBehaviour
         newAnt.name = "Ant " + antInfo.id;
 
         Ant.antDictionary.Add(antInfo.id, newAntScript);
-
-        //antes de ver que usar la funcion PlayAnimation no hace 
-        //newAntScript.followingPheromone = antInfo.followingPheromone;
-        //newAntScript.creatingPheromone = antInfo.creatingPheromone;
-
-
-        //newAntScript.playAnimation(antInfo.animationStateHash, antInfo.animationStateNormalizedTime);
-        //ANtes de darme cuenta de que ni siquiera se ha ejecutado start() de la hormiga en este punto y por tanto
-        //el animator no está asignado.
     }
 
     public static Corn InstantiateCorn(Vector3 pos, Quaternion orientation)

@@ -12,6 +12,28 @@ public class NestPart : MonoBehaviour
 
     public enum NestPartType {Tunnel, FoodChamber}
 
+    public static int NestPartTypeToIndex(NestPartType type)
+    {
+        switch(type)
+        {
+            case NestPartType.Tunnel: return 0;
+            case NestPartType.FoodChamber: return 1;
+        }
+        return -1;
+    }
+
+    public static NestPartType IndexToNestPartType(int index)
+    {
+        switch(index)
+        {
+            case 0: return NestPartType.Tunnel;
+            case 1: return NestPartType.FoodChamber;
+        }
+        Debug.Log("ERROR");
+        return NestPartType.Tunnel;
+    }
+
+
     public NestPartType mode = NestPartType.Tunnel;
 
     private Vector3 dir = Vector3.up;
@@ -19,6 +41,8 @@ public class NestPart : MonoBehaviour
     private Vector3 endPos = Vector3.up;
     private float radius = 1;
     public float interval;
+    public bool gotPoints = false; //whether the points have been extracted yet.
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -52,6 +76,8 @@ public class NestPart : MonoBehaviour
             transform.localRotation = Quaternion.Euler(Vector3.up);
         }
     }
+
+    public NestPartType getMode() {return mode;}
 
     public void setPos(Vector3 start, Vector3 end)
     {
@@ -97,6 +123,17 @@ public class NestPart : MonoBehaviour
         }
     }
 
+    public Vector3 getStartPos()
+    {
+        return startPos;
+    }
+
+    public Vector3 getEndPos()
+    {
+        return endPos;
+    }
+
+
     public void addPos(Vector3 add)
     {
         setPos(startPos, endPos + add);
@@ -127,6 +164,8 @@ public class NestPart : MonoBehaviour
         return radius;
     }
 
+    public Vector3 GetDir(){ return dir; }
+
 
     public void setActive(bool active) 
     {
@@ -136,16 +175,20 @@ public class NestPart : MonoBehaviour
     }
 
 
-    private bool gotPoints = false;
+ 
+    public void SetVisible(bool visible)
+    {
+        cilinder.GetComponent<MeshRenderer>().enabled = visible;
+        startSphere.GetComponent<MeshRenderer>().enabled = visible;
+        endSphere.GetComponent<MeshRenderer>().enabled = visible;
+    }
 
     //Devuelve los puntos que componen el área que se quiere excavar.
     public Dictionary<Vector3Int, DigPoint.digPointData> pointsInDigObject(){
         if (gotPoints) return new Dictionary<Vector3Int, DigPoint.digPointData>();
         else gotPoints = true;
-        cilinder.GetComponent<MeshRenderer>().enabled = false;
-        startSphere.GetComponent<MeshRenderer>().enabled = false;
-        endSphere.GetComponent<MeshRenderer>().enabled = false;
-
+        
+        SetVisible(false);
 
         Dictionary<Vector3Int, DigPoint.digPointData> points = new();
         HashSet<Vector3Int> checkedPoints = new();

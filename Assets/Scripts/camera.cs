@@ -30,7 +30,6 @@ public class FlyCamera : MonoBehaviour
     private bool placingDigZone = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
-    public GameObject origDigPoint;
 
     
 
@@ -59,8 +58,6 @@ public class FlyCamera : MonoBehaviour
     {
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
-        DigPoint.origDigPoint = origDigPoint;
-
     }
 
     void Update()
@@ -352,7 +349,7 @@ public class FlyCamera : MonoBehaviour
         {
             WG.LoadMap();
         }*/
-        if (Input.GetKeyDown(KeyCode.O))
+        if (Input.GetKeyDown(KeyCode.O) && !placingDigZone) //Make sure to not save when placing.
         {
             WorldGen.camera_pos = new(transform.position);
             WorldGen.camera_euler = new(transform.eulerAngles);
