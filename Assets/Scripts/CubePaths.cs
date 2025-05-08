@@ -179,12 +179,11 @@ public class CubePaths : MonoBehaviour
             if (FaceXOR(i, surface.surfaceGroup))
             {
                 Vector3Int dir = chunk.faceDirections[i]; //Get dir
+                
                 bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
                 Vector3Int newSurfaceCorner = TrueCorner(i, surface.surfaceGroup) - dir; //Get corner value
                 bool[] newGroup = GetGroup(newSurfaceCorner, newCornerValues);
-                /*int groupCount = 0;
-                foreach (bool corner in newGroup) if (corner) groupCount += 1;
-                if (groupCount > 1) */adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
+                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
             }
         }
 
@@ -676,7 +675,7 @@ public class CubePaths : MonoBehaviour
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (!Nest.InNest(current.pos + Vector3.one * 0.5f)){
+            if (!Nest.SurfaceInNest(current)){
                 reachedOutside = current;
                 pathExists = true;
                 break;
@@ -694,7 +693,7 @@ public class CubePaths : MonoBehaviour
                 
                 if(updateOrInsert)
                 {
-                    //DrawCube(son.pos, Color.black, 5);
+                    DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;
                     float prioridad = newCost;
                     frontera.Enqueue(son, prioridad);
@@ -705,8 +704,8 @@ public class CubePaths : MonoBehaviour
 
         while (!reachedOutside.Equals(start))
         {
-            //DrawCube(reachedSurface.pos, Color.blue, 4);
-            //DrawSurface(reachedSurface, Color.black, 40);
+            DrawCube(reachedOutside.pos, Color.blue, 4);
+            DrawSurface(reachedOutside, Color.black, 40);
             path.Insert(0, reachedOutside); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             reachedOutside = previo[reachedOutside];
         }

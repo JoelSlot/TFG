@@ -109,7 +109,7 @@ public class Ant : MonoBehaviour
                     .Sequence("If carrying bring to nest") //To do: expand this into giving food to larva?
                         .Condition("Carrying food check", t => IsHolding())
                         .Sequence("If not in nest go to nest")
-                            .Condition("Am I out of nest?", t => !Nest.InNest(transform.position))
+                            .Condition("Am I out of nest?", t => !Nest.PointInNest(transform.position))
                             .Do("Set to go to nest", t => {objective = Task.GoInsideTask(); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success;})
                         .End()
                         .Do("Set to go to food room", t => {Debug.Log("I GOTTA PUT THIS SOMEWHERE"); return BehaviourTreeStatus.Success;})
@@ -149,7 +149,7 @@ public class Ant : MonoBehaviour
                     .End()
                         
                     .Sequence("Go outside")
-                        .Condition("Am i inside?", t => Nest.InNest(antSurface.pos))
+                        .Condition("Am i inside?", t => Nest.SurfaceInNest(antSurface))
                         .Selector("Make path if I don't already have it.")
                             .Condition("I have a path to outside", t => {Debug.Log("NOT IMPLEMENTED"); return true;})
                             .Do("A", t => {return BehaviourTreeStatus.Success;})

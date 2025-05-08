@@ -20,7 +20,7 @@ public class Nest : MonoBehaviour
         
     }
 
-    public static bool InNest(Vector3 point)
+    public static bool PointInNest(Vector3 point)
     {
         int checkedParts = 0;
         for (int i = lastIndex; checkedParts < NestParts.Count; checkedParts++, i++)
@@ -34,6 +34,17 @@ public class Nest : MonoBehaviour
             }
         }
 
+        return false;
+    }
+
+    public static bool SurfaceInNest(CubePaths.CubeSurface surface)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (surface.surfaceGroup[i])
+                if (PointInNest(chunk.cornerTable[i] + surface.pos))
+                    return true;
+        }
         return false;
     }
 

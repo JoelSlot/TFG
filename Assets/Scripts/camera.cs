@@ -320,12 +320,18 @@ public class FlyCamera : MonoBehaviour
     }
 
     private void digAllPoints(){
-        List<Tuple<Vector3Int, int>> points = new();
-        foreach (var entry in DigPoint.digPointDict)
+        List<Vector3Int> keys = new List<Vector3Int>(DigPoint.digPointDict.Keys);
+        foreach (var key in keys)
         {
-            points.Add(new Tuple<Vector3Int, int>(entry.Key, entry.Value.value));
+            if (DigPoint.digPointDict.ContainsKey(key))
+                if(DigPoint.digPointDict[key].digPoint != null)
+                {
+                    GameObject digPointObject = DigPoint.digPointDict[key].digPoint.gameObject;
+                    DigPoint.digPointDict[key].digPoint.Dig();
+                    DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(key));
+                    Destroy(digPointObject);
+                }
         }
-        WorldGen.EditTerrainSet(points);
     }
 
 
@@ -513,13 +519,17 @@ public class FlyCamera : MonoBehaviour
                 case obj.test:
                     Vector3Int cube = Vector3Int.FloorToInt(hit.point);
                     
-                    if (SelectedAnt != null)
+                    /*if (SelectedAnt != null)
                     {
                         //CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
                         //SelectedAnt.path = path;
                         //SelectedAnt.objective = new(hit.point); 
                         //SelectedAnt.state = Ant.AIState.FollowingPath;
-                    }
+                    }*/
+
+                    CubePaths.CubeSurface clickedSurface = new(cube, hit.normal);
+
+                    CubePaths.GetPathInNest(clickedSurface, out List<CubePaths.CubeSurface> path);
 
                     CubePaths.DrawCube(cube, Color.red, 20);
                     
