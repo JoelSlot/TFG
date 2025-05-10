@@ -1,11 +1,18 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.TerrainUtils;
 
 public class chunk
 {
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
+    List<Color> colors = new();
+
+    //Keep forgetting to use the values divided by 255.
+    Color grassGreen = new Color(0, 100f/255f, 0);
+    Color brown = new Color(165f/255f, 42f/255f, 42f/255f);
 
     WorldGen worldGen;
 
@@ -38,19 +45,19 @@ public class chunk
         meshCollider = chunkObject.AddComponent<MeshCollider>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
         //set mesh material
-        meshRenderer.material = worldGen.GetComponent<MeshRenderer>().material;
+        meshRenderer.material = dad.terrainMaterial;
         //not sure if relevant
         chunkObject.transform.tag = "Terrain";
 
         CreateMeshData();
 
+        BuildMesh();
+
     }
 
     // Update is called once per frame
     void Update()
-    {
-
-        
+    {   
 
     }
 
@@ -110,12 +117,48 @@ public class chunk
                 //Guardar los v�rtices que forman el tri�ngulo en la malla.
                 vertices.Add(vertPosition);
                 triangles.Add(vertices.Count - 1);
+
                 arrayIndex++;
 
+            }
+            Vector3 v1 = vertices[vertices.Count-3];
+            Vector3 v2 = vertices[vertices.Count-2];
+            Vector3 v3 = vertices[vertices.Count-1];
+            if (Vector3.Angle(Vector3.up, Vector3.Cross(v2-v1, v3-v1)) > 80)
+            {
+                colors.Add(brown);
+                colors.Add(brown);
+                colors.Add(brown);
+            }
+            else
+            {
+                if (WorldGen.SamplePastTerrain(v1) != WorldGen.SampleTerrain(v1))
+                    colors.Add(brown);
+                else colors.Add(grassGreen);
+                if (WorldGen.SamplePastTerrain(v2) != WorldGen.SampleTerrain(v2))
+                    colors.Add(brown);
+                else colors.Add(grassGreen);
+                if (WorldGen.SamplePastTerrain(v3) != WorldGen.SampleTerrain(v3))
+                    colors.Add(brown);
+                else colors.Add(grassGreen);
             }
 
         }
 
+    }
+
+    //Copia todos los valores del terreno del chunk a la memoryMap.
+    public void saveChunkTerrainToMemory()
+    {
+        for (int x = 0; x < x_dim + 1; x++)
+            for (int y = 0; y < y_dim + 1; y++)
+                for (int z = 0; z < z_dim + 1; z++)
+                    WorldGen.memoryMap[ x + chunkPosition.x, 
+                                        y + chunkPosition.y,
+                                        z + chunkPosition.z] = 
+                    WorldGen.terrainMap[x + chunkPosition.x, 
+                                        y + chunkPosition.y,
+                                        z + chunkPosition.z];
     }
 
 
@@ -125,6 +168,7 @@ public class chunk
 
         vertices.Clear();
         triangles.Clear();
+        colors.Clear();
 
     }
 
@@ -147,8 +191,16 @@ public class chunk
             
         }
 
+        /*
+        colors = new Color[vertices.Count];
+        for (int x = 0; x < x_dim; x++)
+        {
+            for (int z = 0; z < z_dim; z++)
+            {
+                for (int y = 0; y < y_dim; y++)
+                {
+        */
         BuildMesh();
-
     }
 
 
@@ -159,6 +211,7 @@ public class chunk
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.colors = colors.ToArray();
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
         meshCollider.sharedMesh = mesh;

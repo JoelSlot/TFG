@@ -17,6 +17,7 @@ public class GameData
     //Fist i could not serialize cuz static. Then cuz they were fields and the xml would be empty. Finally they are properties.
 
     public byte[] terrainMapStream {get; set;}
+    public byte[] terrainMemoryStream {get; set;}
     public int x_dim {get; set;}
     public int y_dim {get; set;}
     public int z_dim {get; set;}
@@ -27,7 +28,6 @@ public class GameData
 
     public serializableVector3 camera_pos {get; set;}
     public serializableVector3 camera_euler {get; set;}
-
     public HashSet<AntInfo> antInfoDict {get; set;}
     public HashSet<CornInfo> cornInfoDict {get; set;}
     public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
@@ -328,6 +328,7 @@ public class GameData
         data.camera_euler = WorldGen.camera_euler;
 
         data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
+        data.terrainMemoryStream = data.EnCode(WorldGen.memoryMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
 
         data.saveAnts();
 
@@ -355,7 +356,7 @@ public class GameData
         WorldGen.camera_euler = camera_euler;
 
         WorldGen.terrainMap = Decode(new MemoryStream(terrainMapStream), x_dim, y_dim, z_dim);
-        Debug.Log("length: " + terrainMapStream.Count());
+        WorldGen.memoryMap = Decode(new MemoryStream(terrainMemoryStream), x_dim, y_dim, z_dim);
 
     }
 

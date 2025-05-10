@@ -339,6 +339,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a068f96a302e9a94faa4adea731694ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  terrainMaterial: {fileID: 2100000, guid: dc9e4e9ce8fc5fc46abf8e2669d621fc, type: 2}
   origAnt: {fileID: 6207855}
   origNestPart: {fileID: 856479749}
   origCorn: {fileID: 1465707527}
@@ -1031,6 +1032,7 @@ MonoBehaviour:
   endSphere: {fileID: 1396928760}
   mode: 0
   interval: 0.1
+  gotPoints: 0
 --- !u!4 &856479751
 Transform:
   m_ObjectHideFlags: 0
@@ -1196,7 +1198,6 @@ MonoBehaviour:
   camera: {fileID: 1164272996}
   sphere: {fileID: 1997694910}
   WG: {fileID: 35091245}
-  origDigPoint: {fileID: 2026811054}
   objectMode: 0
   SelectedAnt: {fileID: 0}
 --- !u!20 &1164272996

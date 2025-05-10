@@ -32,7 +32,10 @@ public class WorldGen : MonoBehaviour
     public static GameData.serializableVector3 camera_euler = new (Vector3.zero);    
 
     public static int[,,] terrainMap;
+    public static int[,,] memoryMap;
     static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
+
+    public Material terrainMaterial;
 
     public GameObject origAnt;
     public static GameObject originalAnt;
@@ -57,9 +60,12 @@ public class WorldGen : MonoBehaviour
         originalCorn = origCorn;
         originalDigPoint = origDigPoint;
 
+        CleanChunks();
+
         if (MainMenu.GameSettings.saveFile == "none")
         {
             terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+            memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
             PopulateTerrainMap();
             GenerateChunks();
         }
@@ -125,6 +131,8 @@ public class WorldGen : MonoBehaviour
                         terrainMap[x,y,z] = 255;
                     else
                         terrainMap[x, y, z] = 0;
+
+                    memoryMap[x,y,z] = terrainMap[x,y,z];
                 }
             }
         }
@@ -174,6 +182,9 @@ public class WorldGen : MonoBehaviour
         //check what chunks it affects
         foreach (Vector3Int point in affectedChunks)
         {
+            //If in terrain edit mode, set memoryMap to copy of terrainMap
+            if (MainMenu.GameSettings.gameMode == 0)
+                chunks[point].saveChunkTerrainToMemory();
             chunks[point].CreateMeshData();
         }
 
@@ -212,6 +223,9 @@ public class WorldGen : MonoBehaviour
         //check what chunks it affects
         foreach (Vector3Int point in affectedChunks)
         {
+            //If in terrain edit mode, set memoryMap to copy of terrainMap
+            if (MainMenu.GameSettings.gameMode == 0)
+                chunks[point].saveChunkTerrainToMemory();
             chunks[point].CreateMeshData();
         }
 
@@ -276,6 +290,51 @@ public class WorldGen : MonoBehaviour
     {
         return isolevel > SampleTerrain(point);
     }
+    public static int SamplePastTerrain(Vector3Int point)
+    {
+        if (!InRange(point)) return 255;
+        return memoryMap[point.x, point.y, point.z];
+    }
+    public static int SamplePastTerrain(int x, int y, int z)
+    {
+        if (!InRange(new Vector3Int(x, y, z))) return 255;
+        return memoryMap[x,y,z];
+    }
+    public static int SamplePastTerrain(Vector3 point)
+    {
+        if (!InRange(point)) return 0;
+
+        // las esquinas del cubo en el que se encuentra el punto
+        int x0 = Mathf.FloorToInt(point.x);
+        int x1 = x0 + 1;
+        int y0 = Mathf.FloorToInt(point.y);
+        int y1 = y0 + 1;
+        int z0 = Mathf.FloorToInt(point.z);
+        int z1 = z0 + 1;
+
+        // pos relativa dentro del cubo
+        float xd = point.x - x0;
+        float yd = point.y - y0;
+        float zd = point.z - z0;
+
+        // Interpolar por eje x
+        float c00 = Mathf.Lerp(SamplePastTerrain(x0, y0, z0), SamplePastTerrain(x1, y0, z0), xd);
+        float c01 = Mathf.Lerp(SamplePastTerrain(x0, y0, z1), SamplePastTerrain(x1, y0, z1), xd);
+        float c10 = Mathf.Lerp(SamplePastTerrain(x0, y1, z0), SamplePastTerrain(x1, y1, z0), xd);
+        float c11 = Mathf.Lerp(SamplePastTerrain(x0, y1, z1), SamplePastTerrain(x1, y1, z1), xd);
+
+        // Interpolar por eje y
+        float c0 = Mathf.Lerp(c00, c10, yd);
+        float c1 = Mathf.Lerp(c01, c11, yd);
+
+        // Interpolar por eje z
+        return Mathf.RoundToInt(Mathf.Lerp(c0, c1, zd));
+    }
+
+    public static bool WasAboveSurface(Vector3Int point)
+    {
+        return isolevel > SamplePastTerrain(point);
+    }
     public static Vector3 SurfaceDirection(Vector3Int point)
     {
         if (!IsAboveSurface(point)) return Vector3.up;
@@ -321,13 +380,6 @@ public class WorldGen : MonoBehaviour
         //GameData loadedData = (GameData)sizeOptimizedSerializer2.Deserialize("GameDataOptimized.bin");
 
         loadedData.LoadMap();
-
-        //eliminar chunks existentes
-        foreach (var item in chunks.Values)
-        {
-            item.Destroy();
-        }
-        chunks.Clear();
 
         //Crear nuevos chunks
         GenerateChunks();
@@ -465,6 +517,16 @@ public class WorldGen : MonoBehaviour
 
         DigPoint newDigPointScript = newDigPoint.GetComponent<DigPoint>();
         return newDigPointScript;
+    }
+
+    public static void CleanChunks()
+    {
+        //eliminar chunks existentes
+        foreach (var item in chunks.Values)
+        {
+            item.Destroy();
+        }
+        chunks.Clear();
     }
 
 }
