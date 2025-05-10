@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class chunk
@@ -7,7 +6,6 @@ public class chunk
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
-    List<Color> colors = new();
 
     WorldGen worldGen;
 
@@ -45,8 +43,6 @@ public class chunk
         chunkObject.transform.tag = "Terrain";
 
         CreateMeshData();
-
-        BuildMesh();
 
     }
 
@@ -114,10 +110,6 @@ public class chunk
                 //Guardar los v�rtices que forman el tri�ngulo en la malla.
                 vertices.Add(vertPosition);
                 triangles.Add(vertices.Count - 1);
-                if (WorldGen.SamplePastTerrain(vertPosition) != WorldGen.SampleTerrain(vertPosition))
-                    colors.Add(Color.blue);
-                else colors.Add(Color.green);
-
                 arrayIndex++;
 
             }
@@ -133,7 +125,6 @@ public class chunk
 
         vertices.Clear();
         triangles.Clear();
-        colors.Clear();
 
     }
 
@@ -156,16 +147,8 @@ public class chunk
             
         }
 
-        /*
-        colors = new Color[vertices.Count];
-        for (int x = 0; x < x_dim; x++)
-        {
-            for (int z = 0; z < z_dim; z++)
-            {
-                for (int y = 0; y < y_dim; y++)
-                {
-        */
         BuildMesh();
+
     }
 
 
@@ -176,7 +159,6 @@ public class chunk
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        mesh.colors = colors.ToArray();
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
         meshCollider.sharedMesh = mesh;
