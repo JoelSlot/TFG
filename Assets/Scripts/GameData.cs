@@ -31,6 +31,7 @@ public class GameData
     public HashSet<AntInfo> antInfoDict {get; set;}
     public HashSet<CornInfo> cornInfoDict {get; set;}
     public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
+    public HashSet<CornCobInfo> cornCobInfoDict {get; set;}
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict {get; set;}
     public HashSet<serializableVector3Int> initializedDigPoints {get; set;}
     public HashSet<NestPartInfo> nestPartInfoDict {get; set;}
@@ -100,6 +101,15 @@ public class GameData
             {
                 cornHeldAntDict.Add(id, holderAntIndex);
             }
+        }
+    }
+
+    public void saveCornCobs()
+    {
+        cornCobInfoDict = new();
+        foreach(var (id, cornCob) in CornCob.cornCobDictionary)
+        {
+            cornCobInfoDict.Add(CornCobInfo.ToData(cornCob));
         }
     }
 
@@ -213,6 +223,30 @@ public class GameData
             info.id = corn.id;
             info.pos = new (corn.transform.position);
             info.orientation = new(corn.transform.rotation);
+            return info;
+        }
+    }
+
+    [Serializable]
+    public class CornCobInfo
+    {
+        public int id {get; set;}
+        public serializableVector3 pos {get; set;}
+        public serializableQuaternion orientation {get; set;}
+        public Dictionary<int, int> cornCobCornDict {get; set;}
+
+        private CornCobInfo()
+        {
+
+        }
+
+        public static CornCobInfo ToData(CornCob cornCob)
+        {
+            CornCobInfo info = new();
+            info.id = cornCob.id;
+            info.pos = new (cornCob.transform.position);
+            info.orientation = new(cornCob.transform.rotation);
+            info.cornCobCornDict = cornCob.cornCobCornDict;
             return info;
         }
     }
@@ -334,6 +368,8 @@ public class GameData
 
         data.saveCorn();
 
+        data.saveCornCobs();
+
         data.saveDigPoints();
 
         data.saveNestParts();
@@ -375,6 +411,11 @@ public class GameData
                 Ant holderAnt = Ant.antDictionary[cornHeldAntDict[corn.id]];
                 holderAnt.SetToHold(corn.gameObject);
             }
+        }
+
+        foreach (CornCobInfo info in cornCobInfoDict)
+        {
+            CornCob cornCob = WorldGen.InstantiateCornCob(info);
         }
 
         DigPoint.digPointDict = digPointDict;

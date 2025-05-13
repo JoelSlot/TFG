@@ -46,6 +46,9 @@ public class WorldGen : MonoBehaviour
     public GameObject origCorn;
     public static GameObject originalCorn;
 
+    public GameObject origCornCob;
+    public static GameObject originalCornCob;
+
     public GameObject origDigPoint;
     public static GameObject originalDigPoint;
 
@@ -59,6 +62,7 @@ public class WorldGen : MonoBehaviour
         originalNestPart = origNestPart;
         originalCorn = origCorn;
         originalDigPoint = origDigPoint;
+        originalCornCob = origCornCob;
 
         CleanChunks();
 
@@ -74,6 +78,8 @@ public class WorldGen : MonoBehaviour
             LoadMap(MainMenu.GameSettings.saveFile);
         }
         Physics.gravity = new Vector3(0, -15.0F, 0);
+
+        
         
 
     }
@@ -517,6 +523,32 @@ public class WorldGen : MonoBehaviour
 
         DigPoint newDigPointScript = newDigPoint.GetComponent<DigPoint>();
         return newDigPointScript;
+    }
+
+    public static CornCob InstantiateCornCob(Vector3 pos, Quaternion orientation)
+    {
+        GameObject cornCobObj = Instantiate(originalCornCob, pos, orientation);
+        cornCobObj.SetActive(true);
+        CornCob cornCob = cornCobObj.GetComponent<CornCob>();
+        CornCob.registerCorn(cornCob);
+        for (int i = 0; i < CornCob.numCornSpots; i++)
+        {
+            Corn newCorn = InstantiateCorn(cornCobObj.transform.position, Quaternion.identity);
+            cornCob.cornCobCornDict.Add(i, newCorn.id);
+        }
+        return cornCob;        
+    }
+
+    public static CornCob InstantiateCornCob(GameData.CornCobInfo cornCobInfo)
+    {
+        GameObject cornCobObj = Instantiate(originalCornCob);
+        cornCobObj.SetActive(true);
+        cornCobObj.transform.position = cornCobInfo.pos.ToVector3();
+        cornCobObj.transform.rotation = cornCobInfo.orientation.ToQuaternion();
+        CornCob cornCob = cornCobObj.GetComponent<CornCob>();
+        if (!CornCob.registerCorn(cornCob, cornCobInfo.id)) Debug.Log("NON VALID ID CORNCOB");
+        cornCob.cornCobCornDict = cornCobInfo.cornCobCornDict;
+        return cornCob;
     }
 
     public static void CleanChunks()
