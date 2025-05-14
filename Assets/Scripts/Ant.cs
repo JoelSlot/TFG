@@ -124,8 +124,18 @@ public class Ant : MonoBehaviour
 
                 .Selector("Do tasks")
 
-                    .Sequence("Pick up food routine")
-                        .Condition("My task is picking up food?", t => objective.isTaskType(TaskType.GetFood))
+                    .Sequence("Pick up corn routine")
+                        .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn))
+                        .Condition("Is my task valid", t => objective.isValid(this))
+                        .Sequence("Pick up sequence")
+                            .Do("Go to food", t => FollowObjectivePath())
+                            .Do("Align with food", t => Align(objective.getPos()))
+                            .Do("Wait for pickup", t => {Debug.Log("Waiting"); return BehaviourTreeStatus.Running;})
+                        .End()
+                    .End()
+
+                    .Sequence("Pick from cob routine")
+                        .Condition("My task is picking from cob?", t => objective.isTaskType(TaskType.CollectFromCob))
                         .Condition("Is my task valid", t => objective.isValid(this))
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowObjectivePath())
@@ -165,7 +175,9 @@ public class Ant : MonoBehaviour
     {
         if (!objective.isTaskType(TaskType.None))
         {
-            if (CubePaths.NextToPoint(this.transform.position, objective.getPos())) return BehaviourTreeStatus.Success;
+            float dist = CubePaths.DistToPoint(this.transform.position, objective.getPos());
+            if (dist < 1.2f && !objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+            if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = SetGoalFromPath(antSurface, out Vector3 goal);
             if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian, goal);
@@ -179,10 +191,11 @@ public class Ant : MonoBehaviour
     private BehaviourTreeStatus SenseTask()
     {
         int digPointMask = (1 << 9);
-        int foodMask = (1 << 10);
+        int cornMask = (1 << 10);
+        int cornCobMask = 1 << 11;
 
         //BUscamos colisiones con todos los objetos comida y punto de excavación alrededor de la hormiga
-        int layermask = digPointMask + foodMask; //Capa de comida y digpoint
+        int layermask = digPointMask + cornMask + cornCobMask; //Capa de comida y digpoint
         PriorityQueue<GameObject, float> sensedItems = new();
         int maxColliders = 100;
         Collider[] hitColliders = new Collider[maxColliders];
@@ -199,24 +212,32 @@ public class Ant : MonoBehaviour
         {
             GameObject sensedItem = sensedItems.Dequeue();
             //DigPoints tienen prioridad sobre comida
-            if (sensedItem.gameObject.layer == foodMask && foundDigPoint) break;
+            if (sensedItem.gameObject.layer != 9 && foundDigPoint) break;
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
-                if (sensedItem.gameObject.layer == 9) //9 is digpoint layer
+                int objLayer = sensedItem.gameObject.layer;
+                if (objLayer == 9) //9 is digpoint layer
                 {
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
                     if (!foundDigPoint) {foundDigPoint = true; minLength = int.MaxValue;}
 
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
                 }
-                else if (sensedItem.gameObject.layer == 10) //10 is food layer
+                else if (objLayer == 10) //10 is corn layer
                 {
-                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.GetFood, newPath);
+                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
+                }
+                else if (objLayer == 11) //11 is cornCobLayer
+                {
+                    //Only count it if it has corn left
+                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) break;
+                    //Set current pheromonePath to found corn!
+                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
                 }
                 else
                 {
-                    Debug.Log("Wrong layer: " + sensedItem.gameObject.layer + " vs dipoint " + digPointMask + " vs food " + foodMask);
+                    Debug.Log("Wrong layer: " + sensedItem.gameObject.layer + " vs dipoint " + digPointMask + " vs food " + cornMask);
                 }
             }
         }
@@ -262,7 +283,7 @@ public class Ant : MonoBehaviour
         }
         DontTurn();
 
-        if (objective.isTaskType(TaskType.GetFood))
+        if (objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
         {
             Animator.SetBool("Pick up", true);
         }
@@ -331,11 +352,20 @@ public class Ant : MonoBehaviour
             return;
         }
 
-        if (objective.isValid(this) && objective.isTaskType(TaskType.GetFood))
+        if (objective.isValid(this) && objective.isTaskType(TaskType.GetCorn))
         {
             Debug.Log("Valid");
             GameObject food = objective.GetFood();
             SetToHold(food);
+            UpdateHolding();
+        }
+        //gets the cornCob, then a random corn pip from the cob that becomes held.
+        else if (objective.isValid(this) && objective.isTaskType(TaskType.CollectFromCob))
+        {
+            Debug.Log("Cob valid");
+            GameObject cob = objective.GetFood();
+            GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
+            SetToHold(food); //CornPip is removed from cornCob here
             UpdateHolding();
         }
         else
@@ -375,6 +405,17 @@ public class Ant : MonoBehaviour
 
     public void SetToHold(GameObject obj)
     {
+        //If it is attached to a cornCob, remove it from said dictionary.
+        CornCob parentCob = null;
+        if (obj.transform.parent != null) parentCob = obj.transform.parent.gameObject.GetComponent<CornCob>();
+        if (parentCob != null)
+        {
+            int key = -1;
+            int cornId = obj.GetComponent<Corn>().id;
+            foreach(var (pos, id) in parentCob.cornCobCornDict) if (id == cornId) {key = pos; break;};
+            parentCob.cornCobCornDict.Remove(key);
+        }
+
         obj.transform.SetParent(carriedObject.transform);
         Destroy(obj.GetComponent<Rigidbody>());
         obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -383,7 +424,7 @@ public class Ant : MonoBehaviour
 
     public void DigEvent()
     {
-        Animator.SetBool("dig", false);
+        Animator.SetBool("Dig", false);
 
         if (objective.isTaskType(TaskType.None)) return;
         //if (!objective.isTaskType(TaskType.DigPoint)) return;
@@ -391,11 +432,15 @@ public class Ant : MonoBehaviour
         if (objective.isValid(this))
         {
             DigPoint thePoint = objective.GetDigPoint();
-            thePoint.Dig();
-            DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(thePoint.transform.position));
-            Destroy(thePoint.gameObject);
+            if(thePoint != null)
+            {
+                thePoint.Dig();
+                DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(thePoint.transform.position));
+                Destroy(thePoint.gameObject);
+            }
             objective = Task.NoTask();
         }
+        else objective = Task.NoTask();
     }
   
     void RandomMovement()
@@ -666,7 +711,7 @@ public class Ant : MonoBehaviour
             
             if (isReachable && newPath.Count < minLength)
             {         
-                newTask = new Task(food.GetComponent<Corn>().id);
+                //newTask = new Task(food.GetComponent<Corn>().id);
                 objective.path = newPath;
                 minLength = objective.path.Count;
             }

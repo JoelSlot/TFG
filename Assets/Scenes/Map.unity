@@ -1156,7 +1156,7 @@ GameObject:
   - component: {fileID: 981543629}
   - component: {fileID: 981543631}
   - component: {fileID: 981543632}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: CornCob
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1175,6 +1175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee836ee19f602894c8aeeb40ad81bc0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  id: 0
   proportion: 1
 --- !u!4 &981543630
 Transform:
@@ -1186,7 +1187,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 32.060677, y: -0.04518573, z: -21.027605}
-  m_LocalScale: {x: 1, y: 1, z: 0.48}
+  m_LocalScale: {x: 1, y: 1, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1266634136}
@@ -1232,7 +1233,7 @@ MeshCollider:
     m_Bits: 64
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -1367,7 +1368,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1379,7 +1380,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1416,6 +1417,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_Name
       value: NakedCob
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
       propertyPath: m_IsActive

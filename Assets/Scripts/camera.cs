@@ -493,7 +493,7 @@ public class FlyCamera : MonoBehaviour
                     SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal));
                     break;
                 case obj.Corn:
-                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized*3f, Quaternion.Euler(hit.normal));
+                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized*3f, Quaternion.Euler(new Vector3(90, 0, 0)));
                     break;
                 case obj.digTunnel:
                 case obj.digChamber:

@@ -483,10 +483,9 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    public static bool NextToPoint(Vector3 pos, Vector3 point)
+    public static float DistToPoint(Vector3 pos, Vector3 point)
     {
-        if ((point - pos).magnitude < 1.2f) return true;
-        return false;
+        return (point - pos).magnitude; //1.2f
     }
 
     public static bool PointIsInCube(Vector3Int pos, Vector3 point)
@@ -531,7 +530,7 @@ public class CubePaths : MonoBehaviour
                 break;
             }
                 
-            if (NextToPoint(current.pos + Vector3.one * 0.5f, objective))
+            if (DistToPoint(current.pos + Vector3.one * 0.5f, objective) < 1.2f)
             {
                 reachedSurface = current;
                 gotToPoint = true;

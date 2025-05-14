@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CornCob : MonoBehaviour
@@ -78,11 +79,24 @@ public class CornCob : MonoBehaviour
                 newCorn.transform.localPosition = pos;
                 newCorn.transform.localEulerAngles = CornEuler(i) * -57.5f;
                 if (i == 0) Debug.Log(newCorn.transform.localScale);
-                newCorn.transform.localScale = new Vector3(10, 10, 20f/0.5f);
+                newCorn.transform.localScale = new Vector3(10, 10, 20f);
             }
         }
     }
 
+    public bool hasCorn()
+    {
+        return cornCobCornDict.Count != 0;
+    }
+
+    public GameObject getRandomCornObject()
+    {
+        if (cornCobCornDict.Count == 0) return null;
+
+        var (key, id) = cornCobCornDict.ElementAt(Random.Range(0, cornCobCornDict.Count));
+
+        return Corn.cornDictionary[id].gameObject;
+    }
 
     public static float[] cornInfo = new float[numCornSpots * 6]
     {
