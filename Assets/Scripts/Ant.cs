@@ -119,7 +119,13 @@ public class Ant : MonoBehaviour
                     .Do("Sense nearby task", t => SenseTask())
                     //Go foraging
                     //Go explore
-                    //.Do("Go outside", t => {objective = Task.GoOutsideTask(); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success;})
+                    .Sequence("If in nest go outside")
+                        .Sequence("If in nest go outside")
+                            .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
+                            .Do("Set to go outside", t => {objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success;})
+                        .End()
+                        .Do("Set to go outside", t => {Debug.Log("I GOTTA GO OUTSIDE"); return BehaviourTreeStatus.Success;})
+                    .End()
                 .End()
 
                 .Selector("Do tasks")
@@ -154,22 +160,60 @@ public class Ant : MonoBehaviour
                         .End()
                     .End()
 
+                    .Sequence("Go outside")
+                        .Condition("Is my task going outside?", t => objective.isTaskType(TaskType.GoOutside))
+                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Selector("Complete objective if outside or finished path")
+                            .Condition("Im still inside and with complete path?", t => Nest.SurfaceInNest(antSurface) && objective.path.Count != 0)
+                            .Do("Complete objective", t => {objective = Task.NoTask(); return BehaviourTreeStatus.Success;})
+                        .End()
+                    .End()
+
+                    
                     .Sequence("Carry to nest")
                         .Do("Not impemented yet", t => BehaviourTreeStatus.Success)
                     .End()
                         
-                    .Sequence("Go outside")
-                        .Condition("Am i inside?", t => Nest.SurfaceInNest(antSurface))
-                        .Selector("Make path if I don't already have it.")
-                            .Condition("I have a path to outside", t => {Debug.Log("NOT IMPLEMENTED"); return true;})
-                            .Do("A", t => {return BehaviourTreeStatus.Success;})
-                        .End()
-                    .End()
                 .End()
                 
             .End()
             .Build();
     }
+
+    
+    Vector3Int nextPosDraw = Vector3Int.zero;
+
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
+        {
+            Rigidbody.useGravity = false;
+
+            DontTurn();
+            SetWalking(false);
+
+            if (isControlled){
+                AntInputs();
+                objective = Task.NoTask();
+            }
+            else tree.Tick(new TimeData(Time.deltaTime));
+
+            //Debug.Log("Task type: " + objective.TaskToString());
+        
+            if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
+
+            ApplyMovement(normalMedian, rayCastHits, rayCastDist);
+
+            CubePaths.DrawCube(nextPosDraw, Color.blue);
+            CubePaths.DrawCube(antSurface.pos, Color.black);
+        }
+        else Rigidbody.useGravity = true;
+
+        if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
+
+    }
+
 
     private BehaviourTreeStatus FollowObjectivePath()
     {
@@ -297,39 +341,6 @@ public class Ant : MonoBehaviour
 
     private void Update()
     {
-    }
-
-    Vector3Int nextPosDraw = Vector3Int.zero;
-
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
-        {
-            Rigidbody.useGravity = false;
-
-            DontTurn();
-            SetWalking(false);
-
-            if (isControlled){
-                AntInputs();
-                objective = Task.NoTask();
-            }
-            else tree.Tick(new TimeData(Time.deltaTime));
-
-            //Debug.Log("Task type: " + objective.TaskToString());
-        
-            if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
-
-            ApplyMovement(normalMedian, rayCastHits, rayCastDist);
-
-            CubePaths.DrawCube(nextPosDraw, Color.blue);
-            CubePaths.DrawCube(antSurface.pos, Color.black);
-        }
-        else Rigidbody.useGravity = true;
-
-        if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
-
     }
 
     public Vector3 GetRelativePos(float x, float y, float z)

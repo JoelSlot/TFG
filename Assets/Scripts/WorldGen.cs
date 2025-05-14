@@ -143,6 +143,8 @@ public class WorldGen : MonoBehaviour
             }
         }
 
+        camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
+        newCameraPosInfo = true;
 
         Debug.Log(string.Format("Terrain generated"));
 

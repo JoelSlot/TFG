@@ -48,14 +48,19 @@ public class Task
 
         }
 
-        public static Task GoOutsideTask()
+        public static Task GoOutsideTask(CubePaths.CubeSurface antSurface)
         {
             Task GOtask = new()
             {
                 type = TaskType.GoOutside,
                 path = new()
             };
-            return GOtask;
+
+            if (CubePaths.GetPathToOutside(antSurface, out GOtask.path)) return GOtask;
+            
+            Debug.Log("No valid path");
+
+            return NoTask();
         }
 
         public static Task GoInsideTask()

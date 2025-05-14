@@ -653,7 +653,7 @@ public class CubePaths : MonoBehaviour
     }
 
     //For now only looks for path to outside.
-    public static bool GetPathInNest(CubeSurface start, out List<CubeSurface> path)
+    public static bool GetPathToOutside(CubeSurface start, out List<CubeSurface> path)
     {
         Debug.Log("Finding path...");
         path = new List<CubeSurface>();
