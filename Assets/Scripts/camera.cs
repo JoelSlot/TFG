@@ -483,12 +483,14 @@ public class FlyCamera : MonoBehaviour
         }
         else if (placingDigZone)
         {
-            //Si se esta pulsando tmbien boton 2, eliminar la parte que se está colocando.
-            if (Input.GetKey(KeyCode.Mouse1))
+            //Si se esta pulsando tmbien shift, eliminar la parte que se está colocando.
+            if (Input.GetKey(KeyCode.LeftShift))
             {
                 NestPart ErasePart = Nest.NestParts.Last();
                 Nest.NestParts.Remove(ErasePart);
+                Destroy(ErasePart.gameObject);
                 Destroy(ErasePart);
+                placingDigZone = false;
             }
             else
             {
