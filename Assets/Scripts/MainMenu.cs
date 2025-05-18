@@ -23,6 +23,7 @@ public class MainMenu : MonoBehaviour
     public void StartMapTester()
     {
         GameSettings.gameMode = 1;
+        GameSettings.saveFile = "none"; // did not assign this bfore. Also i accidentally wrote None after.
         SceneManager.LoadSceneAsync("Map");
     }
 

@@ -96,6 +96,10 @@ public class NestPart : MonoBehaviour
         else if (mode == NestPartType.FoodChamber)
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
+            endPos.x = Mathf.Max(endPos.x, startPos.x + 5);
+            endPos.y = Mathf.Max(endPos.y, startPos.y + 5);
+            endPos.z = Mathf.Max(endPos.z, startPos.z + 5);
+            
             Vector3 distance = endPos - startPos;
             transform.position = startPos;
             startSphere.transform.localPosition = Vector3.zero;

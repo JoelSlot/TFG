@@ -6,6 +6,7 @@ using System.Linq;
 using UnityEditor.Search;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.ComponentModel.Design;
+using Unity.VisualScripting;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -427,12 +428,13 @@ public class FlyCamera : MonoBehaviour
         
         Vector3 dir = camera.transform.forward;
         dir.y = 0;
-        Vector3 relFor = relativeHorDir(dir, out Vector3 relLeft);
-        Debug.DrawRay(placeDigObject.transform.position, relFor*10, Color.red);
-        Debug.DrawRay(placeDigObject.transform.position, relLeft*10, Color.blue);
+        Vector3 relFor = this.transform.forward;
+        relFor.y = 0;
+        Vector3 relRight = this.transform.right;
+        relRight.y = 0;
         Vector3 movement = Vector3.zero;
         if (Mathf.Abs(mouseForward) > 0.1f) movement += relFor * mouseForward;
-        if (Mathf.Abs(mouseSideways) > 0.1f) movement -= relLeft * mouseSideways;
+        if (Mathf.Abs(mouseSideways) > 0.1f) movement += relRight * mouseSideways;
 
         //resize the tunnel
         if (Input.mouseScrollDelta.y > 0)
@@ -481,8 +483,18 @@ public class FlyCamera : MonoBehaviour
         }
         else if (placingDigZone)
         {
-            toDigPoints();
-            placingDigZone = false;
+            //Si se esta pulsando tmbien boton 2, eliminar la parte que se está colocando.
+            if (Input.GetKey(KeyCode.Mouse1))
+            {
+                NestPart ErasePart = Nest.NestParts.Last();
+                Nest.NestParts.Remove(ErasePart);
+                Destroy(ErasePart);
+            }
+            else
+            {
+                toDigPoints();
+                placingDigZone = false;
+            }
         }
         else if (clickObject(terrainLayer, out RaycastHit hit))
         {
