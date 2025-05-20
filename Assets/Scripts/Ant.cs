@@ -220,7 +220,7 @@ public class Ant : MonoBehaviour
         if (!objective.isTaskType(TaskType.None))
         {
             float dist = CubePaths.DistToPoint(this.transform.position, objective.getPos());
-            if (dist < 1.2f && !objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+            if (dist < 1.5f && !objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = SetGoalFromPath(antSurface, out Vector3 goal);
@@ -234,8 +234,8 @@ public class Ant : MonoBehaviour
 
     private BehaviourTreeStatus SenseTask()
     {
-        int digPointMask = (1 << 9);
-        int cornMask = (1 << 10);
+        int digPointMask = 1 << 9;
+        int cornMask = 1 << 10;
         int cornCobMask = 1 << 11;
 
         //BUscamos colisiones con todos los objetos comida y punto de excavación alrededor de la hormiga
@@ -250,6 +250,7 @@ public class Ant : MonoBehaviour
         }
 
         int minLength = int.MaxValue;
+        int minDigPointScore = -1;
         Task newTask = null;
         bool foundDigPoint = false;
         while (sensedItems.Count > 0)
@@ -264,9 +265,29 @@ public class Ant : MonoBehaviour
                 if (objLayer == 9) //9 is digpoint layer
                 {
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
-                    if (!foundDigPoint) {foundDigPoint = true; minLength = int.MaxValue;}
+                    if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
 
-                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                    int newScore = DigPoint.ReachableScore(Vector3Int.RoundToInt(sensedItem.transform.position));
+
+                    //Thanks to this sistem, priorities are:
+                    //1. Having a high reachable score
+                    //2. Being a short path
+                    if (newScore > minDigPointScore)
+                    {
+                        newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                        minDigPointScore = newScore;
+                        minLength = newPath.Count;
+                    }
+                    else if (newScore == minDigPointScore)
+                    {
+                        if (newPath.Count < minLength)
+                        {
+                            newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                            minLength = newPath.Count;
+                        }
+                    }
+                    
+                    
                 }
                 else if (objLayer == 10) //10 is corn layer
                 {

@@ -226,6 +226,7 @@ public class chunk
         UnityEngine.Object.DestroyImmediate(chunkObject.GetComponent<MeshRenderer>());
         UnityEngine.Object.DestroyImmediate(chunkObject);
     }
+
     /*
     public WorldGen WorldGena
     {
@@ -233,7 +234,8 @@ public class chunk
         set
         {
         }
-    }*/
+    }
+    */
 
     //tabla de esquinas: las 8 esquinas del cubo
     public static Vector3Int[] cornerTable = new Vector3Int[8]

@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DigPoint : MonoBehaviour
 {
-    
+
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
 
 
-    public class digPointData{
-        public int value {get; set;}
+    public class digPointData
+    {
+        public int value { get; set; }
         public DigPoint digPoint = null;
 
         public digPointData(int val)
@@ -18,7 +21,7 @@ public class DigPoint : MonoBehaviour
             digPoint = null;
         }
 
-        private digPointData(){digPoint = null;}
+        private digPointData() { digPoint = null; }
 
         public void update(digPointData newData)
         {
@@ -49,7 +52,7 @@ public class DigPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void Dig()
@@ -59,16 +62,16 @@ public class DigPoint : MonoBehaviour
         int val = digPointDict[pos].value;
         List<Tuple<Vector3Int, int>> terrainEdit = new();
         if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, int>(pos, val));
-        
+
         //Miramos todos los digPoints alrededores
-        Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
         foreach (Vector3Int direction in directions)
         {
             Vector3Int key = pos + direction;
             if (digPointDict.ContainsKey(key))
             {
                 digPointData nextDigData = digPointDict[key];
-                if ( nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
+                if (nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
                     if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, nextDigData.value));
                     digPointDict.Remove(key);
@@ -81,17 +84,26 @@ public class DigPoint : MonoBehaviour
                     //Quitar un poco de los alrededores
                     int newVal = WorldGen.SampleTerrain(key) - 2;
                     if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:
-                        if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, int>(pos+direction, newVal)); //Lo ponemos al valor obtenido
+                        if (WorldGen.SampleTerrain(pos) > newVal) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, newVal)); //Lo ponemos al valor obtenido
                 }
             }
         }
         digPointDict.Remove(pos);
         if (terrainEdit.Count > 0) WorldGen.EditTerrainSet(terrainEdit);
     }
-    
-    public Task getObjective()
+
+    //Used to score digPoints on how reachable they are.
+    public static int ReachableScore(Vector3Int pos)
     {
-        return new Task(this.transform.position);
+        int score = 0;
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        foreach (Vector3Int direction in directions)
+        {
+            Vector3Int adj = pos + direction;
+
+            if (WorldGen.IsAboveSurface(adj)) score++;
+        }
+        return score;
     }
 
 }
