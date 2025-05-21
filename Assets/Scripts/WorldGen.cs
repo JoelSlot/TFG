@@ -52,6 +52,9 @@ public class WorldGen : MonoBehaviour
     public GameObject origDigPoint;
     public static GameObject originalDigPoint;
 
+    public GameObject origPheromoneParticles;
+    public static GameObject originalPheromoneParticles;
+
 
     // Start is called before the first frame update
     void Start()
@@ -63,6 +66,7 @@ public class WorldGen : MonoBehaviour
         originalCorn = origCorn;
         originalDigPoint = origDigPoint;
         originalCornCob = origCornCob;
+        originalPheromoneParticles = origPheromoneParticles;
 
         CleanChunks();
 
@@ -552,6 +556,15 @@ public class WorldGen : MonoBehaviour
         cornCob.cornCobCornDict = cornCobInfo.cornCobCornDict;
         return cornCob;
     }
+
+
+    public static ParticleSystem InstantiatePheromoneParticles(Vector3 pos)
+    {
+        GameObject pherParticlesObj = Instantiate(originalPheromoneParticles, pos, Quaternion.identity);
+        pherParticlesObj.SetActive(true);
+        return pherParticlesObj.GetComponent<ParticleSystem>();
+    }
+
 
     public static void CleanChunks()
     {

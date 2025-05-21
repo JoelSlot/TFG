@@ -22,8 +22,9 @@ public class CubePheromone
 
         this.surface = surface;
 
-        Color[] colors= {Color.red, Color.blue, Color.green};
+        Color[] colors = { Color.red, Color.blue, Color.green };
         CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
+
     }
 
     //Crea el siguientd nodo en el camino dado el actual
@@ -33,13 +34,14 @@ public class CubePheromone
         pathPos = prevPher.pathPos + 1;
         prev = prevPher;
         next = this;
-        
+
         prevPher.next = this;
 
         surface = newSurface;
 
-        Color[] colors= {Color.red, Color.blue, Color.green};
+        Color[] colors = { Color.red, Color.blue, Color.green };
         CubePaths.DrawCube(surface.pos, colors[pathId % 3], 100000);
+        
     }
 
     private static int GetNextId()

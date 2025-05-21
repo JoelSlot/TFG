@@ -11,6 +11,7 @@ public class CubePaths : MonoBehaviour
     //Diccionario de todas las pheromonas. Son indexadas según su posición, para que una hormiga pueda fácilmente acceder a las pheromonas en los cubos alrededores.
     //Ya que pueden haber pheromonas de caminos distintos en el mismo cubo, y pueden haber múltiples superficies con pheromonas del mismo camino en un mismo cubo, se guarda una lista de todas aquellas que se encuentran en cada cubo
     public static Dictionary<Vector3Int, List<CubePheromone>> cubePherDict = new Dictionary<Vector3Int, List<CubePheromone>>();
+    public static Dictionary<Vector3Int, ParticleSystem> cubePherParticleDict = new();
     //El diccionario de caminos, contiene los primeros nodos de los caminos indexados por su pathId
     public static Dictionary<int, CubePheromone> pathDict = new Dictionary<int, CubePheromone>();
 
@@ -57,7 +58,7 @@ public class CubePaths : MonoBehaviour
         List<CubePheromone> pheromones;
         if (cubePherDict.TryGetValue(pos, out pheromones)) //Si ya hay feromonas en el cubo indicado: 
         {
-            bool replaced = false;                          
+            bool replaced = false;
             for (int i = 0; i < pheromones.Count; i++)
             {
                 CubePheromone oldPher = cubePherDict[pos][i];
@@ -73,8 +74,13 @@ public class CubePaths : MonoBehaviour
         }
         else                                                //Si no había ya alguna pheromona, añadir
         {
-            pheromones = new List<CubePheromone>(){newPher};
+            pheromones = new List<CubePheromone>() { newPher };
             cubePherDict.Add(pos, pheromones);
+            //Ya que es la primera vez que se añade pheromona a la coordenada, añadir particulas
+            ParticleSystem pheromoneParticles = WorldGen.InstantiatePheromoneParticles(pos + Vector3.one * 0.5f);
+            pheromoneParticles.Play();
+            cubePherParticleDict.Add(pos, pheromoneParticles);
+            Debug.Log("Placed pheromone node");
         }
 
     }

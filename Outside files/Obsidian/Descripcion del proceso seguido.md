@@ -322,3 +322,18 @@ Lo que necesito hacer es poder guardar y cargar el estado del resto del juego:
 
 
 
+## Sistema de particulas
+
+Para poder representar los caminos de feromona, se quiso usar partículas para visuarlas como nubecitas. Para ello se usó el pack de partículas gratuito https://assetstore.unity.com/packages/vfx/particles/polygonal-s-low-poly-particle-pack-118355. No se trata de simplemente copiar y pegar, sin embargo. Se tuvieron que hacer algunas modificaciones visuales, además de escribir el código necesario para implementarlo en el juego.
+
+Primero de todo, se consideraron 3 prefabs prehechos como base para las feromonas: el de fuego, el de humo y el de radiación. Cada uno podria editarse para adecuarse a nuetras necesidades, pero se decició usar el de raciación. Específicamente, se eligió la versión de alto rendimiento que ofrecía el pack.
+
+Cambios hechos sobre el emisor de partículas: 
+- Culling mode: cambiamos de pause y catch up a pause. Pause y catch up pausan la simulación mientras las particulas no son visibles, pero cuando se vuelven a ver, se hace un gran paso de simulación igual al tiempo que no se ha mirado para que parece que ha seguido simulándose. Este paso de simulación puede ser bastante exigente, y no nos parece tan importante, por lo que lo dejamos en simplemente pausa y reanudación.
+- Eliminación de sub-emisor de partículas: El prefab contiene dos emisores, uno principal que emite nubes grandes, y un segundo que emite nubes pequeñas más intensas. Da una sensación de radiación que no hace falta para las pheromonas, por lo que se elimina.
+- Forma del emisor de partículas: Inicialmente la forma fue la de un círculo plano, y se cambió a una esfera para que las partículas aparezcan en un espacio de tres dimensiones.
+- Ratio de emisión aumentada para que el área ahora más grande parezca menos vacío.
+- Tamaño de partículas ajustadas para pegar con el tamaño de la hormiga.
+- Tiempo de vida aumentada para simular una nube de feromonas más constante.
+- Modificador de gravedad puesto a 0 para que no vayan subiendo las nubes.
+- Color sobre tiempo simplificado y cambiado. Se espera poder cambiar este color en el código para poder diferenciar los distintos caminos. Por ahora se ha dejado en rosa en vez del verde original.
