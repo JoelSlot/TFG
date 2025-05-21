@@ -543,7 +543,7 @@ public class FlyCamera : MonoBehaviour
 
                     CubePaths.CubeSurface clickedSurface = new(cube, hit.normal);
 
-                    CubePaths.GetPathToOutside(clickedSurface, out List<CubePaths.CubeSurface> path);
+                    CubePaths.GetPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
 
                     CubePaths.DrawCube(cube, Color.red, 20);
                     

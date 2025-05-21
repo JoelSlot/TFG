@@ -658,8 +658,8 @@ public class CubePaths : MonoBehaviour
         return pathExists;
     }
 
-    //For now only looks for path to outside.
-    public static bool GetPathToOutside(CubeSurface start, out List<CubeSurface> path)
+    
+    public static bool GetPathToMapPart(CubeSurface start, NestPart.NestPartType type, out List<CubeSurface> path)
     {
         Debug.Log("Finding path...");
         path = new List<CubeSurface>();
@@ -674,29 +674,56 @@ public class CubePaths : MonoBehaviour
 
         bool pathExists = false;
 
-        CubeSurface reachedOutside = start;
+        CubeSurface reachedMapPart = start;
 
         while (frontera.Count > 0)
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (!Nest.SurfaceInNest(current)){
-                reachedOutside = current;
+            if (Nest.SurfaceInNestPart(current, type))
+            {
+                reachedMapPart = current;
                 pathExists = true;
                 break;
             }
 
-            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+            HashSet<CubeSurface> identifiableSurfaces = new();
 
-            foreach(var son in adyacentSurfaces)
+            if (Nest.SurfaceInNest(current)) //Si es dentro del nido miramos adyacentes
+            {
+                List<CubeSurface> adySurfaces = GetAdyacentCubes(current);
+
+                foreach (var son in adySurfaces) identifiableSurfaces.Add(son);
+            }
+            if (cubePherDict.TryGetValue(current.pos, out List<CubePheromone> pherList)) //Si es parte de camino de pheromonas...
+            {
+                bool matchedSurface = false;
+                foreach (var pher in pherList)
+                {
+                    if (pher.surface.Equals(current) && !matchedSurface) //Si es la misma superficie añadimos los siguientes y previos si hay
+                    {
+                        List<CubeSurface> adySurfaces = GetAdyacentCubes(current);
+
+                        foreach (var son in adySurfaces) identifiableSurfaces.Add(son);
+
+                        matchedSurface = true;
+                        /*
+                        if (!pher.isLast(true)) identifiableSurfaces.Add(pher.next.surface);
+                        if (!pher.isLast(false)) identifiableSurfaces.Add(pher.prev.surface);
+                        talk about how it would not work this way
+                        */
+                    }
+                }
+            }
+
+            foreach (var son in identifiableSurfaces)
             {
                 float newCost = coste[current] + 1;
                 bool updateOrInsert = false;
                 if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
                 else if (newCost < prevCost) updateOrInsert = true;
 
-                
-                if(updateOrInsert)
+                if (updateOrInsert)
                 {
                     DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;
@@ -707,12 +734,12 @@ public class CubePaths : MonoBehaviour
             }
         }
 
-        while (!reachedOutside.Equals(start))
+        while (!reachedMapPart.Equals(start))
         {
-            DrawCube(reachedOutside.pos, Color.blue, 4);
-            DrawSurface(reachedOutside, Color.black, 40);
-            path.Insert(0, reachedOutside); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
-            reachedOutside = previo[reachedOutside];
+            DrawCube(reachedMapPart.pos, Color.blue, 4);
+            DrawSurface(reachedMapPart, Color.black, 40);
+            path.Insert(0, reachedMapPart); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            reachedMapPart = previo[reachedMapPart];
         }
 
         //Debug.Log("found path length: " + path.Count);

@@ -11,6 +11,8 @@ public enum TaskType
     CollectFromCob,
     GoOutside,
     GoInside,
+    GoToChamber,
+    GoToTunnel,
     None
 }
 
@@ -56,32 +58,61 @@ public class Task
                 path = new()
             };
 
-            if (CubePaths.GetPathToOutside(antSurface, out GOtask.path)) return GOtask;
+            if (CubePaths.GetPathToMapPart(antSurface, NestPart.NestPartType.Outside, out GOtask.path)) return GOtask;
             
             Debug.Log("No valid path");
 
             return NoTask();
         }
 
-        public static Task GoInsideTask()
+        public static Task GoInsideTask(CubePaths.CubeSurface antSurface)
         {
             Task GOtask = new()
             {
                 type = TaskType.GoInside,
-                path = new()
             };
-            return GOtask;
+
+            //Used foodchamber for now as default
+            if (CubePaths.GetPathToMapPart(antSurface, NestPart.NestPartType.FoodChamber, out GOtask.path)) return GOtask;
+            
+            Debug.Log("No valid path");
+
+            return NoTask();
         }
 
-        public static Task NoTask()
+    public static Task GoToNestPartTask(CubePaths.CubeSurface antSurface, NestPart.NestPartType type)
+    {
+        Task GOtask = new();
+        switch (type)
         {
-            Task notask = new()
-            {
-                type = TaskType.None,
-                path = new()
-            };
-            return notask;
+            case NestPart.NestPartType.Outside:
+                GOtask.type = TaskType.GoOutside;
+                break;
+            case NestPart.NestPartType.FoodChamber:
+                GOtask.type = TaskType.GoToChamber;
+                break;
+            case NestPart.NestPartType.Tunnel:
+                GOtask.type = TaskType.GoToTunnel;
+                break;
         }
+
+        if (CubePaths.GetPathToMapPart(antSurface, type, out GOtask.path)) return GOtask;
+            
+        Debug.Log("No valid path");
+
+        return NoTask();
+    }
+
+
+        public static Task NoTask()
+    {
+        Task notask = new()
+        {
+            type = TaskType.None,
+            path = new()
+        };
+        return notask;
+    }
 
         public bool isTaskType(TaskType checkType) {return checkType == type;}
         public GameObject GetFood()
@@ -166,6 +197,8 @@ public class Task
             case TaskType.GetCorn: return "Get food";
             case TaskType.GoOutside: return "Go outside";
             case TaskType.GoInside: return "Go inside";
+            case TaskType.GoToChamber: return "Go to chamber";
+            case TaskType.GoToTunnel: return "Go to tunnel";
             case TaskType.None: return "None";
             }
             return "error";
@@ -180,7 +213,9 @@ public class Task
                 case TaskType.GetCorn: return 2;
                 case TaskType.GoOutside: return 3;
                 case TaskType.GoInside: return 4;
-                case TaskType.None: return 5;
+                case TaskType.GoToChamber: return 5;
+                case TaskType.GoToTunnel: return 6;
+                case TaskType.None: return 7;
             }
             return -1;
         }
@@ -194,7 +229,9 @@ public class Task
                 case 2: return TaskType.GetCorn;
                 case 3: return TaskType.GoOutside;
                 case 4: return TaskType.GoInside;
-                case 5: return TaskType.None;
+                case 5: return TaskType.GoToChamber;
+                case 6: return TaskType.GoToTunnel;
+                case 7: return TaskType.None;
             }
             return TaskType.None;
         }

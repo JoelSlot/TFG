@@ -103,16 +103,22 @@ public class Ant : MonoBehaviour
         this.tree = builder
             .Sequence("Main") //Todo: rename forgetful to normal and normal to forgetful.
                 .Selector("Get task if none")
-                    .Condition("I have a task?", t => {return !objective.isTaskType(TaskType.None);})
-                    
+                    .Condition("I have a task?", t => { return !objective.isTaskType(TaskType.None); })
+
                     //If im holding food, go send food.
-                    .Sequence("If carrying bring to nest") //To do: expand this into giving food to larva?
+                    .Sequence("If carrying bring to food chamber") //To do: expand this into giving food to larva?
                         .Condition("Carrying food check", t => IsHolding())
-                        .Sequence("If not in nest go to nest")
-                            .Condition("Am I out of nest?", t => !Nest.PointInNest(transform.position))
-                            .Do("Set to go to nest", t => {objective = Task.GoInsideTask(); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success;})
+                        .Selector("Check where ant is")
+                            .Sequence("If not in nest go to nest")
+                                .Condition("Am I out of nest?", t => !Nest.SurfaceInNest(antSurface))
+                                .Do("Set to go to nest", t => { objective = Task.GoInsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
+                            .End()
+                            .Sequence("If in nest go to food chamber")
+                                .Condition("Am i not in food chamber?", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
+                                .Do("Set to go to food chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber); Debug.Log("Task is go to food chamber"); return BehaviourTreeStatus.Success; })
+                            .End()
+                            .Do("If reached chamber put down", t => { Debug.Log("Putting down"); Animator.SetBool("Put down", true); return BehaviourTreeStatus.Success; })
                         .End()
-                        .Do("Set to go to food room", t => {Debug.Log("I GOTTA PUT THIS SOMEWHERE"); return BehaviourTreeStatus.Success;})
                     .End()
 
                     .Do("Get requested task", t => RequestTask())
@@ -120,11 +126,8 @@ public class Ant : MonoBehaviour
                     //Go foraging
                     //Go explore
                     .Sequence("If in nest go outside")
-                        .Sequence("If in nest go outside")
-                            .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
-                            .Do("Set to go outside", t => {objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success;})
-                        .End()
-                        .Do("Set to go outside", t => {Debug.Log("I GOTTA GO OUTSIDE"); return BehaviourTreeStatus.Success;})
+                        .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
+                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
                     .End()
                 .End()
 
@@ -136,7 +139,7 @@ public class Ant : MonoBehaviour
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowObjectivePath())
                             .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => {Debug.Log("Waiting"); return BehaviourTreeStatus.Running;})
+                            .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
@@ -146,7 +149,7 @@ public class Ant : MonoBehaviour
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowObjectivePath())
                             .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => {Debug.Log("Waiting"); return BehaviourTreeStatus.Running;})
+                            .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
@@ -156,7 +159,7 @@ public class Ant : MonoBehaviour
                         .Sequence("Dig sequence")
                             .Do("Go to digPoint", t => FollowObjectivePath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
-                            .Do("Wait for dig", t => {Debug.Log("Waiting"); return BehaviourTreeStatus.Running;})
+                            .Do("Wait for dig", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
@@ -165,13 +168,16 @@ public class Ant : MonoBehaviour
                         .Do("Follow objective path", t => FollowObjectivePath())
                         .Selector("Complete objective if outside or finished path")
                             .Condition("Im still inside and with complete path?", t => Nest.SurfaceInNest(antSurface) && objective.path.Count != 0)
-                            .Do("Complete objective", t => {objective = Task.NoTask(); return BehaviourTreeStatus.Success;})
+                            .Do("Complete objective", t => { objective = Task.NoTask(); return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
 
-                    
-                    .Sequence("Carry to nest")
-                        .Do("Not impemented yet", t => BehaviourTreeStatus.Success)
+
+                    .Sequence("Just follow path")
+                        .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel); })
+                        .Do(".", t => { Debug.Log("Hey i made it");  return BehaviourTreeStatus.Success; })
+                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Objective complete or failed", t => { objective = Task.NoTask();  Debug.Log("REACHED OR FAILED");  return BehaviourTreeStatus.Success; })                        
                     .End()
                         
                 .End()
@@ -201,7 +207,10 @@ public class Ant : MonoBehaviour
 
             //Debug.Log("Task type: " + objective.TaskToString());
         
-            if (changedSurface) DecideToPlacePheromone(rayCastHits, antSurface);
+            if (changedSurface)
+                if (!Nest.SurfaceInNest(antSurface))
+                    if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
+                        PlacePheromone(rayCastHits, antSurface);
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
@@ -214,7 +223,7 @@ public class Ant : MonoBehaviour
 
     }
 
-
+    //Failure if lost path or wrong taskType. Success if reached end. Running if in progress.
     private BehaviourTreeStatus FollowObjectivePath()
     {
         if (!objective.isTaskType(TaskType.None))
@@ -649,7 +658,7 @@ public class Ant : MonoBehaviour
 
     }
 
-    private void DecideToPlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
+    private void PlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
     {
         //DECIDE SI PONER PHEROMONA AAAAAAAAAAAAAAA---------------------------------------------------------
         if (rayCastHits[4]) //si se crea camino y el raycast principal ve suelo

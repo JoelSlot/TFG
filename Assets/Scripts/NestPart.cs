@@ -10,24 +10,26 @@ public class NestPart : MonoBehaviour
     public GameObject startSphere;
     public GameObject endSphere;
 
-    public enum NestPartType {Tunnel, FoodChamber}
+    public enum NestPartType {Tunnel, FoodChamber, Outside}
 
     public static int NestPartTypeToIndex(NestPartType type)
     {
-        switch(type)
+        switch (type)
         {
             case NestPartType.Tunnel: return 0;
             case NestPartType.FoodChamber: return 1;
+            case NestPartType.Outside: return 2;
         }
         return -1;
     }
 
     public static NestPartType IndexToNestPartType(int index)
     {
-        switch(index)
+        switch (index)
         {
             case 0: return NestPartType.Tunnel;
             case 1: return NestPartType.FoodChamber;
+            case 3: return NestPartType.Outside;
         }
         Debug.Log("ERROR");
         return NestPartType.Tunnel;
