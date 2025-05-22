@@ -267,6 +267,8 @@ public class Ant : MonoBehaviour
             GameObject sensedItem = sensedItems.Dequeue();
             //DigPoints tienen prioridad sobre comida
             if (sensedItem.gameObject.layer != 9 && foundDigPoint) break;
+            //Comida dentro de una cámara de comida no se recoge
+            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) break;
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
@@ -295,8 +297,8 @@ public class Ant : MonoBehaviour
                             minLength = newPath.Count;
                         }
                     }
-                    
-                    
+
+
                 }
                 else if (objLayer == 10) //10 is corn layer
                 {
@@ -690,38 +692,39 @@ public class Ant : MonoBehaviour
         }
     }
 
+    
     private void AdjustAntToGround(bool[] rayCastHits, float[] rayCastDist, Quaternion deltaRotation)
     {
         if (!rayCastHits[4])
-            {
-                float xRotation = 0;
-                float zRotation = 0;
-                if (rayCastHits[0] && !rayCastHits[1]) zRotation += tiltSpeed * 0.7f;
-                if (rayCastHits[1] && !rayCastHits[0]) zRotation -= tiltSpeed * 0.7f;
-                if (rayCastHits[1] && !rayCastHits[2]) xRotation += tiltSpeed * 0.7f;
-                if (rayCastHits[2] && !rayCastHits[1]) xRotation -= tiltSpeed * 0.7f;
-                if (rayCastHits[2] && !rayCastHits[3]) zRotation -= tiltSpeed * 0.7f;
-                if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.7f;
-                if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.7f;
-                if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.7f;
-                deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
-                Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
-            }
-            else
-            {
-                float xRotation = 0;
-                float zRotation = 0;
-                if (rayCastHits[0] && rayCastHits[1] && rayCastDist[0] < rayCastDist[1]*1.8f) zRotation += tiltSpeed * 0.1f;
-                if (rayCastHits[1] && rayCastHits[0] && rayCastDist[1] < rayCastDist[0]*1.8f) zRotation -= tiltSpeed * 0.1f;
-                if (rayCastHits[1] && rayCastHits[2] && rayCastDist[1] < rayCastDist[2]*1.8f) xRotation += tiltSpeed * 0.1f;
-                if (rayCastHits[2] && rayCastHits[1] && rayCastDist[2] < rayCastDist[1]*1.8f) xRotation -= tiltSpeed * 0.1f;
-                if (rayCastHits[2] && rayCastHits[3] && rayCastDist[2] < rayCastDist[3]*1.8f) zRotation -= tiltSpeed * 0.1f;
-                if (rayCastHits[3] && rayCastHits[2] && rayCastDist[3] < rayCastDist[2]*1.5f) zRotation += tiltSpeed * 0.1f;
-                if (rayCastHits[3] && rayCastHits[0] && rayCastDist[3] < rayCastDist[0]*1.8f) xRotation -= tiltSpeed * 0.1f;
-                if (rayCastHits[0] && rayCastHits[3] && rayCastDist[0] < rayCastDist[3]*1.8f) xRotation += tiltSpeed * 0.1f;
-                deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
-                Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
-            }
+        {
+            float xRotation = 0;
+            float zRotation = 0;
+            if (rayCastHits[0] && !rayCastHits[1]) zRotation += tiltSpeed * 0.7f;
+            if (rayCastHits[1] && !rayCastHits[0]) zRotation -= tiltSpeed * 0.7f;
+            if (rayCastHits[1] && !rayCastHits[2]) xRotation += tiltSpeed * 0.7f;
+            if (rayCastHits[2] && !rayCastHits[1]) xRotation -= tiltSpeed * 0.7f;
+            if (rayCastHits[2] && !rayCastHits[3]) zRotation -= tiltSpeed * 0.7f;
+            if (rayCastHits[3] && !rayCastHits[2]) zRotation += tiltSpeed * 0.7f;
+            if (rayCastHits[3] && !rayCastHits[0]) xRotation -= tiltSpeed * 0.7f;
+            if (rayCastHits[0] && !rayCastHits[3]) xRotation += tiltSpeed * 0.7f;
+            deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
+            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+        }
+        else
+        {
+            float xRotation = 0;
+            float zRotation = 0;
+            if (rayCastHits[0] && rayCastHits[1] && rayCastDist[0] < rayCastDist[1] * 1.8f) zRotation += tiltSpeed * 0.1f;
+            if (rayCastHits[1] && rayCastHits[0] && rayCastDist[1] < rayCastDist[0] * 1.8f) zRotation -= tiltSpeed * 0.1f;
+            if (rayCastHits[1] && rayCastHits[2] && rayCastDist[1] < rayCastDist[2] * 1.8f) xRotation += tiltSpeed * 0.1f;
+            if (rayCastHits[2] && rayCastHits[1] && rayCastDist[2] < rayCastDist[1] * 1.8f) xRotation -= tiltSpeed * 0.1f;
+            if (rayCastHits[2] && rayCastHits[3] && rayCastDist[2] < rayCastDist[3] * 1.8f) zRotation -= tiltSpeed * 0.1f;
+            if (rayCastHits[3] && rayCastHits[2] && rayCastDist[3] < rayCastDist[2] * 1.5f) zRotation += tiltSpeed * 0.1f;
+            if (rayCastHits[3] && rayCastHits[0] && rayCastDist[3] < rayCastDist[0] * 1.8f) xRotation -= tiltSpeed * 0.1f;
+            if (rayCastHits[0] && rayCastHits[3] && rayCastDist[0] < rayCastDist[3] * 1.8f) xRotation += tiltSpeed * 0.1f;
+            deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
+            Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+        }
     }
 
 
