@@ -337,3 +337,5 @@ Cambios hechos sobre el emisor de partículas:
 - Tiempo de vida aumentada para simular una nube de feromonas más constante.
 - Modificador de gravedad puesto a 0 para que no vayan subiendo las nubes.
 - Color sobre tiempo simplificado y cambiado. Se espera poder cambiar este color en el código para poder diferenciar los distintos caminos. Por ahora se ha dejado en rosa en vez del verde original.
+
+

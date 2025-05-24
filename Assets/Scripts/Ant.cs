@@ -127,7 +127,12 @@ public class Ant : MonoBehaviour
                     //Go explore
                     .Sequence("If in nest go outside")
                         .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
-                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
+                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
+                    .End()
+
+                    .Sequence("If outside start exploring")
+                        .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                        .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
                     .End()
                 .End()
 
@@ -175,9 +180,15 @@ public class Ant : MonoBehaviour
 
                     .Sequence("Just follow path")
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel); })
-                        .Do(".", t => { Debug.Log("Hey i made it");  return BehaviourTreeStatus.Success; })
+                        .Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowObjectivePath())
-                        .Do("Objective complete or failed", t => { objective = Task.NoTask();  Debug.Log("REACHED OR FAILED");  return BehaviourTreeStatus.Success; })                        
+                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
+                    .End()
+
+                    .Sequence("Explore")
+                        .Condition("Is my task exploring?", t => objective.isTaskType(TaskType.Explore))
+                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
                     .End()
                         
                 .End()
@@ -767,7 +778,7 @@ public class Ant : MonoBehaviour
 
     //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
     //Si no hay, devuelve false.
-    private Task SenseDigPoints()
+    /*private Task SenseDigPoints()
     {
         int layermask = 1 << 9;
         PriorityQueue<GameObject, float> sensedDigPoints = new();
@@ -807,7 +818,7 @@ public class Ant : MonoBehaviour
         }
 
         return newTask;
-    }
+    }*/
 
     //Pone el 
     private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface, out Vector3 goal)
@@ -828,7 +839,7 @@ public class Ant : MonoBehaviour
         int range = 0;
         Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
         
-        sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces); //Initial one.
+        sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces); //Initial one.
 
         var sameCube = sensedRange[0];
 
@@ -843,7 +854,7 @@ public class Ant : MonoBehaviour
         while (goalIndex == -1 && range < 5)
         {
             range++;
-            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
+            sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
 
             for (int i = 0; i < objective.path.Count; i += 1)
             {
@@ -851,6 +862,7 @@ public class Ant : MonoBehaviour
             }
         }
 
+        //FORMAR EL CAMINO
         if (goalIndex == -1)
         {
             Debug.Log("not found");
@@ -949,51 +961,6 @@ public class Ant : MonoBehaviour
 
     }*/
 
-    List<CubePaths.CubeSurface> GetNextSurfaceRange(CubePaths.CubeSurface antSurface, List<CubePaths.CubeSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
-    {
-        List<CubePaths.CubeSurface> nextRange = new();
-
-        //Si el rango está empezando se coge la superficie de la hormiga
-        if (currentRange.Count == 0)
-        {
-            nextRange.Add(antSurface);
-            checkedSurfaces.Add(antSurface, antSurface);
-            return nextRange;
-        }
-
-        //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
-        if(currentRange[0].Equals(antSurface)) 
-        {
-            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
-
-            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentRange[0], transform.forward);
-            foreach (var son in adyacentCubes)
-            {
-                nextRange.Add(son);
-                checkedSurfaces.Add(son, son);
-                //CubePaths.DrawCube(son.pos, Color.magenta, 1);
-            }
-            return nextRange;
-        }
-
-
-        //Si el rango es mayor que todo eso se procede como debido
-        foreach (var currentSurface in currentRange)
-        {
-            List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(currentSurface, transform.forward);
-            
-            foreach (var son in adyacentCubes)
-            {
-                if (!checkedSurfaces.ContainsKey(son))
-                {
-                    nextRange.Add(son);
-                    checkedSurfaces.Add(son, currentSurface);
-                    //CubePaths.DrawCube(son.pos, Color.green, 1);
-                }
-            }
-        }
-        return nextRange;
-    }
 
     void AntInputs() {
         //if (SelectedAnt.state != Ant.AIState.Controlled) return;

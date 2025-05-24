@@ -74,6 +74,14 @@ public class Nest : MonoBehaviour
 
     public static bool SurfaceInNestPart(CubePaths.CubeSurface surface, NestPart.NestPartType type)
     {
+        //Added this line because this, used in GetPathToMapPart would give a positive of being outside with
+        //even one point being outside despite having other points inside. But the same goes for outside, so
+        //cubes would be both outside and inside when using surfaceInNestPart.
+        //The default way i want it to work is on point inside = inside. Just like in SurfaceInNest().
+        //This is what caused the ant to be stuck going outside on a cube that is partially inside and
+        //outside.
+        if (type == NestPart.NestPartType.Outside) return !SurfaceInNest(surface);
+        
         for (int i = 0; i < 8; i++)
         {
             if (surface.surfaceGroup[i])

@@ -747,6 +747,163 @@ public class CubePaths : MonoBehaviour
         return pathExists;
     }
 
+    public static bool GetExplorePath(CubeSurface antSurface, Vector3 antForward, out List<CubeSurface> path)
+    {
+        List<CubeSurface> sensedRange = new();
+        Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
+        path = new();
+        HashSet<Vector3Int> nearbyPheromones = new(); 
+
+        Debug.Log("Looking for surface");
+
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Second
+        if (sensedRange.Count == 0) return false;
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Third.
+        if (sensedRange.Count == 0) return false;
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
+        if (sensedRange.Count == 0) return false;
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+
+        //We check the two ranges beyond to get any pheromones to influence what dir we are going
+        List<CubeSurface> beyondRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        beyondRange = GetNextSurfaceRange(antSurface, antForward, beyondRange, ref checkedSurfaces);
+        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        
+        /*
+        Since SortedDictionary is sorted on the key, you can create a sorted list of keys with
+        var keys = new List<DateTime>(dictionary.Keys);
+        and then efficiently perform binary search on it:
+        var index = keys.BinarySearch(key);
+        As the documentation says, if index is positive or zero then the key exists; if it is negative, then ~index is the index where key would be found at if it existed. Therefore the index of the "immediately smaller" existing key is ~index - 1. Make sure you handle correctly the edge case where key is smaller than any of the existing keys and ~index - 1 == -1.
+        Of course the above approach really only makes sense if keys is built up once and then queried repeatedly; since it involves iterating over the whole sequence of keys and doing a binary search on top of that there's no point in trying this if you are only going to search once. In that case even naive iteration would be better.
+        
+        //var keys = new List<Vector3Int>(cubePherParticleDict.Keys);
+        */
+
+        
+        //Conseguir media de todos las feromonas cercanas.
+        int i = 0;
+        Vector3 medium = Vector3.zero;
+        foreach (var pos in nearbyPheromones)
+        {
+            i++;
+            medium += pos;
+        }
+        if (i != 0) medium /= i;
+        Debug.Log(medium);
+
+
+        //Escoger el más lejano a las feromonas
+        float maxScore = float.MinValue;
+        CubeSurface chosen = sensedRange[0];
+        List<CubeSurface> candidates = new();
+        foreach (CubeSurface potentialEnd in sensedRange)
+        {
+            float score = unexploredScore(potentialEnd, medium, nearbyPheromones);
+            Debug.Log("Score: " + score);
+            if (score > maxScore)
+            {
+                Debug.Log("MADE IT-----------------------------");
+                candidates = new()
+                {
+                    potentialEnd
+                };
+                maxScore = score;
+            }
+            else if (score == maxScore)
+            {
+                candidates.Add(potentialEnd);
+            }
+        }
+        int randIndex = UnityEngine.Random.Range(0, candidates.Count - 1);
+        Debug.Log("RAnd: " + randIndex + " vs count " + candidates.Count);
+        chosen = candidates[randIndex];
+
+        path = new();
+
+        //convertir a un path
+        while (!chosen.Equals(antSurface))
+        {
+            DrawCube(chosen.pos, Color.green, 4);
+            DrawSurface(chosen, Color.black, 4);
+            path.Insert(0, chosen); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            chosen = checkedSurfaces[chosen];
+        }
+
+        Debug.Log("Path count: " + path.Count);
+        return true;
+
+    }
+
+    public static float unexploredScore(CubeSurface surface, Vector3 medium, HashSet<Vector3Int> nearbyPhers)
+    {
+        /*
+        //No interesa explorar dentro del nido 
+        if (Nest.SurfaceInNest(surface)) return int.MinValue;
+
+        //Si no hay feromonas aún:
+        if (sortedPheromonePosList.Count == 0) return int.MaxValue;
+
+        if (index == 0) index = 1;
+        Vector3Int closest = sortedPheromonePosList[index - 1];
+        */
+        float penalty = 0;
+        if (nearbyPhers.Contains(surface.pos)) penalty = 5;
+        return Mathf.Abs(medium.x - surface.pos.x) + Mathf.Abs(medium.y - surface.pos.y) + Mathf.Abs(medium.z - surface.pos.z) - penalty;
+    }
+    
+
+    public static List<CubeSurface> GetNextSurfaceRange(CubeSurface antSurface, Vector3 antForward, List<CubeSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
+    {
+        List<CubeSurface> nextRange = new();
+
+        //Si el rango está empezando se coge la superficie de la hormiga
+        if (currentRange.Count == 0)
+        {
+            nextRange.Add(antSurface);
+            checkedSurfaces.Add(antSurface, antSurface);
+            return nextRange;
+        }
+
+        //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
+        if (currentRange[0].Equals(antSurface))
+        {
+            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
+
+            List<CubeSurface> adyacentCubes = GetAdyacentCubes(antSurface, antForward);
+            foreach (var son in adyacentCubes)
+            {
+                nextRange.Add(son);
+                checkedSurfaces.Add(son, antSurface);
+                //CubePaths.DrawCube(son.pos, Color.magenta, 1);
+            }
+            return nextRange;
+        }
+
+
+        //Si el rango es mayor que todo eso se procede como debido
+        foreach (var currentSurface in currentRange)
+        {
+            List<CubeSurface> adyacentCubes = GetAdyacentCubes(currentSurface, antForward);
+
+            foreach (var son in adyacentCubes)
+            {
+                if (!checkedSurfaces.ContainsKey(son))
+                {
+                    nextRange.Add(son);
+                    checkedSurfaces.Add(son, currentSurface);
+                    //CubePaths.DrawCube(son.pos, Color.green, 1);
+                }
+            }
+        }
+        return nextRange;
+    }
+
 
     
     /*
