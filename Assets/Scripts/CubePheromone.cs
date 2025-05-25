@@ -1,6 +1,6 @@
 using UnityEngine;
 
-
+/*
 public class CubePheromone
 {
     //These fucking things gotta be differentiated by their pos, id and surface. Damn.
@@ -98,3 +98,4 @@ public class CubePheromone
     }
 
 }
+*/

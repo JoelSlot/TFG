@@ -19,7 +19,7 @@ public class Ant : MonoBehaviour
     private Vector3Int lastCube; // Created at start, no need to save.
     CubePaths.CubeSurface antSurface; // Updated at start of every frame, no need to save.
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
-    private CubePheromone placedPher = null; //Last placed pheromone by ant
+    private Vector3Int placedPher = new(-999, -999, -999); //Last placed pheromone by ant
     IBehaviourTreeNode tree;
     
 
@@ -220,8 +220,8 @@ public class Ant : MonoBehaviour
         
             if (changedSurface)
                 if (!Nest.SurfaceInNest(antSurface))
-                    if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
-                        PlacePheromone(rayCastHits, antSurface);
+                    //if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
+                    CubePaths.PlacePheromone(antSurface.pos);
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
@@ -671,6 +671,7 @@ public class Ant : MonoBehaviour
 
     }
 
+    /*
     private void PlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
     {
         //DECIDE SI PONER PHEROMONA AAAAAAAAAAAAAAA---------------------------------------------------------
@@ -682,7 +683,7 @@ public class Ant : MonoBehaviour
             }
             else if (CubePaths.DoesSurfaceConnect(placedPher.GetSurface(), antSurface.pos)) //Si se ha llegado a un nuevo cubo adyacente
             {   //Might somehow fuck up if ant moves to adyacent cube on unreachable surface SOMEHOW. 
-                placedPher = CubePaths.ContinuePheromoneTrail(antSurface, placedPher); 
+                placedPher = CubePaths.ContinuePheromoneTrail(antSurface, placedPher);
             }
             else //Si la hormiga se ha separado de su anterior camino
             {
@@ -702,8 +703,8 @@ public class Ant : MonoBehaviour
             }
         }
     }
+    */
 
-    
     private void AdjustAntToGround(bool[] rayCastHits, float[] rayCastDist, Quaternion deltaRotation)
     {
         if (!rayCastHits[4])

@@ -10,108 +10,8 @@ public class CubePaths : MonoBehaviour
 
     //Diccionario de todas las pheromonas. Son indexadas según su posición, para que una hormiga pueda fácilmente acceder a las pheromonas en los cubos alrededores.
     //Ya que pueden haber pheromonas de caminos distintos en el mismo cubo, y pueden haber múltiples superficies con pheromonas del mismo camino en un mismo cubo, se guarda una lista de todas aquellas que se encuentran en cada cubo
-    public static Dictionary<Vector3Int, List<CubePheromone>> cubePherDict = new Dictionary<Vector3Int, List<CubePheromone>>();
-    public static Dictionary<Vector3Int, ParticleSystem> cubePherParticleDict = new();
-    //El diccionario de caminos, contiene los primeros nodos de los caminos indexados por su pathId
-    public static Dictionary<int, CubePheromone> pathDict = new Dictionary<int, CubePheromone>();
-
-    /*
-    Comienza un nuevo camino de pheromonas creando el primer miembro y colocandolo en el mapa.
-
-    pos: las coordinadas del cubo en el que se crea la feromona
-    surfaceNormal: la normal de la superficie sobre la que se coloca la feromona
-
-    return: la feromona nueva creada
-    */
-    public static CubePheromone StartPheromoneTrail(CubeSurface surface)
-    {
-        CubePheromone newPher = new CubePheromone(surface);
-        PlacePheromone(surface.pos, newPher);
-        pathDict.Add(newPher.GetPathId(), newPher); // añadir primer pher del nuevo camino al dictionario
-        return newPher;
-    }
-
-    /*
-    Continúa un camino de feromonas ya existente, conectando el dado con el generado.
-
-    pos: las coordinadas del cubo en el que se crea la feromona
-    prevPher: la feromona previa
+    public static Dictionary<Vector3Int, int> cubePheromones = new();
     
-    return: la feromona nueva creada
-    */
-    public static CubePheromone ContinuePheromoneTrail(CubeSurface surface, CubePheromone prevPher)
-    {
-        CubePheromone newPher = new CubePheromone(surface, prevPher);
-        PlacePheromone(surface.pos, newPher);
-        return newPher;
-    }
-    
-    
-    /*
-    Coloca una feromona en la posición indicada, reemplazando la feromona que ya se encuentra en dicho lugar si tiene la misma pathId y está en la misma superficie
-
-    pos: La posición del cubo en la que se coloca la feromona
-    newPher: el objecto CubePheromone que debe colocarse en la posicion dada
-    */
-    private static void PlacePheromone(Vector3Int pos, CubePheromone newPher)
-    {
-        List<CubePheromone> pheromones;
-        if (cubePherDict.TryGetValue(pos, out pheromones)) //Si ya hay feromonas en el cubo indicado: 
-        {
-            bool replaced = false;
-            for (int i = 0; i < pheromones.Count; i++)
-            {
-                CubePheromone oldPher = cubePherDict[pos][i];
-                if (oldPher.SameCubeSamePathSameSurface(newPher))   //Si una de las feromonas del cubo tiene la misma superficie y pathId
-                {
-                    newPher.prev = oldPher.prev;                        //Desconectar el camino inutil
-                    cubePherDict[pos][i] = newPher;                     //Reemplazar el CubePheromone viejo
-                    replaced = true;
-                    break;
-                }
-            }
-            if (!replaced) pheromones.Add(newPher);                 //Si no ha sido reemplazado uno, añadir a lista
-        }
-        else                                                //Si no había ya alguna pheromona, añadir
-        {
-            pheromones = new List<CubePheromone>() { newPher };
-            cubePherDict.Add(pos, pheromones);
-            //Ya que es la primera vez que se añade pheromona a la coordenada, añadir particulas
-            ParticleSystem pheromoneParticles = WorldGen.InstantiatePheromoneParticles(pos + Vector3.one * 0.5f);
-            pheromoneParticles.Play();
-            cubePherParticleDict.Add(pos, pheromoneParticles);
-            Debug.Log("Placed pheromone node");
-        }
-
-    }
-
-    /*
-    Dado un cubo y los valores de las esquinas respecto están debajo de la superficie indicada devuelve las pheromonas que se encuentran sobre dicha superficie
-
-    surfaceCube: Pos del cubo que contiene la superficie
-    belowSurfaceCorner: valores de las esquinas del cubo que indican la superficie.
-
-    return: Lista de feromonas en la superficie.
-    */
-    public static List<CubePheromone> GetPheromonesOnSurface(CubeSurface surface)
-    {
-        List<CubePheromone> sameSurfacePheromones = new List<CubePheromone>();
-
-        if (cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> pheromones))
-        {
-            //Debug.Log("There is good shit here:" + pheromones.Count);
-            foreach (var pheromone in pheromones)
-            {
-                if (CompareGroups(surface.surfaceGroup, pheromone.GetSurfaceGroup()))
-                {
-                    sameSurfacePheromones.Add(pheromone);
-                }
-            }
-        }
-        //Debug.Log("Returning " + sameSurfacePheromones.Count + " pheromones in cube " + surfaceCube);
-        return sameSurfacePheromones;
-    } 
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -124,11 +24,17 @@ public class CubePaths : MonoBehaviour
         
     }
 
+    public static void PlacePheromone(Vector3Int pos)
+    {
+        //thought it would be more complicated but... This should update existing entries as well.
+        cubePheromones[pos] = 100;
+    }
+
     /*
     Dado dos grupos de valores de esquinas, devuelve si son iguales
     */
-    public static bool CompareGroups (bool[] G1, bool[] G2) 
-    { 
+    public static bool CompareGroups(bool[] G1, bool[] G2)
+    {
         /*Debug.Log(G1[0] + "-" + G2[0] + ", " +
                   G1[1] + "-" + G2[1] + ", " + 
                   G1[2] + "-" + G2[2] + ", " + 
@@ -141,7 +47,7 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 8; i++) //chek if same surface
             if (G1[i] != G2[i]) return false;
         //Debug.Log("TRUE!!!!!");
-        return true; 
+        return true;
     }
 
     /*
@@ -153,7 +59,7 @@ public class CubePaths : MonoBehaviour
 
     return: Lista de superficies adyacentes, ordenados en el que está más hacia la dirección dada hasta la que menos.
     */
-    public static List<CubeSurface> GetAdyacentCubes(CubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
+    public static List<CubeSurface> GetAdyacentSurfaces(CubeSurface surface, Vector3 forwardDir) // cube contains the cube pos and one of the points below
     {
         List<CubeSurface> adyacentCubes = new List<CubeSurface>();
 
@@ -176,7 +82,7 @@ public class CubePaths : MonoBehaviour
         return adyacentCubes;
     }
 
-    public static List<CubeSurface> GetAdyacentCubes(CubeSurface surface) // cube contains the cube pos and one of the points below
+    public static List<CubeSurface> GetAdyacentSurfaces(CubeSurface surface) // cube contains the cube pos and one of the points below
     {
         List<CubeSurface> adyacentCubes = new List<CubeSurface>();
 
@@ -543,7 +449,7 @@ public class CubePaths : MonoBehaviour
                 break;
             }
 
-            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+            List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
 
             foreach(var son in adyacentSurfaces)
             {
@@ -619,7 +525,7 @@ public class CubePaths : MonoBehaviour
                 break;
             }
 
-            List<CubeSurface> adyacentSurfaces = GetAdyacentCubes(current);
+            List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
 
             foreach(var son in adyacentSurfaces)
             {
@@ -689,31 +595,11 @@ public class CubePaths : MonoBehaviour
 
             HashSet<CubeSurface> identifiableSurfaces = new();
 
-            if (Nest.SurfaceInNest(current)) //Si es dentro del nido miramos adyacentes
+            if (Nest.SurfaceInNest(current) || cubePheromones.ContainsKey(current.pos)) //Si es dentro del nido miramos adyacentes
             {
-                List<CubeSurface> adySurfaces = GetAdyacentCubes(current);
+                List<CubeSurface> adySurfaces = GetAdyacentSurfaces(current);
 
                 foreach (var son in adySurfaces) identifiableSurfaces.Add(son);
-            }
-            if (cubePherDict.TryGetValue(current.pos, out List<CubePheromone> pherList)) //Si es parte de camino de pheromonas...
-            {
-                bool matchedSurface = false;
-                foreach (var pher in pherList)
-                {
-                    if (pher.surface.Equals(current) && !matchedSurface) //Si es la misma superficie añadimos los siguientes y previos si hay
-                    {
-                        List<CubeSurface> adySurfaces = GetAdyacentCubes(current);
-
-                        foreach (var son in adySurfaces) identifiableSurfaces.Add(son);
-
-                        matchedSurface = true;
-                        /*
-                        if (!pher.isLast(true)) identifiableSurfaces.Add(pher.next.surface);
-                        if (!pher.isLast(false)) identifiableSurfaces.Add(pher.prev.surface);
-                        talk about how it would not work this way
-                        */
-                    }
-                }
             }
 
             foreach (var son in identifiableSurfaces)
@@ -757,22 +643,22 @@ public class CubePaths : MonoBehaviour
         Debug.Log("Looking for surface");
 
         sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Second
         if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Third.
         if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
         if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
 
         //We check the two ranges beyond to get any pheromones to influence what dir we are going
         List<CubeSurface> beyondRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         beyondRange = GetNextSurfaceRange(antSurface, antForward, beyondRange, ref checkedSurfaces);
-        foreach (var surface in sensedRange) if (cubePherParticleDict.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         
         /*
         Since SortedDictionary is sorted on the key, you can create a sorted list of keys with
@@ -875,7 +761,7 @@ public class CubePaths : MonoBehaviour
         {
             if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
 
-            List<CubeSurface> adyacentCubes = GetAdyacentCubes(antSurface, antForward);
+            List<CubeSurface> adyacentCubes = GetAdyacentSurfaces(antSurface, antForward);
             foreach (var son in adyacentCubes)
             {
                 nextRange.Add(son);
@@ -889,7 +775,7 @@ public class CubePaths : MonoBehaviour
         //Si el rango es mayor que todo eso se procede como debido
         foreach (var currentSurface in currentRange)
         {
-            List<CubeSurface> adyacentCubes = GetAdyacentCubes(currentSurface, antForward);
+            List<CubeSurface> adyacentCubes = GetAdyacentSurfaces(currentSurface, antForward);
 
             foreach (var son in adyacentCubes)
             {
