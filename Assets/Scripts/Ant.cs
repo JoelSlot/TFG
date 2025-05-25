@@ -863,7 +863,7 @@ public class Ant : MonoBehaviour
             }
         }
 
-        //FORMAR EL CAMINO
+        //Si no se ha encontrado el camino, hemos fallado
         if (goalIndex == -1)
         {
             Debug.Log("not found");
@@ -871,13 +871,15 @@ public class Ant : MonoBehaviour
             return BehaviourTreeStatus.Failure;
         }
 
+
         CubePaths.CubeSurface firstStep = objective.path[goalIndex];
 
         //Debug.Log("First step: " + firstStep.pos + " at range " + range);
 
         Vector3Int dir = firstStep.pos - antSurface.pos;
 
-        if (goalIndex < objective.path.Count - 1) goal = CubePaths.GetMovementGoal(antSurface, dir, objective.path[goalIndex+1].pos - objective.path[goalIndex].pos);
+        //Si NO es el ultimo paso del camino, obtenemos movement goal usando dos siguientes pasos. Sino solo el útlimo que queda.
+        if (goalIndex < objective.path.Count - 1) goal = CubePaths.GetMovementGoal(antSurface, dir, objective.path[goalIndex + 1].pos - objective.path[goalIndex].pos);
         else goal = CubePaths.GetMovementGoal(antSurface, dir);
 
         nextPosDraw = firstStep.pos;

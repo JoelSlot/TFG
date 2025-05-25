@@ -50,6 +50,15 @@ public class CubePaths : MonoBehaviour
         return true;
     }
 
+    public static CubeSurface GetAdyacentSurface(CubeSurface origSurface, int faceIndex)
+    {
+        Vector3Int dir = chunk.faceDirections[faceIndex]; //Get dir
+        bool[] newCornerValues = CubeCornerValues(origSurface.pos + dir); //Get new cube cornerValues
+        Vector3Int newSurfaceCorner = TrueCorner(faceIndex, origSurface.surfaceGroup) - dir; //Get corner value
+        bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
+        return new CubeSurface(origSurface.pos + dir, newGroupCornerValues);
+    }
+
     /*
     Dado una superficie de un cubo, devuelve los cubos adyacentes que conectan con esa superficie.
 
@@ -63,19 +72,15 @@ public class CubePaths : MonoBehaviour
     {
         List<CubeSurface> adyacentCubes = new List<CubeSurface>();
 
-        List<int> index = new List<int>{0,1,2,3,4,5};
+        List<int> index = new List<int> { 0, 1, 2, 3, 4, 5 };
 
         index.Sort((x, y) => (int)(Vector3.Angle(forwardDir, chunk.faceDirections[x]) - Vector3.Angle(forwardDir, chunk.faceDirections[y])));
-        
+
         for (int i = 0; i < 6; i++)
         {
             if (FaceXOR(index[i], surface.surfaceGroup))
             {
-                Vector3Int dir = chunk.faceDirections[index[i]]; //Get dir
-                bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
-                Vector3Int newSurfaceCorner = TrueCorner(index[i], surface.surfaceGroup) - dir; //Get corner value
-                bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
-                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroupCornerValues));
+                adyacentCubes.Add(GetAdyacentSurface(surface, index[i]));
             }
         }
 
@@ -90,12 +95,7 @@ public class CubePaths : MonoBehaviour
         {
             if (FaceXOR(i, surface.surfaceGroup))
             {
-                Vector3Int dir = chunk.faceDirections[i]; //Get dir
-                
-                bool[] newCornerValues = CubeCornerValues(surface.pos + dir); //Get new cube cornerValues
-                Vector3Int newSurfaceCorner = TrueCorner(i, surface.surfaceGroup) - dir; //Get corner value
-                bool[] newGroup = GetGroup(newSurfaceCorner, newCornerValues);
-                adyacentCubes.Add(new CubeSurface(surface.pos + dir, newGroup));
+                adyacentCubes.Add(GetAdyacentSurface(surface, i));
             }
         }
 
@@ -264,8 +264,20 @@ public class CubePaths : MonoBehaviour
             }
         }
         goal = surface.pos + goal / num;
-        Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex]*4, Color.blue, 10);
-        return goal + chunk.faceDirections[faceIndex]*40;
+        //Para evitar goals que dejan a la hormiga en el sitio al estar justo encima de ellos:
+        if (GetAdyacentSurface(surface, chunk.reverseFaceDirections[dir]).Count() == num) //Si los puntos que conectan los cubos son los unicos de la superficie del segundo cubo:
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int cornerIndex = chunk.faceIndexes[faceIndex, i];
+                if (surface.surfaceGroup[cornerIndex]) //Si el punto se encuentra bajo la superficie
+                {
+                    goal += (chunk.cornerTable[cornerIndex] - Vector3.one*0.5f)*40;
+                }
+            }
+        }
+        Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex] * 4, Color.blue, 10);
+        return goal + chunk.faceDirections[faceIndex]*400;
     }
 
     //Dado la superficie actual y las dos siguientes direcciones, devuelve el punto a seguir
@@ -379,19 +391,28 @@ public class CubePaths : MonoBehaviour
             if (!(obj is CubeSurface))
                 return false;
 
-            CubeSurface mys = (CubeSurface) obj;
+            CubeSurface mys = (CubeSurface)obj;
             // compare elements here
 
             if (pos != mys.pos) return false;
 
             for (int i = 0; i < 8; i++)
                 if (surfaceGroup[i] != mys.surfaceGroup[i]) return false;
-            
+
             return true;
         }
         public override int GetHashCode()
         {
             return pos.x + pos.y * 1000 + pos.z * 1000000;
+        }
+
+        public int Count()
+        {
+            int count = 0;
+            for (int i = 0; i < 8; i++)
+                if (surfaceGroup[i]) count++;
+
+            return count;
         }
     }
 
