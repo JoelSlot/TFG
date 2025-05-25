@@ -31,7 +31,8 @@ public class Ant : MonoBehaviour
     public bool isControlled = false;
     public int followingPheromone = -1; //if -1, not following a pheromone
     public int creatingPheromone = -1; //id of the pheormone the ant is creating. -1 if none
-    
+    public int lostCounter = 0; //Counter of how long the ant is lost before checking if it can go home.
+    public int waitingCounter = 0; //Counter of how long the ant still has to lounge about.
 
     //el animador
     private Animator Animator;
@@ -190,7 +191,18 @@ public class Ant : MonoBehaviour
                         .Do("Follow objective path", t => FollowObjectivePath())
                         .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
                     .End()
-                        
+
+                    .Sequence("Lost")
+                        .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
+                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Increase counter", t => { lostCounter++; if (lostCounter > 10) { objective = Task.NoTask(); lostCounter = 0; } return BehaviourTreeStatus.Success; })
+                    .End()
+
+                    .Sequence("Waiting")
+                        .Condition("Am i waiting?", t => objective.isTaskType(TaskType.Wait))
+                        .Do("Decrease waiting counter", t => { waitingCounter -= 1; if (waitingCounter <= 0) { objective = Task.NoTask(); waitingCounter = 0; } return BehaviourTreeStatus.Success; })
+                    .End()
+
                 .End()
                 
             .End()

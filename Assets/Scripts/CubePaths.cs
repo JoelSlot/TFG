@@ -641,6 +641,8 @@ public class CubePaths : MonoBehaviour
             }
         }
 
+        if (!pathExists) return false;
+
         while (!reachedMapPart.Equals(start))
         {
             DrawCube(reachedMapPart.pos, Color.blue, 4);
@@ -677,9 +679,9 @@ public class CubePaths : MonoBehaviour
 
         //We check the two ranges beyond to get any pheromones to influence what dir we are going
         List<CubeSurface> beyondRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         beyondRange = GetNextSurfaceRange(antSurface, antForward, beyondRange, ref checkedSurfaces);
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         
         /*
         Since SortedDictionary is sorted on the key, you can create a sorted list of keys with
@@ -702,7 +704,6 @@ public class CubePaths : MonoBehaviour
             medium += pos;
         }
         if (i != 0) medium /= i;
-        Debug.Log(medium);
 
 
         //Escoger el más lejano a las feromonas
@@ -712,10 +713,8 @@ public class CubePaths : MonoBehaviour
         foreach (CubeSurface potentialEnd in sensedRange)
         {
             float score = unexploredScore(potentialEnd, medium, nearbyPheromones);
-            Debug.Log("Score: " + score);
             if (score > maxScore)
             {
-                Debug.Log("MADE IT-----------------------------");
                 candidates = new()
                 {
                     potentialEnd
@@ -728,7 +727,6 @@ public class CubePaths : MonoBehaviour
             }
         }
         int randIndex = UnityEngine.Random.Range(0, candidates.Count - 1);
-        Debug.Log("RAnd: " + randIndex + " vs count " + candidates.Count);
         chosen = candidates[randIndex];
 
         path = new();
@@ -742,17 +740,78 @@ public class CubePaths : MonoBehaviour
             chosen = checkedSurfaces[chosen];
         }
 
-        Debug.Log("Path count: " + path.Count);
+        return true;
+
+    }
+
+    
+    public static bool GetLostPath(CubeSurface antSurface, Vector3 antForward, out List<CubeSurface> path)
+    {
+        List<CubeSurface> sensedRange = new();
+        Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
+        path = new();
+        HashSet<Vector3Int> nearbyPheromones = new(); 
+
+        Debug.Log("Looking for surface");
+
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
+        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Second
+        if (sensedRange.Count == 0) return false;
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Third.
+        if (sensedRange.Count == 0) return false;
+        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
+        if (sensedRange.Count == 0) return false;
+        
+        //Conseguir media de todos las feromonas cercanas.
+        int i = 0;
+        Vector3 medium = Vector3.zero;
+        foreach (var pos in nearbyPheromones)
+        {
+            i++;
+            medium += pos;
+        }
+        if (i != 0) medium /= i;
+
+        //ESCOGER SUPERFICIE AL QUE IR
+        CubeSurface chosen = sensedRange[0];
+        bool foundNest = false;
+        //SI alguno se encuentra dentro del nido, jackpot.
+        // Incluimos todos los checked. Digamos que el interior del nido es como una feromona, por tanto el rango.
+        foreach (var surface in checkedSurfaces.Keys)
+        {
+            if (Nest.SurfaceInNest(surface))
+            {
+                chosen = surface;
+                foundNest = true;
+            }
+        }
+        if (!foundNest)
+        {
+            int randIndex = UnityEngine.Random.Range(0, sensedRange.Count - 1);
+            chosen = sensedRange[randIndex];
+        }
+
+        path = new();
+
+        //convertir a un path
+        while (!chosen.Equals(antSurface))
+        {
+            DrawCube(chosen.pos, Color.green, 4);
+            DrawSurface(chosen, Color.black, 4);
+            path.Insert(0, chosen); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            chosen = checkedSurfaces[chosen];
+        }
+
         return true;
 
     }
 
     public static float unexploredScore(CubeSurface surface, Vector3 medium, HashSet<Vector3Int> nearbyPhers)
     {
-        /*
         //No interesa explorar dentro del nido 
         if (Nest.SurfaceInNest(surface)) return int.MinValue;
-
+        /*
         //Si no hay feromonas aún:
         if (sortedPheromonePosList.Count == 0) return int.MaxValue;
 

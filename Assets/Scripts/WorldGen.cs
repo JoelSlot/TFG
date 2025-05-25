@@ -485,6 +485,8 @@ public class WorldGen : MonoBehaviour
         newAntScript.id = antInfo.id;
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
+        newAntScript.waitingCounter = antInfo.waitingCounter;
+        newAntScript.lostCounter = antInfo.lostCounter;
 
         newAnt.name = "Ant " + antInfo.id;
 

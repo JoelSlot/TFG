@@ -13,6 +13,8 @@ public enum TaskType
     GoInside,
     GoToChamber,
     GoToTunnel,
+    Lost,
+    Wait,
     None
 }
 
@@ -57,7 +59,7 @@ public class Task
 
         Debug.Log("No valid path, didnt create GoOutSideTask");
 
-        return NoTask();
+        return LostTask(antSurface, Vector3.up);
     }
 
     public static Task GoInsideTask(CubePaths.CubeSurface antSurface)
@@ -72,7 +74,7 @@ public class Task
 
         Debug.Log("No valid path");
 
-        return NoTask();
+        return LostTask(antSurface, Vector3.forward);
     }
 
     public static Task GoToNestPartTask(CubePaths.CubeSurface antSurface, NestPart.NestPartType type)
@@ -95,7 +97,7 @@ public class Task
 
         Debug.Log("No valid path");
 
-        return NoTask();
+        return LostTask(antSurface, Vector3.up);
     }
 
     public static Task ExploreTask(CubePaths.CubeSurface antSurface, Vector3 forward)
@@ -105,10 +107,9 @@ public class Task
             type = TaskType.Explore,
         };
         
-        //Used foodchamber for now as default
         if (CubePaths.GetExplorePath(antSurface, forward, out exploreTask.path)) return exploreTask;
 
-        Debug.Log("No valid path");
+        Debug.Log("BIG ERROR; ANT IS IN STRANGE PLACE");
 
         return NoTask();
     }
@@ -122,6 +123,31 @@ public class Task
             path = new()
         };
         return notask;
+    }
+
+    public static Task LostTask(CubePaths.CubeSurface antSurface, Vector3 forward)
+    {
+        Task lostTask = new()
+        {
+            type = TaskType.Lost,
+            path = new()
+        };
+
+        if (CubePaths.GetLostPath(antSurface, forward, out lostTask.path)) return lostTask;
+
+        return lostTask;
+    }
+
+    public static Task WaitTask(Ant ant, int time)
+    {
+        Task waitTask = new()
+        {
+            type = TaskType.Wait,
+            path = new()
+        };
+
+        ant.waitingCounter = time;
+        return waitTask;
     }
 
     public bool isTaskType(TaskType checkType) { return checkType == type; }
@@ -209,6 +235,8 @@ public class Task
             case TaskType.GoInside: return "Go inside";
             case TaskType.GoToChamber: return "Go to chamber";
             case TaskType.GoToTunnel: return "Go to tunnel";
+            case TaskType.Lost: return "Lost";
+            case TaskType.Wait: return "Waiting";
             case TaskType.None: return "None";
         }
         return "error";
@@ -225,7 +253,9 @@ public class Task
             case TaskType.GoInside: return 4;
             case TaskType.GoToChamber: return 5;
             case TaskType.GoToTunnel: return 6;
-            case TaskType.None: return 7;
+            case TaskType.Lost: return 7;
+            case TaskType.Wait: return 8;
+            case TaskType.None: return 9;
         }
         return -1;
     }
@@ -241,7 +271,9 @@ public class Task
             case 4: return TaskType.GoInside;
             case 5: return TaskType.GoToChamber;
             case 6: return TaskType.GoToTunnel;
-            case 7: return TaskType.None;
+            case 7: return TaskType.Lost;
+            case 8: return TaskType.Wait;
+            case 9: return TaskType.None;
         }
         return TaskType.None;
     }

@@ -262,6 +262,8 @@ public class GameData
         public serializableVector3 pos {get; set;}
         public serializableQuaternion orientation {get; set;}
         public bool isHolding {get; set;}
+        public int lostCounter { get; set; }
+        public int waitingCounter { get; set; }
 
         private AntInfo()
         {
@@ -278,6 +280,8 @@ public class GameData
             info.creatingPheromone = ant.creatingPheromone;
             info.pos = new (ant.transform.position);
             info.orientation = new(ant.transform.rotation);
+            info.waitingCounter = ant.waitingCounter;
+            info.lostCounter = ant.lostCounter;
 
             info.isHolding = ant.IsHolding();
 
