@@ -146,7 +146,7 @@ public class Task
             path = new()
         };
 
-        ant.waitingCounter = time;
+        ant.Counter = time;
         return waitTask;
     }
 
@@ -154,10 +154,16 @@ public class Task
     public GameObject GetFood()
     {
         if (isTaskType(TaskType.GetCorn))
-            return Corn.cornDictionary[foodId].gameObject;
+        {
+            if (Corn.cornDictionary.TryGetValue(foodId, out Corn corn))
+                return corn.gameObject;
+        }
         else if (isTaskType(TaskType.CollectFromCob))
-            return CornCob.cornCobDictionary[foodId].gameObject;
-        else return null;
+        {
+            if (CornCob.cornCobDictionary.TryGetValue(foodId, out CornCob cob))
+                return cob.gameObject;
+        }
+        return null;
     }
 
     public DigPoint GetDigPoint()
@@ -238,6 +244,7 @@ public class Task
             case TaskType.Lost: return "Lost";
             case TaskType.Wait: return "Waiting";
             case TaskType.None: return "None";
+            case TaskType.CollectFromCob: return "Going to cob";
         }
         return "error";
     }
@@ -256,6 +263,7 @@ public class Task
             case TaskType.Lost: return 7;
             case TaskType.Wait: return 8;
             case TaskType.None: return 9;
+            case TaskType.CollectFromCob: return 10;
         }
         return -1;
     }
@@ -274,6 +282,7 @@ public class Task
             case 7: return TaskType.Lost;
             case 8: return TaskType.Wait;
             case 9: return TaskType.None;
+            case 10: return TaskType.CollectFromCob;
         }
         return TaskType.None;
     }

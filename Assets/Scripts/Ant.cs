@@ -3,6 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Utils;
 using FluentBehaviourTree;
+using Unity.VisualScripting;
+using System;
 
 
 public class Ant : MonoBehaviour
@@ -11,11 +13,12 @@ public class Ant : MonoBehaviour
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
     public GameObject carriedObject = null; // the head bone
+    public String taskName = "";
 
 
     //Variables for pheromone paths
     //public GameObject origPheromone;
-    
+
     private Vector3Int lastCube; // Created at start, no need to save.
     CubePaths.CubeSurface antSurface; // Updated at start of every frame, no need to save.
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
@@ -31,8 +34,8 @@ public class Ant : MonoBehaviour
     public bool isControlled = false;
     public int followingPheromone = -1; //if -1, not following a pheromone
     public int creatingPheromone = -1; //id of the pheormone the ant is creating. -1 if none
-    public int lostCounter = 0; //Counter of how long the ant is lost before checking if it can go home.
-    public int waitingCounter = 0; //Counter of how long the ant still has to lounge about.
+    public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
+    public HashSet<int> discoveredCobs = new(); //Cobs discovered outside of nest.
 
     //el animador
     private Animator Animator;
@@ -121,11 +124,10 @@ public class Ant : MonoBehaviour
                             .Do("If reached chamber put down", t => { Debug.Log("Putting down"); Animator.SetBool("Put down", true); return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
-
-                    .Do("Get requested task", t => RequestTask())
+                    
                     .Do("Sense nearby task", t => SenseTask())
-                    //Go foraging
-                    //Go explore
+                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
+                    
                     .Sequence("If in nest go outside")
                         .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
                         .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
@@ -195,12 +197,12 @@ public class Ant : MonoBehaviour
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
                         .Do("Follow objective path", t => FollowObjectivePath())
-                        .Do("Increase counter", t => { lostCounter++; if (lostCounter > 10) { objective = Task.NoTask(); lostCounter = 0; } return BehaviourTreeStatus.Success; })
+                        .Do("Increase counter", t => { Counter++; if (Counter > 10) { objective = Task.NoTask(); Counter = 0; } return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Sequence("Waiting")
                         .Condition("Am i waiting?", t => objective.isTaskType(TaskType.Wait))
-                        .Do("Decrease waiting counter", t => { waitingCounter -= 1; if (waitingCounter <= 0) { objective = Task.NoTask(); waitingCounter = 0; } return BehaviourTreeStatus.Success; })
+                        .Do("Decrease waiting counter", t => { Counter -= 1; if (Counter <= 0) { objective = Task.NoTask(); Counter = 0; } return BehaviourTreeStatus.Success; })
                     .End()
 
                 .End()
@@ -215,6 +217,9 @@ public class Ant : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        //Añadido para poder supervisar el estado en el que se encuentra la hormiga.
+        taskName = objective.TaskToString();
+
         if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
         {
             Rigidbody.useGravity = false;
@@ -222,19 +227,29 @@ public class Ant : MonoBehaviour
             DontTurn();
             SetWalking(false);
 
-            if (isControlled){
+            if (isControlled)
+            {
                 AntInputs();
                 objective = Task.NoTask();
             }
             else tree.Tick(new TimeData(Time.deltaTime));
 
             //Debug.Log("Task type: " + objective.TaskToString());
-        
+
             if (changedSurface)
                 if (!Nest.SurfaceInNest(antSurface))
                     //if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
                     CubePaths.PlacePheromone(antSurface.pos);
+                else
+                {
+                    //Si hemos llegado al nido habiendo descubierto mazorcas, lo compartimos en el nido.
+                    if (discoveredCobs.Count > 0)
+                    {
+                        Nest.KnownCornCobs.AddRange(discoveredCobs);
+                        discoveredCobs = new();
+                    }
 
+                }
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
             CubePaths.DrawCube(nextPosDraw, Color.blue);
@@ -252,7 +267,7 @@ public class Ant : MonoBehaviour
         if (!objective.isTaskType(TaskType.None))
         {
             float dist = CubePaths.DistToPoint(this.transform.position, objective.getPos());
-            if (dist < 1.5f && !objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+            if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = SetGoalFromPath(antSurface, out Vector3 goal);
@@ -283,7 +298,7 @@ public class Ant : MonoBehaviour
 
         int minLength = int.MaxValue;
         int minDigPointScore = -1;
-        Task newTask = null;
+        Task newTask = Task.NoTask();
         bool foundDigPoint = false;
         while (sensedItems.Count > 0)
         {
@@ -333,6 +348,9 @@ public class Ant : MonoBehaviour
                     if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) break;
                     //Set current pheromonePath to found corn!
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
+
+                    //añadimos el cob a descubiertos por hormiga.
+                    discoveredCobs.Add(newTask.foodId);
                 }
                 else
                 {
@@ -341,7 +359,7 @@ public class Ant : MonoBehaviour
             }
         }
 
-        if (newTask != null)
+        if (!newTask.isTaskType(TaskType.None))
         {
             objective = newTask;
             return BehaviourTreeStatus.Success;

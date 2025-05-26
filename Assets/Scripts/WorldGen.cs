@@ -16,9 +16,9 @@ public class WorldGen : MonoBehaviour
 {
 
     public static float isolevel = 127.5f;
-    public static int x_dim = 100;
+    public static int x_dim = 200;
     public static int y_dim = 50;
-    public static int z_dim = 100;
+    public static int z_dim = 200;
     public static int chunk_x_dim = 10;
     public static int chunk_y_dim = 50;
     public static int chunk_z_dim = 10;
@@ -485,8 +485,8 @@ public class WorldGen : MonoBehaviour
         newAntScript.id = antInfo.id;
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
-        newAntScript.waitingCounter = antInfo.waitingCounter;
-        newAntScript.lostCounter = antInfo.lostCounter;
+        newAntScript.Counter = antInfo.Counter;
+        newAntScript.discoveredCobs = antInfo.discoveredCobs;
 
         newAnt.name = "Ant " + antInfo.id;
 

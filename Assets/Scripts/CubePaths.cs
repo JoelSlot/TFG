@@ -502,7 +502,7 @@ public class CubePaths : MonoBehaviour
         {
             DrawCube(reachedSurface.pos, Color.blue, 40);
             DrawSurface(reachedSurface, Color.black, 40);
-            path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING 
             reachedSurface = previo[reachedSurface];
         }
         DrawCube(reachedSurface.pos, Color.blue, 40);
@@ -510,6 +510,92 @@ public class CubePaths : MonoBehaviour
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
     }
+    
+    
+    public static bool GetKnownPathToPoint(CubeSurface start, Vector3 objective, float acceptableDistance, out List<CubeSurface> path)
+    { ///UHHH NO PATHW EHN GO TO FOOD SO LIKE DRAW CUBES WHEN MAKING FINDING PATH SOU KNWO WHAT IS HAPPENIGN-
+        path = new List<CubeSurface>();
+
+        PriorityQueue<CubeSurface, float> frontera = new();
+        frontera.Enqueue(start, 0);
+        Dictionary<CubeSurface, CubeSurface> previo = new();
+        Dictionary<CubeSurface, float> coste = new();
+        Dictionary<CubeSurface, int> longitud = new();
+
+        previo[start] = start;
+        coste[start] = 0;
+        longitud[start] = 0;
+
+
+        float heuristic(Vector3 point, Vector3 objective)
+        {
+            return Mathf.Abs(point.x - objective.x) + Mathf.Abs(point.z - objective.z) + Mathf.Abs(point.z - objective.z);
+        }
+
+        bool gotToPoint = false;
+
+        CubeSurface reachedSurface = start;
+
+        while (frontera.Count > 0)
+        {
+            CubeSurface current = frontera.Dequeue();
+
+            if (current.pos == objective){
+                reachedSurface = current;
+                gotToPoint = true;
+                break;
+            }
+                
+            if (DistToPoint(current.pos + Vector3.one * 0.5f, objective) < acceptableDistance)
+            {
+                reachedSurface = current;
+                gotToPoint = true;
+                break;
+            }
+
+            List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
+
+            foreach(var son in adyacentSurfaces)
+            {
+                float newCost = coste[current] + 1;
+                int newLength = longitud[current] + 1;
+                //if (!CompareGroups(son.surfaceGroup, current.surfaceGroup)) newCost += 1;
+                bool updateOrInsert = false;
+                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                else if (newCost < prevCost) updateOrInsert = true;
+
+                if (!cubePheromones.ContainsKey(current.pos))
+                    if (!Nest.SurfaceInNest(current))
+                        updateOrInsert = false;
+
+                
+                if(updateOrInsert)
+                {
+                    //DrawCube(son.pos, Color.black, 5);
+                    coste[son] = newCost;
+                    longitud[son] = newLength;
+                    float prioridad = newCost + heuristic(son.pos, objective);
+                    frontera.Enqueue(son, prioridad);
+                    previo[son] = current;
+                }
+            }
+        }
+
+        if (!gotToPoint) return false;
+
+        while (!reachedSurface.Equals(start))
+        {
+            DrawCube(reachedSurface.pos, Color.blue, 40);
+            DrawSurface(reachedSurface, Color.black, 40);
+            path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING 
+            reachedSurface = previo[reachedSurface];
+        }
+        DrawCube(reachedSurface.pos, Color.blue, 40);
+
+        //Debug.Log("found path length: " + path.Count);
+        return gotToPoint;
+    }
+
 
     public static bool GetPathToSurface(CubeSurface start, CubeSurface objective, int lengthLimit, out List<CubeSurface> path)
     {
@@ -540,7 +626,8 @@ public class CubePaths : MonoBehaviour
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (current.Equals(objective)){
+            if (current.Equals(objective))
+            {
                 reachedSurface = current;
                 pathExists = true;
                 break;
@@ -548,7 +635,7 @@ public class CubePaths : MonoBehaviour
 
             List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
 
-            foreach(var son in adyacentSurfaces)
+            foreach (var son in adyacentSurfaces)
             {
                 float newCost = coste[current] + 1;
                 int newLength = longitud[current] + 1;
@@ -559,8 +646,8 @@ public class CubePaths : MonoBehaviour
 
                 if (newLength > lengthLimit) updateOrInsert = false;
 
-                
-                if(updateOrInsert)
+
+                if (updateOrInsert)
                 {
                     //DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;

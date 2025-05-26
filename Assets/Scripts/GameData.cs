@@ -15,8 +15,9 @@ public class GameData
 {
 
     //Fist i could not serialize cuz static. Then cuz they were fields and the xml would be empty. Finally they are properties.
-
-    public byte[] terrainMapStream {get; set;}
+    //Also they have to be public.
+    
+    public byte[] terrainMapStream { get; set; }
     public byte[] terrainMemoryStream {get; set;}
     public int x_dim {get; set;}
     public int y_dim {get; set;}
@@ -35,6 +36,8 @@ public class GameData
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict {get; set;}
     public HashSet<serializableVector3Int> initializedDigPoints {get; set;}
     public HashSet<NestPartInfo> nestPartInfoDict {get; set;}
+    public HashSet<int> KnownCornCobs { get; set; }
+
     /* hashset gave:
     <Items>
         <Reference id="12" />
@@ -128,8 +131,9 @@ public class GameData
 
     public void saveNestParts()
     {
+        KnownCornCobs = Nest.KnownCornCobs;
         nestPartInfoDict = new();
-        foreach(var nestPart in Nest.NestParts)
+        foreach (var nestPart in Nest.NestParts)
         {
             nestPartInfoDict.Add(NestPartInfo.ToData(nestPart));
         }
@@ -262,8 +266,8 @@ public class GameData
         public serializableVector3 pos {get; set;}
         public serializableQuaternion orientation {get; set;}
         public bool isHolding {get; set;}
-        public int lostCounter { get; set; }
-        public int waitingCounter { get; set; }
+        public int Counter { get; set; }
+        public HashSet<int> discoveredCobs { get; set; }
 
         private AntInfo()
         {
@@ -280,8 +284,8 @@ public class GameData
             info.creatingPheromone = ant.creatingPheromone;
             info.pos = new (ant.transform.position);
             info.orientation = new(ant.transform.rotation);
-            info.waitingCounter = ant.waitingCounter;
-            info.lostCounter = ant.lostCounter;
+            info.Counter = ant.Counter;
+            info.discoveredCobs = ant.discoveredCobs;
 
             info.isHolding = ant.IsHolding();
 
@@ -429,6 +433,10 @@ public class GameData
             DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
         }
 
+        
+        if (Nest.KnownCornCobs == null) Debug.Log("preexisting was null cob");
+        Nest.KnownCornCobs = KnownCornCobs;
+        if (KnownCornCobs == null) Debug.Log("Saved was null cob");
         foreach (NestPartInfo info in nestPartInfoDict)
         {
             WorldGen.InstantiateNestPart(info);

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using FluentBehaviourTree;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,7 +9,9 @@ using UnityEngine.Rendering;
 public class Nest : MonoBehaviour
 {
     public static List<NestPart> NestParts = new();
+    public static HashSet<int> KnownCornCobs = new();
     private static int lastIndex = 0;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -19,6 +23,39 @@ public class Nest : MonoBehaviour
     void Update()
     {
 
+    }
+
+    public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    {
+        if (KnownCornCobs.Count > 0 && SurfaceInNest(antSurface))
+        {
+            //Selecciona un indice de los conocidos aleatorio
+            int cornIndex = KnownCornCobs.ElementAt(UnityEngine.Random.Range(0, KnownCornCobs.Count));
+            if (CornCob.cornCobDictionary.TryGetValue(cornIndex, out CornCob cob))
+            {
+                if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 5, out List<CubePaths.CubeSurface> path))
+                {
+                    objective = new Task(cob.gameObject, TaskType.CollectFromCob, path);
+                    return BehaviourTreeStatus.Success;
+                }
+                else
+                {
+                    //Quitamos de la lista si desde el nido mismo no se puede llegar.
+                    KnownCornCobs.Remove(cornIndex);
+                    Debug.Log("Please dont loop");
+                    return GetNestTask(antSurface, ref objective);
+                }
+            }
+            else
+            {
+                //Quitamos de la lista si es no válido.
+                KnownCornCobs.Remove(cornIndex);
+                Debug.Log("Please dont loop");
+                return GetNestTask(antSurface, ref objective);
+            }
+
+        }
+        else return BehaviourTreeStatus.Failure;
     }
 
     public static bool PointInNest(Vector3 point)
