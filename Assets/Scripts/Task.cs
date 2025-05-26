@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -293,6 +294,13 @@ public class Task
         foodId = info.foodId;
         pos = info.pos.ToVector3();
         type = IndexToType(info.typeIndex);
+        
+        path = new();
+        foreach (var surfaceInfo in info.path)
+        {
+            path.Add(new(surfaceInfo));
+            CubePaths.DrawSurface(path.Last(), Color.yellow, 6);
+        }
     }
 
 }

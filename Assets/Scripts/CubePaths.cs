@@ -381,11 +381,19 @@ public class CubePaths : MonoBehaviour
             surfaceGroup = GetGroup(CornerFromNormal(surfaceNormals), CubeCornerValues(newPos));
             pos = newPos;
         }
+
         public CubeSurface(Vector3Int newPos, bool[] newSurfaceGroup)
         {
             pos = newPos;
             surfaceGroup = newSurfaceGroup;
         }
+
+        public CubeSurface(GameData.SurfaceInfo info)
+        {
+            pos = info.pos.ToVector3Int();
+            surfaceGroup = GameData.ConvertByteToBoolArray(info.group);
+        }
+
         public override bool Equals(object obj)
         {
             if (!(obj is CubeSurface))
@@ -401,6 +409,7 @@ public class CubePaths : MonoBehaviour
 
             return true;
         }
+
         public override int GetHashCode()
         {
             return pos.x + pos.y * 1000 + pos.z * 1000000;

@@ -11,32 +11,33 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 
-public class GameData 
+public class GameData
 {
 
     //Fist i could not serialize cuz static. Then cuz they were fields and the xml would be empty. Finally they are properties.
     //Also they have to be public.
-    
-    public byte[] terrainMapStream { get; set; }
-    public byte[] terrainMemoryStream {get; set;}
-    public int x_dim {get; set;}
-    public int y_dim {get; set;}
-    public int z_dim {get; set;}
-    
-    public int chunk_x_dim {get; set;}
-    public int chunk_y_dim {get; set;}
-    public int chunk_z_dim  {get; set;}
 
-    public serializableVector3 camera_pos {get; set;}
-    public serializableVector3 camera_euler {get; set;}
-    public HashSet<AntInfo> antInfoDict {get; set;}
-    public HashSet<CornInfo> cornInfoDict {get; set;}
-    public Dictionary<int, int> cornHeldAntDict {get; set;} //Key is corn index, value is ant index
-    public HashSet<CornCobInfo> cornCobInfoDict {get; set;}
-    public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict {get; set;}
-    public HashSet<serializableVector3Int> initializedDigPoints {get; set;}
-    public HashSet<NestPartInfo> nestPartInfoDict {get; set;}
-    public HashSet<int> KnownCornCobs { get; set; }
+    public byte[] terrainMapStream { get; set; }
+    public byte[] terrainMemoryStream { get; set; }
+    public int x_dim { get; set; }
+    public int y_dim { get; set; }
+    public int z_dim { get; set; }
+
+    public int chunk_x_dim { get; set; }
+    public int chunk_y_dim { get; set; }
+    public int chunk_z_dim { get; set; }
+
+    public serializableVector3 camera_pos { get; set; }
+    public serializableVector3 camera_euler { get; set; }
+    public HashSet<AntInfo> antInfoDict { get; set; }
+    public HashSet<CornInfo> cornInfoDict { get; set; }
+    public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
+    public HashSet<CornCobInfo> cornCobInfoDict { get; set; }
+    public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict { get; set; }
+    public HashSet<serializableVector3Int> initializedDigPoints { get; set; }
+    public HashSet<NestPartInfo> nestPartInfoDict { get; set; }
+    public HashSet<int> knownCornCobs { get; set; }
+    public Dictionary<Vector3Int, int> pheromones { get; set; }
 
     /* hashset gave:
     <Items>
@@ -84,7 +85,7 @@ public class GameData
     public void saveAnts()
     {
         antInfoDict = new();
-        foreach(var (id, ant) in Ant.antDictionary)
+        foreach (var (id, ant) in Ant.antDictionary)
         {
             antInfoDict.Add(AntInfo.ToData(ant));
         }
@@ -96,7 +97,7 @@ public class GameData
     {
         cornInfoDict = new();
         cornHeldAntDict = new();
-        foreach(var (id, corn) in Corn.cornDictionary)
+        foreach (var (id, corn) in Corn.cornDictionary)
         {
             cornInfoDict.Add(CornInfo.ToData(corn));
             int holderAntIndex = corn.holderAntIndex();
@@ -110,7 +111,7 @@ public class GameData
     public void saveCornCobs()
     {
         cornCobInfoDict = new();
-        foreach(var (id, cornCob) in CornCob.cornCobDictionary)
+        foreach (var (id, cornCob) in CornCob.cornCobDictionary)
         {
             cornCobInfoDict.Add(CornCobInfo.ToData(cornCob));
         }
@@ -120,7 +121,7 @@ public class GameData
     {
         digPointDict = DigPoint.digPointDict;
         initializedDigPoints = new();
-        foreach(var (id, digPointData) in digPointDict)
+        foreach (var (id, digPointData) in digPointDict)
         {
             if (digPointData.digPoint != null)
             {
@@ -131,7 +132,7 @@ public class GameData
 
     public void saveNestParts()
     {
-        KnownCornCobs = Nest.KnownCornCobs;
+        knownCornCobs = Nest.KnownCornCobs;
         nestPartInfoDict = new();
         foreach (var nestPart in Nest.NestParts)
         {
@@ -140,12 +141,17 @@ public class GameData
         Debug.Log("Num nestParts: " + nestPartInfoDict.Count);
     }
 
+    public void savePhermones()
+    {
+        pheromones = CubePaths.cubePheromones;
+    }
+
     [Serializable]
     public class serializableVector3Int
     {
-        public int x {get; set;}
-        public int y {get; set;}
-        public int z {get; set;}
+        public int x { get; set; }
+        public int y { get; set; }
+        public int z { get; set; }
 
         public serializableVector3Int(Vector3Int original)
         {
@@ -154,7 +160,7 @@ public class GameData
             z = original.z;
         }
 
-        private serializableVector3Int(){}
+        private serializableVector3Int() { }
 
         public Vector3Int ToVector3Int()
         {
@@ -165,9 +171,9 @@ public class GameData
     [Serializable]
     public class serializableVector3
     {
-        public float x {get; set;}
-        public float y {get; set;}
-        public float z {get; set;}
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
 
         public serializableVector3(Vector3 original)
         {
@@ -176,7 +182,7 @@ public class GameData
             z = original.z;
         }
 
-        private serializableVector3(){}
+        private serializableVector3() { }
 
         public Vector3 ToVector3()
         {
@@ -187,10 +193,10 @@ public class GameData
     [Serializable]
     public class serializableQuaternion
     {
-        public float x {get; set;}
-        public float y {get; set;}
-        public float z {get; set;}
-        public float w {get; set;}
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
+        public float w { get; set; }
 
         public serializableQuaternion(Quaternion original)
         {
@@ -200,7 +206,7 @@ public class GameData
             w = original.w;
         }
 
-        private serializableQuaternion() {}
+        private serializableQuaternion() { }
 
         public Quaternion ToQuaternion()
         {
@@ -211,10 +217,10 @@ public class GameData
     [Serializable]
     public class CornInfo
     {
-        public int id {get; set;}
-        public serializableVector3 pos {get; set;}
-        public serializableQuaternion orientation {get; set;}
-        
+        public int id { get; set; }
+        public serializableVector3 pos { get; set; }
+        public serializableQuaternion orientation { get; set; }
+
 
         private CornInfo()
         {
@@ -225,7 +231,7 @@ public class GameData
         {
             CornInfo info = new();
             info.id = corn.id;
-            info.pos = new (corn.transform.position);
+            info.pos = new(corn.transform.position);
             info.orientation = new(corn.transform.rotation);
             return info;
         }
@@ -234,10 +240,10 @@ public class GameData
     [Serializable]
     public class CornCobInfo
     {
-        public int id {get; set;}
-        public serializableVector3 pos {get; set;}
-        public serializableQuaternion orientation {get; set;}
-        public Dictionary<int, int> cornCobCornDict {get; set;}
+        public int id { get; set; }
+        public serializableVector3 pos { get; set; }
+        public serializableQuaternion orientation { get; set; }
+        public Dictionary<int, int> cornCobCornDict { get; set; }
 
         private CornCobInfo()
         {
@@ -248,7 +254,7 @@ public class GameData
         {
             CornCobInfo info = new();
             info.id = cornCob.id;
-            info.pos = new (cornCob.transform.position);
+            info.pos = new(cornCob.transform.position);
             info.orientation = new(cornCob.transform.rotation);
             info.cornCobCornDict = cornCob.cornCobCornDict;
             return info;
@@ -258,14 +264,14 @@ public class GameData
     [Serializable]
     public class AntInfo
     {
-        public int id {get; set;}
-        public TaskInfo objective {get; set;} //This was task, but since it didnt serialize the task's enum and shit properly
-        public bool isControlled {get; set;}
-        public int followingPheromone {get; set;}
-        public int creatingPheromone {get; set;}
-        public serializableVector3 pos {get; set;}
-        public serializableQuaternion orientation {get; set;}
-        public bool isHolding {get; set;}
+        public int id { get; set; }
+        public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
+        public bool isControlled { get; set; }
+        public int followingPheromone { get; set; }
+        public int creatingPheromone { get; set; }
+        public serializableVector3 pos { get; set; }
+        public serializableQuaternion orientation { get; set; }
+        public bool isHolding { get; set; }
         public int Counter { get; set; }
         public HashSet<int> discoveredCobs { get; set; }
 
@@ -282,7 +288,7 @@ public class GameData
             info.isControlled = ant.isControlled;
             info.followingPheromone = ant.followingPheromone;
             info.creatingPheromone = ant.creatingPheromone;
-            info.pos = new (ant.transform.position);
+            info.pos = new(ant.transform.position);
             info.orientation = new(ant.transform.rotation);
             info.Counter = ant.Counter;
             info.discoveredCobs = ant.discoveredCobs;
@@ -296,11 +302,12 @@ public class GameData
 
     [Serializable]
     public class TaskInfo
-    {        
-        public Vector3Int digPointId {get; set;}
-        public int foodId {get; set;}
-        public serializableVector3 pos {get; set;}
-        public int typeIndex {get; set;}
+    {
+        public Vector3Int digPointId { get; set; }
+        public int foodId { get; set; }
+        public serializableVector3 pos { get; set; }
+        public int typeIndex { get; set; }
+        public List<SurfaceInfo> path { get; set; }
 
 
 
@@ -316,6 +323,13 @@ public class GameData
             info.foodId = task.foodId;
             info.pos = new(task.pos);
             info.typeIndex = Task.TypeToIndex(task.type);
+
+            info.path = new();
+            foreach (var surface in task.path)
+            {
+                info.path.Add(SurfaceInfo.ToData(surface));
+            }
+
             return info;
         }
 
@@ -324,10 +338,10 @@ public class GameData
     [Serializable]
     public class NestPartInfo
     {
-        public serializableVector3 startPos {get; set;}
-        public serializableVector3 endPos {get; set;}
-        public float radius {get; set;}
-        public int mode {get; set;}
+        public serializableVector3 startPos { get; set; }
+        public serializableVector3 endPos { get; set; }
+        public float radius { get; set; }
+        public int mode { get; set; }
 
         private NestPartInfo()
         {
@@ -348,10 +362,33 @@ public class GameData
         }
     }
 
+    [Serializable]
+    public class SurfaceInfo
+    {
+        public Byte group { get; set; }
+        public serializableVector3Int pos { get; set; }
+
+        private SurfaceInfo()
+        {
+
+        }
+
+        public static SurfaceInfo ToData(CubePaths.CubeSurface surface)
+        {
+            SurfaceInfo info = new()
+            {
+                group = ConvertBoolArrayToByte(surface.surfaceGroup),
+                pos = new(surface.pos)
+            };
+
+            return info;
+        }
+    }
+
 
     public GameData()
     {
-        
+
     }
 
     public static GameData Save()
@@ -381,6 +418,8 @@ public class GameData
         data.saveDigPoints();
 
         data.saveNestParts();
+
+        data.savePhermones();
 
         return data;
     }
@@ -429,20 +468,27 @@ public class GameData
         DigPoint.digPointDict = digPointDict;
         foreach (var id in initializedDigPoints)
         {
-            
+
             DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
         }
 
-        
+
         if (Nest.KnownCornCobs == null) Debug.Log("preexisting was null cob");
-        Nest.KnownCornCobs = KnownCornCobs;
-        if (KnownCornCobs == null) Debug.Log("Saved was null cob");
+        Nest.KnownCornCobs = knownCornCobs;
+        if (knownCornCobs == null) Debug.Log("Saved was null cob");
+
+        //I suspect that this was the missing ingredient to solving the error:
+        //No encontré ningun otro sitio donde se instancia a new, asi que debe de ser que
+        //no es reseteao la lista de partes al cargar partida en una sesion donde ya se jugó.
+        Nest.NestParts = new(); //this
         foreach (NestPartInfo info in nestPartInfoDict)
         {
             WorldGen.InstantiateNestPart(info);
         }
-    }
 
+        CubePaths.cubePheromones = pheromones;
+
+    }
 
 
     private MemoryStream EnCode(int[,,] terrainMap, int x_dim, int y_dim, int z_dim)
@@ -461,20 +507,20 @@ public class GameData
         bool nextPos()
         {
             z++;
-            if (z > z_dim){z = 0; y++;}
-            if (y > y_dim){y = 0; x++;}
-            if (x > x_dim){return false;}
+            if (z > z_dim) { z = 0; y++; }
+            if (y > y_dim) { y = 0; x++; }
+            if (x > x_dim) { return false; }
             return true;
         }
 
         bool end = false;
         bool nextBlock;
-        
+
 
         while (!end)
         {
             //Obtain repeatCount number of same values
-            currentValue = terrainMap[x,y,z];
+            currentValue = terrainMap[x, y, z];
             nextBlock = false;
             repeatCount = 1;
             while (!nextBlock)
@@ -482,7 +528,7 @@ public class GameData
                 end = !nextPos();
                 if (end) nextBlock = true;
                 else if (repeatCount == 255) nextBlock = true;
-                else if (terrainMap[x,y,z] != currentValue) nextBlock = true;
+                else if (terrainMap[x, y, z] != currentValue) nextBlock = true;
                 else
                 {
                     repeatCount++;
@@ -492,10 +538,10 @@ public class GameData
             if (repeatCount > 1)
             {
                 tagByte[i] = true;
-                localStream.Write(new byte[1]{Convert.ToByte(repeatCount)});
+                localStream.Write(new byte[1] { Convert.ToByte(repeatCount) });
             }
 
-            localStream.Write(new byte[1]{Convert.ToByte(currentValue)});
+            localStream.Write(new byte[1] { Convert.ToByte(currentValue) });
 
             i++; //next tag
 
@@ -528,9 +574,9 @@ public class GameData
         bool nextPos()
         {
             z++;
-            if (z > z_dim){z = 0; y++;}
-            if (y > y_dim){y = 0; x++;}
-            if (x > x_dim){return false;}
+            if (z > z_dim) { z = 0; y++; }
+            if (y > y_dim) { y = 0; x++; }
+            if (x > x_dim) { return false; }
             return true;
         }
 
@@ -538,10 +584,10 @@ public class GameData
         bool end = false;
         int max = 0;
 
-        while(!end && max < x_dim * y_dim * z_dim * 2)
+        while (!end && max < x_dim * y_dim * z_dim * 2)
         {
             max++;
-            byte[] byteVal = new byte[1]{Convert.ToByte(data.ReadByte())};
+            byte[] byteVal = new byte[1] { Convert.ToByte(data.ReadByte()) };
             tagByte = new BitArray(byteVal);
 
 
@@ -553,16 +599,16 @@ public class GameData
 
                 int val = data.ReadByte();
 
-                for ( ; count > 0; count--)
+                for (; count > 0; count--)
                 {
-                    decodedMap[x,y,z] = val;
+                    decodedMap[x, y, z] = val;
                     //Debug.Log("Pos: " + x +", "+ y +", "+ z + ". new: " + decodedMap[x,y,z] + ". old: " + WorldGen.terrainMap[x,y,z]);
                     if (!nextPos())
                     {
                         end = true;
                         break;
                     }
-                    
+
                 }
                 if (end) break;
             }
@@ -572,17 +618,51 @@ public class GameData
 
 
         return decodedMap;
-        
+
     }
 
-    
+
     private byte SetBit(byte nByte, int index, bool value)
     {
-        int bitIndex =  7 - index % 8;
+        int bitIndex = 7 - index % 8;
         byte mask = (byte)(1 << bitIndex);
 
         nByte = (byte)(value ? (nByte | mask) : (nByte & ~mask));
         return nByte;
+    }
+
+    public static byte ConvertBoolArrayToByte(bool[] source)
+    {
+        byte result = 0;
+        // This assumes the array never contains more than 8 elements!
+        int index = 8 - source.Length;
+
+        // Loop through the array
+        foreach (bool b in source)
+        {
+            // if the element is 'true' set the bit at that position
+            if (b)
+                result |= (byte)(1 << (7 - index));
+
+            index++;
+        }
+
+        return result;
+    }
+
+    public static bool[] ConvertByteToBoolArray(byte b)
+    {
+        // prepare the return result
+        bool[] result = new bool[8];
+
+        // check each bit in the byte. if 1 set to true, if 0 set to false
+        for (int i = 0; i < 8; i++)
+            result[i] = (b & (1 << i)) != 0;
+
+        // reverse the array
+        Array.Reverse(result);
+
+        return result;
     }
 
 }

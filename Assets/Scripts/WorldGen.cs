@@ -76,6 +76,9 @@ public class WorldGen : MonoBehaviour
             memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
             PopulateTerrainMap();
             GenerateChunks();
+            Nest.NestParts = new();
+            Nest.KnownCornCobs = new();
+            CubePaths.cubePheromones = new();
         }
         else
         {
