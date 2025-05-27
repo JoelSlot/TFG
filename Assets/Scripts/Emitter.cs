@@ -3,6 +3,7 @@ using UnityEngine;
 public class Emitter : MonoBehaviour
 {
     public ParticleSystem ps;
+    private ParticleSystemRenderer pr;
     int counter = 0;
     int mode = 0;
     //Hay 8 modos:
@@ -14,6 +15,11 @@ public class Emitter : MonoBehaviour
     //x impar, y par, z impar
     //x impar, y impar, z par
     //x impar, y impar, z impar
+
+    void Start()
+    {
+        pr = ps.GetComponent<ParticleSystemRenderer>();   
+    }
 
     public void EmitPheromone(Vector3 pos)
     {
@@ -28,66 +34,82 @@ public class Emitter : MonoBehaviour
 
     void FixedUpdate()
     {
-        counter++;
-        if (counter > 10)
+        if (!FlyCamera.cameraUnderground)
         {
-            foreach (var pos in CubePaths.cubePheromones.Keys)
+            if (pr.renderMode != ParticleSystemRenderMode.Mesh)
             {
-                switch (mode)
-                {
-                    case 0:
-                        if (pos.x % 2 == 0)
-                            if (pos.y % 2 == 0)
-                                if (pos.z % 2 == 0)
-                                    EmitPheromone(pos);
-                        break;
-                    case 1:
-                        if (pos.x % 2 == 0)
-                            if (pos.y % 2 == 0)
-                                if (pos.z % 2 == 1)
-                                    EmitPheromone(pos);
-                        break;
-                    case 2:
-                        if (pos.x % 2 == 0)
-                            if (pos.y % 2 == 1)
-                                if (pos.z % 2 == 0)
-                                    EmitPheromone(pos);
-                        break;
-                    case 3:
-                        if (pos.x % 2 == 0)
-                            if (pos.y % 2 == 1)
-                                if (pos.z % 2 == 1)
-                                    EmitPheromone(pos);
-                        break;
-                    case 4:
-                        if (pos.x % 2 == 1)
-                            if (pos.y % 2 == 0)
-                                if (pos.z % 2 == 0)
-                                    EmitPheromone(pos);
-                        break;
-                    case 5:
-                        if (pos.x % 2 == 1)
-                            if (pos.y % 2 == 0)
-                                if (pos.z % 2 == 1)
-                                    EmitPheromone(pos);
-                        break;
-                    case 6:
-                        if (pos.x % 2 == 1)
-                            if (pos.y % 2 == 1)
-                                if (pos.z % 2 == 0)
-                                    EmitPheromone(pos);
-                        break;
-                    case 7:
-                        if (pos.x % 2 == 1)
-                            if (pos.y % 2 == 1)
-                                if (pos.z % 2 == 1)
-                                    EmitPheromone(pos);
-                        break;
-                }
+                ps.Play();
+                pr.renderMode = ParticleSystemRenderMode.Mesh;
             }
-            mode++;
-            if (mode > 7) mode = 0;
-            counter = 0;
+            counter++;
+            if (counter > 10)
+            {
+                foreach (var pos in CubePaths.cubePheromones.Keys)
+                {
+                    switch (mode)
+                    {
+                        case 0:
+                            if (pos.x % 2 == 0)
+                                if (pos.y % 2 == 0)
+                                    if (pos.z % 2 == 0)
+                                        EmitPheromone(pos);
+                            break;
+                        case 1:
+                            if (pos.x % 2 == 0)
+                                if (pos.y % 2 == 0)
+                                    if (pos.z % 2 == 1)
+                                        EmitPheromone(pos);
+                            break;
+                        case 2:
+                            if (pos.x % 2 == 0)
+                                if (pos.y % 2 == 1)
+                                    if (pos.z % 2 == 0)
+                                        EmitPheromone(pos);
+                            break;
+                        case 3:
+                            if (pos.x % 2 == 0)
+                                if (pos.y % 2 == 1)
+                                    if (pos.z % 2 == 1)
+                                        EmitPheromone(pos);
+                            break;
+                        case 4:
+                            if (pos.x % 2 == 1)
+                                if (pos.y % 2 == 0)
+                                    if (pos.z % 2 == 0)
+                                        EmitPheromone(pos);
+                            break;
+                        case 5:
+                            if (pos.x % 2 == 1)
+                                if (pos.y % 2 == 0)
+                                    if (pos.z % 2 == 1)
+                                        EmitPheromone(pos);
+                            break;
+                        case 6:
+                            if (pos.x % 2 == 1)
+                                if (pos.y % 2 == 1)
+                                    if (pos.z % 2 == 0)
+                                        EmitPheromone(pos);
+                            break;
+                        case 7:
+                            if (pos.x % 2 == 1)
+                                if (pos.y % 2 == 1)
+                                    if (pos.z % 2 == 1)
+                                        EmitPheromone(pos);
+                            break;
+                    }
+                }
+                mode++;
+                if (mode > 7) mode = 0;
+                counter = 0;
+            }
+        }
+        else //Si se está debajo del suelo.
+        {
+            if (pr.renderMode != ParticleSystemRenderMode.None)
+            {
+                ps.Pause();
+                pr.renderMode = ParticleSystemRenderMode.None;
+            }
         }
     }
 

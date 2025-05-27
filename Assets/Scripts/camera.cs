@@ -18,6 +18,8 @@ public class FlyCamera : MonoBehaviour
     public bool focusOnEnable = true; // whether or not to focus and lock cursor immediately on enable
     public Camera camera; // Objeto cámara que se usa ingame
 
+    public static bool cameraUnderground = false;
+
 
 
     Vector3 velocity; // current velocity
@@ -74,9 +76,14 @@ public class FlyCamera : MonoBehaviour
 
         if (WorldGen.IsAboveSurface(transform.position))
         {
-            camera.backgroundColor = new Color(0,191,255);
+            cameraUnderground = false;
+            camera.backgroundColor = new Color(0, 191, 255);
         }
-        else camera.backgroundColor = Color.black;
+        else
+        {
+            cameraUnderground = true;
+            camera.backgroundColor = Color.black;
+        }    
     }
 
     void FixedUpdate()
