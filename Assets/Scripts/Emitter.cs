@@ -3,6 +3,17 @@ using UnityEngine;
 public class Emitter : MonoBehaviour
 {
     public ParticleSystem ps;
+    int counter = 0;
+    int mode = 0;
+    //Hay 8 modos:
+    //x par, y par, z par
+    //x par, y par, z impar
+    //x par, y impar, z par
+    //x par, y impar, z impar
+    //x impar, y par, z par
+    //x impar, y par, z impar
+    //x impar, y impar, z par
+    //x impar, y impar, z impar
 
     public void EmitPheromone(Vector3 pos)
     {
@@ -15,12 +26,68 @@ public class Emitter : MonoBehaviour
         ps.Emit(ep, 1);
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        foreach (var pos in CubePaths.cubePheromones.Keys)
+        counter++;
+        if (counter > 10)
         {
-            ps.transform.position = pos;
-            ps.Emit(1);
+            foreach (var pos in CubePaths.cubePheromones.Keys)
+            {
+                switch (mode)
+                {
+                    case 0:
+                        if (pos.x % 2 == 0)
+                            if (pos.y % 2 == 0)
+                                if (pos.z % 2 == 0)
+                                    EmitPheromone(pos);
+                        break;
+                    case 1:
+                        if (pos.x % 2 == 0)
+                            if (pos.y % 2 == 0)
+                                if (pos.z % 2 == 1)
+                                    EmitPheromone(pos);
+                        break;
+                    case 2:
+                        if (pos.x % 2 == 0)
+                            if (pos.y % 2 == 1)
+                                if (pos.z % 2 == 0)
+                                    EmitPheromone(pos);
+                        break;
+                    case 3:
+                        if (pos.x % 2 == 0)
+                            if (pos.y % 2 == 1)
+                                if (pos.z % 2 == 1)
+                                    EmitPheromone(pos);
+                        break;
+                    case 4:
+                        if (pos.x % 2 == 1)
+                            if (pos.y % 2 == 0)
+                                if (pos.z % 2 == 0)
+                                    EmitPheromone(pos);
+                        break;
+                    case 5:
+                        if (pos.x % 2 == 1)
+                            if (pos.y % 2 == 0)
+                                if (pos.z % 2 == 1)
+                                    EmitPheromone(pos);
+                        break;
+                    case 6:
+                        if (pos.x % 2 == 1)
+                            if (pos.y % 2 == 1)
+                                if (pos.z % 2 == 0)
+                                    EmitPheromone(pos);
+                        break;
+                    case 7:
+                        if (pos.x % 2 == 1)
+                            if (pos.y % 2 == 1)
+                                if (pos.z % 2 == 1)
+                                    EmitPheromone(pos);
+                        break;
+                }
+            }
+            mode++;
+            if (mode > 7) mode = 0;
+            counter = 0;
         }
     }
 
