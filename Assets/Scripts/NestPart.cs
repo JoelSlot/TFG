@@ -224,7 +224,7 @@ public class NestPart : MonoBehaviour
                         pointsToCheck.Enqueue(son);
                     }
                     //Si el punto realmente cambiará el terreno, lo guardamos para ser excavado
-                    if (desiredVal < WorldGen.SampleTerrain(son)) points.Add(son, new DigPoint.digPointData(desiredVal)); 
+                    if (desiredVal < WorldGen.SampleTerrain(son) && !DigPoint.IsPointless(son)) points.Add(son, new DigPoint.digPointData(desiredVal)); 
                     //Registramos que ya hemos mirado este punto
                     checkedPoints.Add(son);
                 }

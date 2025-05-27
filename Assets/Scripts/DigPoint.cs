@@ -71,7 +71,13 @@ public class DigPoint : MonoBehaviour
             if (digPointDict.ContainsKey(key))
             {
                 digPointData nextDigData = digPointDict[key];
-                if (nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
+                if (IsPointless(key)) //Si ahora da igual excavar el punto, lo eliminamos y editamos el mapa
+                {
+                    terrainEdit.Add(new Tuple<Vector3Int, int>(key, nextDigData.value));
+                    digPointDict.Remove(key);
+                    Destroy(nextDigData.digPoint.gameObject);
+                }
+                else if (nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
                 {
                     if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, nextDigData.value));
                     digPointDict.Remove(key);
@@ -104,6 +110,20 @@ public class DigPoint : MonoBehaviour
             if (WorldGen.IsAboveSurface(adj)) score++;
         }
         return score;
+    }
+
+    //No tiene sentido crear un digpoint donde no va a tener un efecto: que el y todos sus alrededores ya están sobre la superficie.
+    public static bool IsPointless(Vector3Int pos)
+    {
+        if (!WorldGen.IsAboveSurface(pos)) return false;
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        foreach (Vector3Int direction in directions)
+        {
+            Vector3Int adj = pos + direction;
+            if (!WorldGen.IsAboveSurface(adj)) return false;
+        }
+
+        return true;
     }
 
 }
