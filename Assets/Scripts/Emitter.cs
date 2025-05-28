@@ -6,6 +6,7 @@ public class Emitter : MonoBehaviour
     private ParticleSystemRenderer pr;
     int counter = 0;
     int mode = 0;
+
     //Hay 8 modos:
     //x par, y par, z par
     //x par, y par, z impar
@@ -21,12 +22,13 @@ public class Emitter : MonoBehaviour
         pr = ps.GetComponent<ParticleSystemRenderer>();   
     }
 
-    public void EmitPheromone(Vector3 pos)
+    public void EmitPheromone(Vector3 pos, int age)
     {
         ParticleSystem.EmitParams ep = new ParticleSystem.EmitParams
         {
             position = pos,
-            applyShapeToPosition = true //Makes it not bunch up a lot.
+            applyShapeToPosition = true, //Makes it not bunch up a lot.
+            startSize = 10 + (50f * age / 100f) //40 to 60 wasn't very visible
         };
 
         ps.Emit(ep, 1);
@@ -44,7 +46,7 @@ public class Emitter : MonoBehaviour
             counter++;
             if (counter > 10)
             {
-                foreach (var pos in CubePaths.cubePheromones.Keys)
+                foreach (var (pos, val) in CubePaths.cubePheromones)
                 {
                     switch (mode)
                     {
@@ -52,49 +54,49 @@ public class Emitter : MonoBehaviour
                             if (pos.x % 2 == 0)
                                 if (pos.y % 2 == 0)
                                     if (pos.z % 2 == 0)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 1:
                             if (pos.x % 2 == 0)
                                 if (pos.y % 2 == 0)
                                     if (pos.z % 2 == 1)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 2:
                             if (pos.x % 2 == 0)
                                 if (pos.y % 2 == 1)
                                     if (pos.z % 2 == 0)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 3:
                             if (pos.x % 2 == 0)
                                 if (pos.y % 2 == 1)
                                     if (pos.z % 2 == 1)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 4:
                             if (pos.x % 2 == 1)
                                 if (pos.y % 2 == 0)
                                     if (pos.z % 2 == 0)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 5:
                             if (pos.x % 2 == 1)
                                 if (pos.y % 2 == 0)
                                     if (pos.z % 2 == 1)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 6:
                             if (pos.x % 2 == 1)
                                 if (pos.y % 2 == 1)
                                     if (pos.z % 2 == 0)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                         case 7:
                             if (pos.x % 2 == 1)
                                 if (pos.y % 2 == 1)
                                     if (pos.z % 2 == 1)
-                                        EmitPheromone(pos);
+                                        EmitPheromone(pos, val);
                             break;
                     }
                 }

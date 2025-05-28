@@ -11,17 +11,17 @@ public class CubePaths : MonoBehaviour
     //Diccionario de todas las pheromonas. Son indexadas según su posición, para que una hormiga pueda fácilmente acceder a las pheromonas en los cubos alrededores.
     //Ya que pueden haber pheromonas de caminos distintos en el mismo cubo, y pueden haber múltiples superficies con pheromonas del mismo camino en un mismo cubo, se guarda una lista de todas aquellas que se encuentran en cada cubo
     public static Dictionary<Vector3Int, int> cubePheromones = new();
-    
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public static void PlacePheromone(Vector3Int pos)
@@ -127,10 +127,10 @@ public class CubePaths : MonoBehaviour
     */
     public static Vector3Int TrueCorner(int faceIndex, bool[] cornerValues)
     {
-        if (cornerValues[chunk.faceIndexes[faceIndex,0]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,0]];
-        if (cornerValues[chunk.faceIndexes[faceIndex,1]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,1]];
-        if (cornerValues[chunk.faceIndexes[faceIndex,2]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex,2]];
-        return chunk.cornerTable[chunk.faceIndexes[faceIndex,3]];
+        if (cornerValues[chunk.faceIndexes[faceIndex, 0]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 0]];
+        if (cornerValues[chunk.faceIndexes[faceIndex, 1]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 1]];
+        if (cornerValues[chunk.faceIndexes[faceIndex, 2]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 2]];
+        return chunk.cornerTable[chunk.faceIndexes[faceIndex, 3]];
     }
 
 
@@ -151,9 +151,9 @@ public class CubePaths : MonoBehaviour
             chunk.faceIndexes[faceIndex, 2] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 2]] + ", " +
             chunk.faceIndexes[faceIndex, 3] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 3]] + ", " );*/
         return !(
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 1]] && 
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 2]] && 
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 3]] );
+            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 1]] &&
+            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 2]] &&
+            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 3]]);
     }
 
     /*
@@ -206,7 +206,7 @@ public class CubePaths : MonoBehaviour
             new Vector3Int(corner.x, Mathf.Abs(corner.y-1), corner.z),
             new Vector3Int(corner.x, corner.y, Mathf.Abs(corner.z-1))
             };
-        
+
     }
 
     /*
@@ -220,7 +220,7 @@ public class CubePaths : MonoBehaviour
     {
         Vector3Int returnCorner = Vector3Int.zero;
         float minAngle = 180;
-        foreach(Vector3Int corner in chunk.cornerTable)
+        foreach (Vector3Int corner in chunk.cornerTable)
         {
             float angle = Vector3.Angle(-normal, CornerNormal(corner));
             if (angle < minAngle)
@@ -248,7 +248,7 @@ public class CubePaths : MonoBehaviour
             DrawCube(surface.pos, Color.black, 20);
             DrawCube(surface.pos + dir, Color.black, 20);
             //Debug.Log("NOT VALID DIR: " + dir);
-            return surface.pos + Vector3.one / 2 + dir*40;
+            return surface.pos + Vector3.one / 2 + dir * 40;
         }
 
         Vector3 goal = Vector3.zero;
@@ -272,12 +272,12 @@ public class CubePaths : MonoBehaviour
                 int cornerIndex = chunk.faceIndexes[faceIndex, i];
                 if (surface.surfaceGroup[cornerIndex]) //Si el punto se encuentra bajo la superficie
                 {
-                    goal += (chunk.cornerTable[cornerIndex] - Vector3.one*0.5f)*40;
+                    goal += (chunk.cornerTable[cornerIndex] - Vector3.one * 0.5f) * 40;
                 }
             }
         }
         Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex] * 4, Color.blue, 10);
-        return goal + chunk.faceDirections[faceIndex]*400;
+        return goal + chunk.faceDirections[faceIndex] * 400;
     }
 
     //Dado la superficie actual y las dos siguientes direcciones, devuelve el punto a seguir
@@ -298,7 +298,7 @@ public class CubePaths : MonoBehaviour
             DrawCube(surface.pos, Color.black, 20);
             DrawCube(surface.pos + dir1, Color.black, 20);
             //Debug.Log("DIR 1 NOT VALID: " + dir1);
-            return surface.pos + Vector3.one / 2 + dir1*2;
+            return surface.pos + Vector3.one / 2 + dir1 * 2;
         }
 
         //Si la segunda dir es igual o opuesto al primero, no es importante y podemos usar solo el primero.
@@ -306,7 +306,8 @@ public class CubePaths : MonoBehaviour
         {
             //Debug.Log("DIR 2 == DIR 1: " + dir1);
             return GetMovementGoal(surface, dir1);
-        };
+        }
+        ;
 
         Vector3 goal = Vector3.zero;
         int num = 0;
@@ -339,14 +340,14 @@ public class CubePaths : MonoBehaviour
         DrawFace(surface.pos, faceIndex2, Color.red, 2);
 
         //THIS SOLVED THE INNER TURN PROBLEM
-        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceDirections[faceIndex2]*4;
+        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceDirections[faceIndex2] * 4;
 
-        goal += chunk.faceDirections[faceIndex1]*4;
+        goal += chunk.faceDirections[faceIndex1] * 4;
 
         return goal;
     }
 
-    
+
     //Función que dado dos cubos y la subSuperficie del primero, devuelve si esa superficie conecta directamente con el segundo cubo
     public static bool DoesSurfaceConnect(CubeSurface surface1, Vector3Int cube2)
     {
@@ -467,11 +468,12 @@ public class CubePaths : MonoBehaviour
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (current.pos == objective){
+            if (current.pos == objective)
+            {
                 reachedSurface = current;
                 break;
             }
-                
+
             if (DistToPoint(current.pos + Vector3.one * 0.5f, objective) < 1.2f)
             {
                 reachedSurface = current;
@@ -481,7 +483,7 @@ public class CubePaths : MonoBehaviour
 
             List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
 
-            foreach(var son in adyacentSurfaces)
+            foreach (var son in adyacentSurfaces)
             {
                 float newCost = coste[current] + 1;
                 int newLength = longitud[current] + 1;
@@ -492,8 +494,8 @@ public class CubePaths : MonoBehaviour
 
                 if (newLength > lengthLimit) updateOrInsert = false;
 
-                
-                if(updateOrInsert)
+
+                if (updateOrInsert)
                 {
                     //DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;
@@ -505,7 +507,7 @@ public class CubePaths : MonoBehaviour
             }
         }
 
-        
+
 
         while (!reachedSurface.Equals(start))
         {
@@ -519,8 +521,8 @@ public class CubePaths : MonoBehaviour
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
     }
-    
-    
+
+
     public static bool GetKnownPathToPoint(CubeSurface start, Vector3 objective, float acceptableDistance, out List<CubeSurface> path)
     { ///UHHH NO PATHW EHN GO TO FOOD SO LIKE DRAW CUBES WHEN MAKING FINDING PATH SOU KNWO WHAT IS HAPPENIGN-
         path = new List<CubeSurface>();
@@ -549,12 +551,13 @@ public class CubePaths : MonoBehaviour
         {
             CubeSurface current = frontera.Dequeue();
 
-            if (current.pos == objective){
+            if (current.pos == objective)
+            {
                 reachedSurface = current;
                 gotToPoint = true;
                 break;
             }
-                
+
             if (DistToPoint(current.pos + Vector3.one * 0.5f, objective) < acceptableDistance)
             {
                 reachedSurface = current;
@@ -564,7 +567,7 @@ public class CubePaths : MonoBehaviour
 
             List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
 
-            foreach(var son in adyacentSurfaces)
+            foreach (var son in adyacentSurfaces)
             {
                 float newCost = coste[current] + 1;
                 int newLength = longitud[current] + 1;
@@ -577,8 +580,8 @@ public class CubePaths : MonoBehaviour
                     if (!Nest.SurfaceInNest(current))
                         updateOrInsert = false;
 
-                
-                if(updateOrInsert)
+
+                if (updateOrInsert)
                 {
                     //DrawCube(son.pos, Color.black, 5);
                     coste[son] = newCost;
@@ -681,7 +684,7 @@ public class CubePaths : MonoBehaviour
         return pathExists;
     }
 
-    
+
     public static bool GetPathToMapPart(CubeSurface start, NestPart.NestPartType type, out List<CubeSurface> path)
     {
         Debug.Log("Finding path...");
@@ -757,7 +760,7 @@ public class CubePaths : MonoBehaviour
         List<CubeSurface> sensedRange = new();
         Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
         path = new();
-        HashSet<Vector3Int> nearbyPheromones = new(); 
+        HashSet<Vector3Int> nearbyPheromones = new();
 
         Debug.Log("Looking for surface");
 
@@ -778,7 +781,7 @@ public class CubePaths : MonoBehaviour
         foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         beyondRange = GetNextSurfaceRange(antSurface, antForward, beyondRange, ref checkedSurfaces);
         foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-        
+
         /*
         Since SortedDictionary is sorted on the key, you can create a sorted list of keys with
         var keys = new List<DateTime>(dictionary.Keys);
@@ -790,7 +793,7 @@ public class CubePaths : MonoBehaviour
         //var keys = new List<Vector3Int>(cubePherParticleDict.Keys);
         */
 
-        
+
         //Conseguir media de todos las feromonas cercanas.
         int i = 0;
         Vector3 medium = Vector3.zero;
@@ -840,13 +843,13 @@ public class CubePaths : MonoBehaviour
 
     }
 
-    
+
     public static bool GetLostPath(CubeSurface antSurface, Vector3 antForward, out List<CubeSurface> path)
     {
         List<CubeSurface> sensedRange = new();
         Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
         path = new();
-        HashSet<Vector3Int> nearbyPheromones = new(); 
+        HashSet<Vector3Int> nearbyPheromones = new();
 
         Debug.Log("Looking for surface");
 
@@ -858,7 +861,7 @@ public class CubePaths : MonoBehaviour
         if (sensedRange.Count == 0) return false;
         sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
         if (sensedRange.Count == 0) return false;
-        
+
         //Conseguir media de todos las feromonas cercanas.
         int i = 0;
         Vector3 medium = Vector3.zero;
@@ -918,7 +921,7 @@ public class CubePaths : MonoBehaviour
         if (nearbyPhers.Contains(surface.pos)) penalty = 5;
         return Mathf.Abs(medium.x - surface.pos.x) + Mathf.Abs(medium.y - surface.pos.y) + Mathf.Abs(medium.z - surface.pos.z) - penalty;
     }
-    
+
 
     public static List<CubeSurface> GetNextSurfaceRange(CubeSurface antSurface, Vector3 antForward, List<CubeSurface> currentRange, ref Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces)
     {
@@ -967,7 +970,7 @@ public class CubePaths : MonoBehaviour
     }
 
 
-    
+
     /*
     Debuja el cubo dado, en el color dado, durando el tiempo dado
     */
@@ -987,13 +990,13 @@ public class CubePaths : MonoBehaviour
         }
     }
 
-    
+
     public static void DrawSurface(CubeSurface cubeSurface, Color color, int time)
     {
         for (int i = 0; i < 8; i++)
         {
             if (!cubeSurface.surfaceGroup[i])
-                Debug.DrawLine(cubeSurface.pos + Vector3.one/2, cubeSurface.pos + chunk.cornerTable[i], color, time);
+                Debug.DrawLine(cubeSurface.pos + Vector3.one / 2, cubeSurface.pos + chunk.cornerTable[i], color, time);
         }
     }
 
@@ -1001,7 +1004,33 @@ public class CubePaths : MonoBehaviour
     {
         for (int i = 0; i < 4; i++)
         {
-            Debug.DrawLine(pos + chunk.cornerTable[chunk.faceIndexes[faceId, i%4]], pos + chunk.cornerTable[chunk.faceIndexes[faceId, (i+1)%4]], color, time);
+            Debug.DrawLine(pos + chunk.cornerTable[chunk.faceIndexes[faceId, i % 4]], pos + chunk.cornerTable[chunk.faceIndexes[faceId, (i + 1) % 4]], color, time);
+        }
+    }
+
+
+    //Sistema de edad de la feromona
+    //Cada 3 segundos las feromonas pierden un punto de edad.
+    //Si llegan a 0 dejan de existir
+    //al tener 100 de base, duran 100 * 3s = 5 min
+    float timeCounter = 0;
+    void FixedUpdate()
+    {
+        timeCounter += Time.fixedDeltaTime;
+        if (timeCounter >= 3) //Cada tres segundos
+        {
+            timeCounter = 0;
+            List<Vector3Int> keys = new();
+            foreach (var (key, value) in cubePheromones)
+            {
+                keys.Add(key);
+            }
+            foreach (var key in keys)
+            {
+                cubePheromones[key] -= 1;
+                if (cubePheromones[key] <= 0)
+                    cubePheromones.Remove(key);
+            }
         }
     }
 
