@@ -231,7 +231,6 @@ MonoBehaviour:
   followingPheromone: -1
   creatingPheromone: -1
   Counter: 0
-  minAngle: 70
 --- !u!114 &6207866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -702,7 +701,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198909573904484406, guid: 2b5ba3f0e23ea4246a8cf4a37ffd8767, type: 3}
       propertyPath: InitialModule.maxNumParticles
-      value: 999999999
+      value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 198909573904484406, guid: 2b5ba3f0e23ea4246a8cf4a37ffd8767, type: 3}
       propertyPath: InitialModule.startSize.scalar

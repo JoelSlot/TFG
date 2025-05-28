@@ -248,7 +248,7 @@ public class CubePaths : MonoBehaviour
             DrawCube(surface.pos, Color.black, 20);
             DrawCube(surface.pos + dir, Color.black, 20);
             //Debug.Log("NOT VALID DIR: " + dir);
-            return surface.pos + Vector3.one / 2 + dir * 40;
+            return surface.pos + Vector3.one / 2 + dir * 400;
         }
 
         Vector3 goal = Vector3.zero;
@@ -307,7 +307,6 @@ public class CubePaths : MonoBehaviour
             //Debug.Log("DIR 2 == DIR 1: " + dir1);
             return GetMovementGoal(surface, dir1);
         }
-        ;
 
         Vector3 goal = Vector3.zero;
         int num = 0;
@@ -764,17 +763,16 @@ public class CubePaths : MonoBehaviour
 
         Debug.Log("Looking for surface");
 
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Second
-        if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Third.
-        if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
-        if (sensedRange.Count == 0) return false;
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+        int range = UnityEngine.Random.Range(4, 10);
+
+        for (int r = 0; r < range; r++)
+        {
+            sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
+            if (r < 8)foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+            if (sensedRange.Count == 0)
+                return false;
+        }
+
 
         //We check the two ranges beyond to get any pheromones to influence what dir we are going
         List<CubeSurface> beyondRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
@@ -849,28 +847,20 @@ public class CubePaths : MonoBehaviour
         List<CubeSurface> sensedRange = new();
         Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
         path = new();
-        HashSet<Vector3Int> nearbyPheromones = new();
 
         Debug.Log("Looking for surface");
 
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
-        foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Second
-        if (sensedRange.Count == 0) return false;
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Third.
-        if (sensedRange.Count == 0) return false;
-        sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //fourth.
-        if (sensedRange.Count == 0) return false;
+        int range = UnityEngine.Random.Range(3, 6);
+
+        for (int r = 0; r < range; r++)
+        {
+            sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
+            if (sensedRange.Count == 0)
+                return false;
+        }
 
         //Conseguir media de todos las feromonas cercanas.
-        int i = 0;
         Vector3 medium = Vector3.zero;
-        foreach (var pos in nearbyPheromones)
-        {
-            i++;
-            medium += pos;
-        }
-        if (i != 0) medium /= i;
 
         //ESCOGER SUPERFICIE AL QUE IR
         CubeSurface chosen = sensedRange[0];
@@ -918,7 +908,10 @@ public class CubePaths : MonoBehaviour
         Vector3Int closest = sortedPheromonePosList[index - 1];
         */
         float penalty = 0;
-        if (nearbyPhers.Contains(surface.pos)) penalty = 5;
+        if (nearbyPhers.Contains(surface.pos)) penalty += 5;
+        int count = surface.Count();
+        if (count == 1 && count == 7) penalty += 2; // evitar cubos con
+        if (count == 2 && count == 6) penalty += 1; // poca superficie.
         return Mathf.Abs(medium.x - surface.pos.x) + Mathf.Abs(medium.y - surface.pos.y) + Mathf.Abs(medium.z - surface.pos.z) - penalty;
     }
 

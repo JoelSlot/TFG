@@ -236,6 +236,7 @@ public class Ant : MonoBehaviour
 
             //Debug.Log("Task type: " + objective.TaskToString());
 
+
             if (changedSurface)
                 if (!Nest.SurfaceInNest(antSurface))
                     //if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
@@ -270,13 +271,54 @@ public class Ant : MonoBehaviour
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
 
-            BehaviourTreeStatus status = SetGoalFromPath(antSurface, out Vector3 goal);
-            if (status == BehaviourTreeStatus.Running) FollowGoal(normalMedian, goal);
-            else {DontTurn(); SetWalking(false);}
+            BehaviourTreeStatus status = SetGoalFromPath(antSurface, transform.position, out Vector3 goal);
+
+            if (status != BehaviourTreeStatus.Running)
+            {
+                DontTurn();
+                SetWalking(false);
+                return status;
+            }
+
+            //Patch para intentar evitar la hormiga quedandose pillada.
+            //Si el ángulo es demasiado pequeño
+            float angle = Vector3.Angle(goal, transform.up);
+            if (angle < 10 || angle > 170)
+            {
+                //check de casi al final de camino
+                if (objective.path.Count > 1) //Por si acaso el camino no es demasiado pequeño
+                {
+                    CubePaths.CubeSurface secondLastSurface = objective.path[objective.path.Count - 2]; //La penultima superficie
+                    if (antSurface.Equals(secondLastSurface)) //Si la hormiga ha llegado al penúltimo
+                    {
+                        //Si la hormiga casi está en el último
+                        Vector3 pos = transform.position;
+                        if (
+                            pos.x < secondLastSurface.pos.x + 1.3f && pos.x > secondLastSurface.pos.x - 0.3f ||
+                            pos.y < secondLastSurface.pos.y + 1.3f && pos.y > secondLastSurface.pos.y - 0.3f ||
+                            pos.z < secondLastSurface.pos.z + 1.3f && pos.z > secondLastSurface.pos.z - 0.3f
+                            )
+                        {
+                            Debug.Log("Pretty much made it.");
+                            objective.path = new();
+                            return BehaviourTreeStatus.Success;
+                        }
+                    }
+                }
+
+                //Si no hemos llegado al casi final del camino, hacemos followGoal con márgen de caminar hacia delante muy grande
+                FollowGoal(normalMedian, goal, 100f);
+
+                return status;
+
+            }
+
+            FollowGoal(normalMedian, goal, 70f);
             return status;
+
         }
         else return BehaviourTreeStatus.Failure;
-        
+
     }
 
     private BehaviourTreeStatus SenseTask()
@@ -533,11 +575,10 @@ public class Ant : MonoBehaviour
         Animator.SetBool("walking", true);
     }
 
-    public float minAngle = 60f;
 
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
-    void FollowGoal(Vector3 hitNormal, Vector3 goal)
+    void FollowGoal(Vector3 hitNormal, Vector3 goal, float minAngle)
     {
 
         //Obtenemos los datos de distancia hacia la pheromona
@@ -852,7 +893,7 @@ public class Ant : MonoBehaviour
     }*/
 
     //Pone el 
-    private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface, out Vector3 goal)
+    private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface, Vector3 pos, out Vector3 goal)
     {
 
         goal = Vector3.zero;
@@ -882,16 +923,16 @@ public class Ant : MonoBehaviour
         }
 
         //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
-        while (goalIndex == -1 && range < 5)
-        {
-            range++;
-            sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
-
-            for (int i = 0; i < objective.path.Count; i += 1)
+            while (goalIndex == -1 && range < 5)
             {
-                if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
+                range++;
+                sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
+
+                for (int i = 0; i < objective.path.Count; i += 1)
+                {
+                    if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
+                }
             }
-        }
 
         //Si no se ha encontrado el camino, hemos fallado
         if (goalIndex == -1)
