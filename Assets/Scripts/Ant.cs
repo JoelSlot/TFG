@@ -463,8 +463,6 @@ public class Ant : MonoBehaviour
         return Rigidbody.position + antObj.transform.rotation * new Vector3(x, y, z);
     }
 
-    int senseTimer = 0;
-
     public void PickupEvent() //function called by the animation
     {
 
