@@ -97,6 +97,7 @@ public class Ant : MonoBehaviour
         SetWalking(false); //El estado por defecto no camina
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
         Animator.enabled = true; //Se habilita el animator
+        Animator.speed = 0; //To pause it the speed is set to 0.
 
         UpdateHolding();
 
@@ -232,8 +233,21 @@ public class Ant : MonoBehaviour
                 AntInputs();
                 objective = Task.NoTask();
             }
-            else tree.Tick(new TimeData(Time.deltaTime));
+            else
+            {
+                var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
+                if (stateInfo.IsTag("noMove"))
+                {
+                    //DigEvent
+                    //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
+                    //To copy the pickup anim into a dig anim again. whoops.
+                    //After copying pickup and adding it as dig, added event
+                    //Shortenede anim but looked bad, so readjusted it
+                    //then had to move the event again because adjusting anim length changes event time.
+                }
+                else tree.Tick(new TimeData(Time.deltaTime));
 
+            }
             //Debug.Log("Task type: " + objective.TaskToString());
 
 
@@ -251,6 +265,7 @@ public class Ant : MonoBehaviour
                     }
 
                 }
+            
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
             CubePaths.DrawCube(nextPosDraw, Color.blue);
@@ -332,7 +347,7 @@ public class Ant : MonoBehaviour
         PriorityQueue<GameObject, float> sensedItems = new();
         int maxColliders = 100;
         Collider[] hitColliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 7, hitColliders, layermask);
         for (int i = 0; i < numColliders; i++)
         {
             sensedItems.Enqueue(hitColliders[i].gameObject, Vector3.Distance(hitColliders[i].transform.position, transform.position));
