@@ -265,6 +265,7 @@ public class GameData
     public class AntInfo
     {
         public int id { get; set; }
+        public int age { get; set; }
         public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
         public bool isControlled { get; set; }
         public int followingPheromone { get; set; }
@@ -284,6 +285,7 @@ public class GameData
         {
             AntInfo info = new();
             info.id = ant.id;
+            info.age = ant.age;
             info.objective = TaskInfo.ToData(ant.objective);
             info.isControlled = ant.isControlled;
             info.followingPheromone = ant.followingPheromone;

@@ -12,9 +12,17 @@ public class Ant : MonoBehaviour
     public GameObject antObj;
     public Rigidbody Rigidbody;
     public BoxCollider PherSenseRange;
+    public CapsuleCollider terrainCapCollider;
+    public CapsuleCollider antCapCollider;
     public GameObject carriedObject = null; // the head bone
     public String taskName = "";
+    public GameObject staticEgg;
+    public GameObject eggAnim;
+    private Animator eggAnimator;
 
+
+    //el animador
+    private Animator Animator;
 
     //Variables for pheromone paths
     //public GameObject origPheromone;
@@ -30,6 +38,7 @@ public class Ant : MonoBehaviour
 
     //Datos que hay que guardar y cargar
     public int id;
+    public int age = 0;
     public Task objective = Task.NoTask();
     public bool isControlled = false;
     public int followingPheromone = -1; //if -1, not following a pheromone
@@ -37,8 +46,6 @@ public class Ant : MonoBehaviour
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
     public HashSet<int> discoveredCobs = new(); //Cobs discovered outside of nest.
 
-    //el animador
-    private Animator Animator;
 
     //Static values
     public static float speed_per_second = 2f;
@@ -46,6 +53,9 @@ public class Ant : MonoBehaviour
     public static float speed = 0;
     public static float tiltSpeed = 10;
     public static float sep = 0.35f;
+
+    //valor para gestionar cargar hormigas nacidas/no nacidas
+    public bool born = false;
 
     //static ant dictionary
     public static Dictionary<int, Ant> antDictionary = new();
@@ -92,14 +102,27 @@ public class Ant : MonoBehaviour
     {
         
         Rigidbody = antObj.GetComponent<Rigidbody>(); //El rigidbody se registra
-        Animator = antObj.GetComponent<Animator>(); //El Animator se registra
         PherSenseRange = antObj.GetComponent<BoxCollider>(); //El boxCollider se registra
-        SetWalking(false); //El estado por defecto no camina
-        Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
+        Animator = antObj.GetComponent<Animator>(); //El Animator se registra
         Animator.enabled = true; //Se habilita el animator
-        Animator.speed = 0; //To pause it the speed is set to 0.
+        Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
+        if (!born)
+        {
+            Animator.speed = 0; //To pause it the speed is set to 0.
+        }
+        else
+        {
+            eggAnim.SetActive(false);
+            staticEgg.SetActive(false);
+            Animator.SetBool("Born", true);
+            //Was gonna complicate my life a lot till i just put the transition to exit time.
+            Animator.speed = 1;
+        }
+
+        eggAnimator = eggAnim.GetComponent<Animator>();
 
         UpdateHolding();
+        SetWalking(false); //El estado por defecto no camina
 
 
         lastCube = Vector3Int.FloorToInt(transform.position);
@@ -214,14 +237,41 @@ public class Ant : MonoBehaviour
 
     
     Vector3Int nextPosDraw = Vector3Int.zero;
-
+    int ageUpdateCounter = 0;
     // Update is called once per frame
     void FixedUpdate()
     {
+
+        //Sistema de edad
+        ageUpdateCounter += 1;
+        if (ageUpdateCounter > 100)
+        {
+            age++;
+            ageUpdateCounter = 0;
+        }
+
+
         //Añadido para poder supervisar el estado en el que se encuentra la hormiga.
         taskName = objective.TaskToString();
 
-        if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
+        if (Animator.speed == 0) //Añadido nueva cláusula. animator es 0 porque la hormiga no ha nacido aún.
+        {
+            Rigidbody.useGravity = true;
+            if (age > 100)
+            {
+                Animator.speed = 1;
+                staticEgg.SetActive(false);
+                eggAnim.SetActive(true);
+                eggAnimator.enabled = true;
+                //eggPos = eggAnim.transform.position;
+                //eggDir = eggAnim.transform.eulerAngles;
+                //Instead of recording its pos and updating it so it doesn't move with the ant, 
+                //which has proven to be not ... , just remove it from heirarchy.
+                eggAnim.transform.SetParent(null);
+            }
+
+        }
+        else if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
         {
             Rigidbody.useGravity = false;
 
@@ -265,7 +315,7 @@ public class Ant : MonoBehaviour
                     }
 
                 }
-            
+
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
             CubePaths.DrawCube(nextPosDraw, Color.blue);
@@ -275,7 +325,20 @@ public class Ant : MonoBehaviour
 
         if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
 
+        if (eggAnim.activeSelf)
+        {
+            if (age < 108)
+            {
+                //eggAnim.transform.position = eggPos;
+                //eggAnim.transform.eulerAngles = eggDir;
+            }
+            else eggAnim.SetActive(false);
+        }
+
     }
+
+    private Vector3 eggPos = new Vector3(-999, -999, -999);
+    private Vector3 eggDir = new(0, 0, 0);
 
     //Failure if lost path or wrong taskType. Success if reached end. Running if in progress.
     private BehaviourTreeStatus FollowObjectivePath()

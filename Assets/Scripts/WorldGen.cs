@@ -486,6 +486,7 @@ public class WorldGen : MonoBehaviour
         Ant newAntScript = newAnt.GetComponent<Ant>();
 
         newAntScript.id = antInfo.id;
+        newAntScript.age = antInfo.age;
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
         newAntScript.Counter = antInfo.Counter;
