@@ -258,8 +258,10 @@ public class Ant : MonoBehaviour
         if (Animator.speed == 0) //Añadido nueva cláusula. animator es 0 porque la hormiga no ha nacido aún.
         {
             Rigidbody.useGravity = true;
+            transform.localScale = Vector3.one * Mathf.Clamp01(0.5f + (0.5f * (age + ageUpdateCounter/100f) / 100f));
             if (age > 100)
             {
+                transform.localScale = Vector3.one;
                 Animator.speed = 1;
                 staticEgg.SetActive(false);
                 eggAnim.SetActive(true);

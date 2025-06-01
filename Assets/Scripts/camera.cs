@@ -511,7 +511,7 @@ public class FlyCamera : MonoBehaviour
             {
                 case obj.Ant:
                     if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
+                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), false);
                     break;
                 case obj.Corn:
                         WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized*3f, Quaternion.Euler(new Vector3(90, 0, 0)));

@@ -231,12 +231,11 @@ MonoBehaviour:
   staticEgg: {fileID: 1123016342}
   eggAnim: {fileID: 1155347687}
   id: 0
-  age: 98
+  age: 0
   isControlled: 0
   followingPheromone: -1
   creatingPheromone: -1
   Counter: 0
-  born: 1
 --- !u!114 &6207866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1079,7 +1078,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 79fc8a230202b4e4490bccdceac9b434, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 959149765511527319, guid: 79fc8a230202b4e4490bccdceac9b434, type: 3}
       propertyPath: m_Layer
