@@ -110,6 +110,7 @@ public class Ant : MonoBehaviour
         if (!born)
         {
             Animator.speed = 0; //To pause it the speed is set to 0.
+            transform.localScale = Vector3.one * Mathf.Clamp01(0.5f + (0.5f * (age + ageUpdateCounter/100f) / 100f));
         }
         else
         {
