@@ -462,13 +462,14 @@ public class WorldGen : MonoBehaviour
         return nestPartScript;
     }
     
-    public static Ant InstantiateAnt(Vector3 pos, Quaternion orientation)
+    public static Ant InstantiateAnt(Vector3 pos, Quaternion orientation, bool born)
     {
         GameObject newAnt = Instantiate(originalAnt, pos, orientation); 
         newAnt.layer = 7;
         newAnt.SetActive(true);
         Ant newAntScript = newAnt.GetComponent<Ant>();
         Ant.registerAnt(newAntScript);
+        newAntScript.born = born;
 
         newAnt.name = "Ant " + newAntScript.id;
 
@@ -491,6 +492,10 @@ public class WorldGen : MonoBehaviour
         newAntScript.isControlled = antInfo.isControlled;
         newAntScript.Counter = antInfo.Counter;
         newAntScript.discoveredCobs = antInfo.discoveredCobs;
+
+        //Informamos tambien si la hormiga ha sido nacida o no.
+        if (antInfo.age > 100) newAntScript.born = true;
+        else newAntScript.born = false;
 
         newAnt.name = "Ant " + antInfo.id;
 

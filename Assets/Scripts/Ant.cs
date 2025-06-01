@@ -55,7 +55,8 @@ public class Ant : MonoBehaviour
     public static float sep = 0.35f;
 
     //valor para gestionar cargar hormigas nacidas/no nacidas
-    public bool born = false;
+    public bool born { get; set; }
+
 
     //static ant dictionary
     public static Dictionary<int, Ant> antDictionary = new();
