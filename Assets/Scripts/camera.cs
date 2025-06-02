@@ -443,6 +443,7 @@ public class FlyCamera : MonoBehaviour
         if (Mathf.Abs(mouseForward) > 0.1f) movement += relFor * mouseForward;
         if (Mathf.Abs(mouseSideways) > 0.1f) movement += relRight * mouseSideways;
 
+
         //resize the tunnel
         if (Input.mouseScrollDelta.y > 0)
             movement.y += 0.2f;
@@ -456,7 +457,7 @@ public class FlyCamera : MonoBehaviour
             case NestPart.NestPartType.Tunnel:
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
-                    placeDigObject.addPos(new Vector3(0, movement.x, 0));
+                    placeDigObject.addPos(new (movement.x, 0, movement.z));
                     placeDigObject.addRadius(movement.y);
                 }
                 else
