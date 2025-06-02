@@ -101,20 +101,24 @@ public class Task
         return LostTask(antSurface, Vector3.up);
     }
 
-    public static Task ExploreTask(CubePaths.CubeSurface antSurface, Vector3 forward)
+    public static Task ExploreTask(CubePaths.CubeSurface antSurface, Vector3 forward, out int timesToRepeat)
     {
         Task exploreTask = new()
         {
             type = TaskType.Explore,
         };
-        
-        if (CubePaths.GetExplorePath(antSurface, forward, out exploreTask.path)) return exploreTask;
+
+        if (CubePaths.GetExplorePath(antSurface, forward, out exploreTask.path))
+        {
+            timesToRepeat = Random.Range(30, 80); //La "distancia" de exploración
+            return exploreTask;
+        }
 
         Debug.Log("BIG ERROR; ANT IS IN STRANGE PLACE");
 
+        timesToRepeat = 0; //Ya que puede ser el counter, hay que ponerlo en 0
         return NoTask();
     }
-
 
     public static Task NoTask()
     {

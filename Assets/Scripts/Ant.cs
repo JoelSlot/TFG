@@ -150,18 +150,18 @@ public class Ant : MonoBehaviour
                             .Do("If reached chamber put down", t => { Debug.Log("Putting down"); Animator.SetBool("Put down", true); return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
-                    
+
                     .Do("Sense nearby task", t => SenseTask())
                     .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
-                    
+
                     .Sequence("If in nest go outside")
                         .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
-                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
+                        .Do("Set to go outside", t => {objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Sequence("If outside start exploring")
                         .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
-                        .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
+                        .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
                     .End()
                 .End()
 
@@ -217,13 +217,13 @@ public class Ant : MonoBehaviour
                     .Sequence("Explore")
                         .Condition("Is my task exploring?", t => objective.isTaskType(TaskType.Explore))
                         .Do("Follow objective path", t => FollowObjectivePath())
-                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
+                        .Do("Objective complete or failed", t => CheckExploreStatus())
                     .End()
 
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
                         .Do("Follow objective path", t => FollowObjectivePath())
-                        .Do("Increase counter", t => { Counter++; if (Counter > 10) { objective = Task.NoTask(); Counter = 0; } return BehaviourTreeStatus.Success; })
+                        .Do("Check if in nest", t => CheckLostStatus())
                     .End()
 
                     .Sequence("Waiting")
@@ -289,6 +289,7 @@ public class Ant : MonoBehaviour
             }
             else
             {
+
                 var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
                 if (stateInfo.IsTag("noMove"))
                 {
@@ -401,6 +402,49 @@ public class Ant : MonoBehaviour
         }
         else return BehaviourTreeStatus.Failure;
 
+    }
+
+    //Función de gestion de estado explore
+    private BehaviourTreeStatus CheckExploreStatus()
+    {
+        //Si no se ha encontrado task cerca y por tanto task no ha cambiado
+        if (SenseTask() == BehaviourTreeStatus.Failure)
+        {
+            Counter--;
+            //Si hemos explorado la distancia que queríamos, volvemos a casa.
+            if (Counter < 1)
+            {
+                Counter = 0; //Just to be extra sure.
+                objective = Task.GoInsideTask(antSurface);
+            }
+            else
+            {
+                objective = Task.ExploreTask(antSurface, transform.forward, out int Unimportant);
+            }
+        }
+        else Counter = 0;
+
+        return BehaviourTreeStatus.Success;
+    }
+
+    private BehaviourTreeStatus CheckLostStatus()
+    {
+        //Si hemos llegado al nido ya no estamos perdidos.
+        if (Nest.SurfaceInNest(antSurface))
+        {
+            Counter = 0;
+            objective = Task.NoTask();
+        }
+
+        Counter++;
+        //Si llevamos ya un rato perdidos, igual nos hemos topado con un camino de pheromonas que nos lleva a casa.
+        if (Counter > 10)
+        {
+            Counter = 0;
+            objective = Task.GoInsideTask(antSurface);
+        }
+
+        return BehaviourTreeStatus.Success;
     }
 
     private BehaviourTreeStatus SenseTask()
