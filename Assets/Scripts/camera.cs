@@ -28,20 +28,20 @@ public class FlyCamera : MonoBehaviour
     public WorldGen WG;
 
     //Variables para sistema de excavacion
-   
-    
+
+
     private bool placingDigZone = false;
     private Vector3 digStartPoint;
     private Vector3 digEndPoint;
 
-    
+
 
     float sphereDistance = 10f;
     float sphereScale = 1f;
 
 
-    public enum obj {None, Ant, Corn, digTunnel, digChamber, test}
-    
+    public enum obj { None, Ant, Corn, digTunnel, digChamber, test }
+
     public obj objectMode = obj.None;
     public Ant SelectedAnt;
 
@@ -83,7 +83,7 @@ public class FlyCamera : MonoBehaviour
         {
             cameraUnderground = true;
             camera.backgroundColor = Color.black;
-        }    
+        }
     }
 
     void FixedUpdate()
@@ -97,7 +97,7 @@ public class FlyCamera : MonoBehaviour
 
         // Rotation
         if (rotateAllowed)
-        { 
+        {
             Vector2 mouseDelta = lookSensitivity * new Vector2(Input.GetAxis("Mouse X"), -Input.GetAxis("Mouse Y"));
             Quaternion rotation = transform.rotation;
             Quaternion horiz = Quaternion.AngleAxis(mouseDelta.x, Vector3.up);
@@ -133,8 +133,8 @@ public class FlyCamera : MonoBehaviour
             sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
         }
 
-        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale/2, -1);
-        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale/2, 1);
+        if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale / 2, -1);
+        else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale / 2, 1);
 
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -177,7 +177,7 @@ public class FlyCamera : MonoBehaviour
         AddMovement(KeyCode.Space, Vector3.up);
         AddMovement(KeyCode.X, Vector3.down);
         Vector3 direction = moveInput.normalized;
-            
+
         if (Input.GetKey(KeyCode.LeftShift))
             return direction * (acceleration * accSprintMultiplier); // "sprinting"
         return direction * acceleration; // "walking"
@@ -198,8 +198,8 @@ public class FlyCamera : MonoBehaviour
             {
                 lockCursor(true);
                 TakePlacingInputs();
-            } 
-            else 
+            }
+            else
             {
                 lockCursor(false);
             }
@@ -259,7 +259,7 @@ public class FlyCamera : MonoBehaviour
                         Vector3 adjacentCorner = new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)); //siguiente v�rtice adjacente
                         if (!WorldGen.IsAboveSurface(new Vector3(MCF(hit.x, i2, 0), MCF(hit.y, i2, 1), MCF(hit.z, i2, 2)))) //Si alguno de los v�rtices est� debajo de la superficie podemos tomar este v�rtice
                         {
-                            nearest = cubeCorner ;
+                            nearest = cubeCorner;
                             distance = Vector3.Distance(hit, cubeCorner);
                         }
 
@@ -270,9 +270,9 @@ public class FlyCamera : MonoBehaviour
     }
 
     //GameObject.CreatePrimitive(PrimitiveType.Cilinder)
-    void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int,int>> points)
+    void PointsInSphere(Vector3 pos, float radius, out List<Tuple<Vector3Int, int>> points)
     {
-        points = new List<Tuple<Vector3Int,int>>();
+        points = new List<Tuple<Vector3Int, int>>();
 
         //check all points in the cube containing the sphere
         int radiusCeil = Mathf.CeilToInt(radius);
@@ -286,7 +286,7 @@ public class FlyCamera : MonoBehaviour
                     float distPoint = point.magnitude;
                     if (distPoint <= radius)
                     { //changed it to do ciel with the x and pos added (shouldn't change anything actually, hmm)
-                        points.Add(new Tuple<Vector3Int,int>(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)),Mathf.Clamp(Mathf.RoundToInt((255 - (127.5f * distPoint)/radius)/15), 0, 255)));
+                        points.Add(new Tuple<Vector3Int, int>(new Vector3Int(Mathf.CeilToInt(x + pos.x), Mathf.CeilToInt(y + pos.y), Mathf.CeilToInt(z + pos.z)), Mathf.Clamp(Mathf.RoundToInt((255 - (127.5f * distPoint) / radius) / 15), 0, 255)));
                     }
                 }
             }
@@ -294,16 +294,17 @@ public class FlyCamera : MonoBehaviour
     }
 
 
-    public void terrainEditSphere(Vector3 pos, float radius, int degree){
+    public void terrainEditSphere(Vector3 pos, float radius, int degree)
+    {
         PointsInSphere(pos, radius, out List<Tuple<Vector3Int, int>> points);
         WorldGen.EditTerrainAdd(points, degree);
     }
 
-    
+
     public void toDigPoints()
     {
         Dictionary<Vector3Int, DigPoint.digPointData> points = Nest.NestParts.Last().pointsInDigObject();
-        foreach(var entry in points)
+        foreach (var entry in points)
         {
             var newDigPointData = entry.Value;
             var pos = entry.Key;
@@ -317,7 +318,7 @@ public class FlyCamera : MonoBehaviour
                 // Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
                 else if (newDigPointData.value < WorldGen.isolevel)
                 {
-                    Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
+                    Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
                     //Si algun punto del alrededor se encuentra sobre la superficie lo instanciamos
                     foreach (Vector3Int direction in directions)
                         if (WorldGen.IsAboveSurface(pos + direction)) newDigPointData.InstantiatePoint(pos);
@@ -327,12 +328,13 @@ public class FlyCamera : MonoBehaviour
         }
     }
 
-    private void digAllPoints(){
+    private void digAllPoints()
+    {
         List<Vector3Int> keys = new List<Vector3Int>(DigPoint.digPointDict.Keys);
         foreach (var key in keys)
         {
             if (DigPoint.digPointDict.ContainsKey(key))
-                if(DigPoint.digPointDict[key].digPoint != null)
+                if (DigPoint.digPointDict[key].digPoint != null)
                 {
                     GameObject digPointObject = DigPoint.digPointDict[key].digPoint.gameObject;
                     DigPoint.digPointDict[key].digPoint.Dig();
@@ -345,7 +347,7 @@ public class FlyCamera : MonoBehaviour
 
     private void ReadInputs()
     {
-        
+
         //Mouse controls depending on game mode
         if (MainMenu.GameSettings.gameMode == 0)
             MapBuildingMode();
@@ -373,16 +375,16 @@ public class FlyCamera : MonoBehaviour
         CameraMovement();
         if (!placingDigZone)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha0)){objectMode = obj.None; Debug.Log("Modo none");} //cambiar modo a ninguno
-            if (Input.GetKeyDown(KeyCode.Alpha1)){objectMode = obj.Ant; Debug.Log("Modo ant");} //cambiar modo a hormiga
-            if (Input.GetKeyDown(KeyCode.Alpha2)){objectMode = obj.Corn; Debug.Log("Modo corn");} //Cambiar al modo poner comida
-            if (Input.GetKeyDown(KeyCode.Alpha3)){objectMode = obj.digTunnel; Debug.Log("Modo túnel");} //cambiar de modo a construir
-            if (Input.GetKeyDown(KeyCode.Alpha4)){objectMode = obj.digChamber; Debug.Log("Modo chamber");} // cambiar de modo a construir 
-            if (Input.GetKeyDown(KeyCode.Alpha5)){objectMode = obj.test; Debug.Log("Modo test");} // cambiar de modo a test 
+            if (Input.GetKeyDown(KeyCode.Alpha0)) { objectMode = obj.None; Debug.Log("Modo none"); } //cambiar modo a ninguno
+            if (Input.GetKeyDown(KeyCode.Alpha1)) { objectMode = obj.Ant; Debug.Log("Modo ant"); } //cambiar modo a hormiga
+            if (Input.GetKeyDown(KeyCode.Alpha2)) { objectMode = obj.Corn; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
+            if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
+            if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
+            if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
         }
-        if (Input.GetKeyDown(KeyCode.Alpha9)){digAllPoints();}
+        if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
-        { 
+        {
             SelectedAnt.isControlled = !SelectedAnt.isControlled;
         }
         /*if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
@@ -403,7 +405,7 @@ public class FlyCamera : MonoBehaviour
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
     {
-        Vector3Int[] horDirs = {Vector3Int.right, Vector3Int.back, Vector3Int.left};
+        Vector3Int[] horDirs = { Vector3Int.right, Vector3Int.back, Vector3Int.left };
         float minAngle = Vector3.Angle(dir, Vector3Int.forward);
         Vector3Int shortest = Vector3Int.forward;
         Vector3Int prev = Vector3Int.left;
@@ -428,11 +430,11 @@ public class FlyCamera : MonoBehaviour
 
         NestPart placeDigObject = Nest.NestParts.Last();
 
-        
+
         //Move the digObject
         float mouseForward = Input.GetAxis("Mouse Y");
         float mouseSideways = Input.GetAxis("Mouse X");
-        
+
         Vector3 dir = camera.transform.forward;
         dir.y = 0;
         Vector3 relFor = this.transform.forward;
@@ -457,22 +459,22 @@ public class FlyCamera : MonoBehaviour
             case NestPart.NestPartType.Tunnel:
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
-                    placeDigObject.addPos(new (movement.x, 0, movement.z));
+                    placeDigObject.addPos(new(movement.x, 0, movement.z));
                     placeDigObject.addRadius(movement.y);
                 }
                 else
                 {
                     placeDigObject.addPos(movement);
                 }
-            break;
+                break;
             case NestPart.NestPartType.FoodChamber:
                 if (Input.GetKey(KeyCode.LeftShift))
                     placeDigObject.addPos(movement);
                 else
                     placeDigObject.addStartPos(movement);
-            break;
+                break;
         }
-        
+
 
     }
 
@@ -480,6 +482,7 @@ public class FlyCamera : MonoBehaviour
     {
         int antLayer = (1 << 7); //capa de hormigas
         int terrainLayer = (1 << 6); //terrain layer
+        int nestLayer = (1 << 12); //capa de las partes del nido
         if (objectMode == obj.None)
         {
             if (clickObject(antLayer, out RaycastHit hit))
@@ -516,7 +519,7 @@ public class FlyCamera : MonoBehaviour
                     SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), false);
                     break;
                 case obj.Corn:
-                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized*3f, Quaternion.Euler(new Vector3(90, 0, 0)));
+                    WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
                     break;
                 case obj.digTunnel:
                 case obj.digChamber:
@@ -539,10 +542,10 @@ public class FlyCamera : MonoBehaviour
                         }
                     }
                     break;
-                    
+
                 case obj.test:
                     Vector3Int cube = Vector3Int.FloorToInt(hit.point);
-                    
+
                     /*if (SelectedAnt != null)
                     {
                         //CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
@@ -556,7 +559,7 @@ public class FlyCamera : MonoBehaviour
                     CubePaths.GetPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
 
                     CubePaths.DrawCube(cube, Color.red, 20);
-                    
+
                     /*
                     bool[] cornerValues = CubePaths.CubeCornerValues(cube);
 
@@ -582,13 +585,36 @@ public class FlyCamera : MonoBehaviour
                     break;
                 default:
                     Debug.Log("No valid object mode when clicked");
-                break;
+                    break;
             }
+        }
+        else if (clickObject(nestLayer, out hit))
+        {
+            if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
+                if (!placingDigZone)
+                {
+                    placingDigZone = true;
+                    digStartPoint = hit.point;
+                    digEndPoint = hit.point;
+                    NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
+                    if (objectMode == obj.digTunnel)
+                    {
+                        nestPartScript.setMode(NestPart.NestPartType.Tunnel);
+                        nestPartScript.setPos(digStartPoint, digEndPoint);
+                    }
+                    else
+                    {
+                        nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
+                        nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                        nestPartScript.setKinematic(false);
+                    }
+
+                }
         }
     }
 
 
-    
+
 
 }
 

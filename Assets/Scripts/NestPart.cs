@@ -80,7 +80,6 @@ public class NestPart : MonoBehaviour
             cilinder.SetActive(true);
             transform.localRotation = Quaternion.Euler(dir);
             setPos(transform.position, endPos);
-            toggleCollision(false);
         }
         else if (newMode == NestPartType.FoodChamber)
         {
@@ -88,7 +87,6 @@ public class NestPart : MonoBehaviour
             endSphere.SetActive(false);
             cilinder.SetActive(false);
             transform.localRotation = Quaternion.Euler(Vector3.up);
-            toggleCollision(true);
         }
     }
 
@@ -173,15 +171,6 @@ public class NestPart : MonoBehaviour
         {
             renderer.material = material;
         }
-    }
-
-    public void toggleCollision(bool value)
-    {
-
-        MeshCollider[] colliders = GetComponentsInChildren<MeshCollider>();
-
-        for (int i = 0; i < colliders.Count(); i++)
-            colliders[i].enabled = value;
     }
 
     public void setRadius(float newRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
@@ -349,7 +338,11 @@ public class NestPart : MonoBehaviour
     {
         if (collision.gameObject != this.gameObject && collision.gameObject.CompareTag("NestPart"))
         {
-            collidingClones.Add(collision.gameObject);
+            //Only register other non-tunnels (should always be chambers)
+            NestPart collisionNestPart = collision.gameObject.GetComponent<NestPart>();
+            if (collisionNestPart != null)
+                if (collisionNestPart.mode != NestPartType.Tunnel)
+                    collidingClones.Add(collision.gameObject);
         }
     }
 
