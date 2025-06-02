@@ -32,7 +32,7 @@ public class DigPoint : MonoBehaviour
         {
             if (digPoint == null)
             {
-                Debug.Log("I HAVE BEEN CREATED AT " + pos);
+                //Debug.Log("I HAVE BEEN CREATED AT " + pos);
                 digPoint = WorldGen.InstantiateDigPoint(pos);
             }
         }

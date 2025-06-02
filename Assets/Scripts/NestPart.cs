@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -9,8 +10,11 @@ public class NestPart : MonoBehaviour
     public GameObject cilinder;
     public GameObject startSphere;
     public GameObject endSphere;
+    public Material normalMaterial;
+    public Material errorMaterial;
+    public Rigidbody rigidBody;
 
-    public enum NestPartType {Tunnel, FoodChamber, Outside}
+    public enum NestPartType { Tunnel, FoodChamber, Outside }
 
     public static int NestPartTypeToIndex(NestPartType type)
     {
@@ -49,37 +53,46 @@ public class NestPart : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (!gotPoints)
+            if (mode != NestPartType.Tunnel)
+            {
+                if (IsNotCollidingWithOtherChamber())
+                {
+                    setMaterial(normalMaterial);
+                }
+                else setMaterial(errorMaterial);
+            }
     }
 
     public void setMode(NestPartType newMode)
     {
-        if (newMode == mode) return;
+        //if (newMode == mode) return; This was causing the toggleCollision to not run...
         mode = newMode;
         if (newMode == NestPartType.Tunnel)
         {
-            startSphere.GetComponent<MeshRenderer>().enabled = true;
-            endSphere.GetComponent<MeshRenderer>().enabled = true;
-            cilinder.GetComponent<MeshRenderer>().enabled = true;
+            startSphere.SetActive(true);
+            endSphere.SetActive(true);
+            cilinder.SetActive(true);
             transform.localRotation = Quaternion.Euler(dir);
             setPos(transform.position, endPos);
+            toggleCollision(false);
         }
         else if (newMode == NestPartType.FoodChamber)
         {
-            startSphere.GetComponent<MeshRenderer>().enabled = true;
-            endSphere.GetComponent<MeshRenderer>().enabled = false;
-            cilinder.GetComponent<MeshRenderer>().enabled = false;
+            startSphere.SetActive(true);
+            endSphere.SetActive(false);
+            cilinder.SetActive(false);
             transform.localRotation = Quaternion.Euler(Vector3.up);
+            toggleCollision(true);
         }
     }
 
-    public NestPartType getMode() {return mode;}
+    public NestPartType getMode() { return mode; }
 
     public void setPos(Vector3 start, Vector3 end)
     {
@@ -88,12 +101,12 @@ public class NestPart : MonoBehaviour
         if (mode == NestPartType.Tunnel)
         {
             dir = end - start;
-            transform.position = startPos;
             startSphere.transform.localPosition = Vector3.zero;
             endSphere.transform.localPosition = Vector3.up * dir.magnitude;
             cilinder.transform.localPosition = Vector3.up * dir.magnitude / 2;
-            cilinder.transform.localScale = new Vector3(radius*2, dir.magnitude/2, radius*2);
+            cilinder.transform.localScale = new Vector3(radius * 2, dir.magnitude / 2, radius * 2);
             transform.up = dir.normalized;
+            rigidBody.MovePosition(startPos);
         }
         else if (mode == NestPartType.FoodChamber)
         //The chamber uses startpos as its center, and endPos as one of it's corners
@@ -101,17 +114,19 @@ public class NestPart : MonoBehaviour
             endPos.x = Mathf.Max(endPos.x, startPos.x + 5);
             endPos.y = Mathf.Max(endPos.y, startPos.y + 5);
             endPos.z = Mathf.Max(endPos.z, startPos.z + 5);
-            
+
             Vector3 distance = endPos - startPos;
-            transform.position = startPos;
             startSphere.transform.localPosition = Vector3.zero;
             startSphere.transform.localScale = new Vector3(Mathf.Abs(distance.x), Mathf.Abs(distance.y), Mathf.Abs(distance.z));
+
             
+            rigidBody.MovePosition(startPos);
+
             transform.up = Vector3.up;
             float a = Mathf.Abs(distance.x);
             float b = Mathf.Abs(distance.y);
             float c = Mathf.Abs(distance.z);
-            Debug.Log("a: " + a + ", b: " + b + ", c: " + c);
+            //Debug.Log("a: " + a + ", b: " + b + ", c: " + c);
         }
     }
 
@@ -150,6 +165,24 @@ public class NestPart : MonoBehaviour
         setPos(startPos + add, endPos + add);
     }
 
+    public void setMaterial(Material material)
+    {
+        Renderer[] childRenders = GetComponentsInChildren<Renderer>();
+
+        foreach (var renderer in childRenders)
+        {
+            renderer.material = material;
+        }
+    }
+
+    public void toggleCollision(bool value)
+    {
+
+        MeshCollider[] colliders = GetComponentsInChildren<MeshCollider>();
+
+        for (int i = 0; i < colliders.Count(); i++)
+            colliders[i].enabled = value;
+    }
 
     public void setRadius(float newRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
     {
@@ -157,12 +190,12 @@ public class NestPart : MonoBehaviour
         radius = newRadius;
         startSphere.transform.localScale = 2 * radius * Vector3.one;
         endSphere.transform.localScale = 2 * radius * Vector3.one;
-        cilinder.transform.localScale = new Vector3(radius*2, dir.magnitude/2, radius*2);        
+        cilinder.transform.localScale = new Vector3(radius * 2, dir.magnitude / 2, radius * 2);
     }
 
     public void addRadius(float addRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
     {
-        setRadius(radius + addRadius);       
+        setRadius(radius + addRadius);
     }
 
     public float getRadius()
@@ -170,18 +203,38 @@ public class NestPart : MonoBehaviour
         return radius;
     }
 
-    public Vector3 GetDir(){ return dir; }
+    public Vector3 GetDir() { return dir; }
 
 
-    public void setActive(bool active) 
+    public void setActive(bool active)
     {
-        startSphere.SetActive(active);
-        endSphere.SetActive(active);
-        cilinder.SetActive(active);
+        if (active == false)
+        {
+            startSphere.SetActive(active);
+            endSphere.SetActive(active);
+            cilinder.SetActive(active);
+        }
+        else
+        {
+            if (mode == NestPartType.Tunnel)
+            {
+                startSphere.SetActive(true);
+                endSphere.SetActive(true);
+                cilinder.SetActive(true);
+                transform.localRotation = Quaternion.Euler(dir);
+                setPos(transform.position, endPos);
+            }
+            else if (mode == NestPartType.FoodChamber)
+            {
+                startSphere.SetActive(true);
+                endSphere.SetActive(false);
+                cilinder.SetActive(false);
+            }
+        }
     }
 
 
- 
+
     public void SetVisible(bool visible)
     {
         cilinder.GetComponent<MeshRenderer>().enabled = visible;
@@ -190,11 +243,12 @@ public class NestPart : MonoBehaviour
     }
 
     //Devuelve los puntos que componen el área que se quiere excavar.
-    public Dictionary<Vector3Int, DigPoint.digPointData> pointsInDigObject(){
+    public Dictionary<Vector3Int, DigPoint.digPointData> pointsInDigObject()
+    {
         if (gotPoints) return new Dictionary<Vector3Int, DigPoint.digPointData>();
         else gotPoints = true;
-        
-        SetVisible(false);
+
+        //SetVisible(false);
 
         Dictionary<Vector3Int, DigPoint.digPointData> points = new();
         HashSet<Vector3Int> checkedPoints = new();
@@ -206,7 +260,7 @@ public class NestPart : MonoBehaviour
         pointsToCheck.Enqueue(start);
         points.Add(start, new DigPoint.digPointData(desiredVal)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
 
-        Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back};
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
 
         while (pointsToCheck.Count > 0)
         {
@@ -216,7 +270,7 @@ public class NestPart : MonoBehaviour
             {
                 Vector3Int son = father + direction;
                 if (!checkedPoints.Contains(son)) // si no se ha visto aun
-                { 
+                {
                     desiredVal = getMarchingValue(son);
                     //Si el punto se encuentra dentro de la forma que se excavará miraremos sus adyacentes
                     if (desiredVal < WorldGen.isolevel)
@@ -224,13 +278,13 @@ public class NestPart : MonoBehaviour
                         pointsToCheck.Enqueue(son);
                     }
                     //Si el punto realmente cambiará el terreno, lo guardamos para ser excavado
-                    if (desiredVal < WorldGen.SampleTerrain(son) && !DigPoint.IsPointless(son)) points.Add(son, new DigPoint.digPointData(desiredVal)); 
+                    if (desiredVal < WorldGen.SampleTerrain(son) && !DigPoint.IsPointless(son)) points.Add(son, new DigPoint.digPointData(desiredVal));
                     //Registramos que ya hemos mirado este punto
                     checkedPoints.Add(son);
                 }
             }
         }
-        
+
         return points;
     }
 
@@ -272,20 +326,55 @@ public class NestPart : MonoBehaviour
     float EllipseDistance(Vector3 point)
     {
         Vector3 distance = endPos - startPos;
-        float a = Mathf.Abs(distance.x)/2;
-        float b = Mathf.Abs(distance.y)/2;
-        float c = Mathf.Abs(distance.z)/2;
+        float a = Mathf.Abs(distance.x) / 2;
+        float b = Mathf.Abs(distance.y) / 2;
+        float c = Mathf.Abs(distance.z) / 2;
         Vector3 localPos = point - transform.position;
         //Debug.DrawLine(transform.position, point, Color.white, 100000);
         float x = localPos.x;
         float y = localPos.y;
         float z = localPos.z;
         //float wrongValue = (x*x/a*a + y*y/b*b + z*z/c*c); //I HAVE BEEN USING THIS FOR A WHOLE DAY AND A HALF WONDERING WHY IT DIDNT WORK AAAAAAAA
-        float value = ((x*x)/(a*a) + (y*y)/(b*b) + (z*z)/(c*c));
+        float value = ((x * x) / (a * a) + (y * y) / (b * b) + (z * z) / (c * c));
         //float value2 = 
         //Debug.Log("a: " + a + ", b: " + b + ", c: " + c + ", x: " + x + ", y: " + y + ", z: " + z + " result: " + value);
-        return value/2;
+        return value / 2;
     }
 
+
+
+    private HashSet<GameObject> collidingClones = new HashSet<GameObject>();
+    // Called when another collider starts touching this one
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject != this.gameObject && collision.gameObject.CompareTag("NestPart"))
+        {
+            collidingClones.Add(collision.gameObject);
+        }
+    }
+
+    // Called when another collider stops touching this one
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("NestPart"))
+        {
+            collidingClones.Remove(collision.gameObject);
+        }
+    }
+
+
+    // Your boolean function
+    public bool IsNotCollidingWithOtherChamber()
+    {
+        if (mode == NestPartType.Tunnel) return true;
+        //Debug.Log(collidingClones.Count);
+        return collidingClones.Count == 0;
+    }
+
+    public void setKinematic(bool value)
+    {
+        rigidBody.isKinematic = value;
+    }
+    
 
 }

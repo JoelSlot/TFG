@@ -499,10 +499,11 @@ public class FlyCamera : MonoBehaviour
                 Destroy(ErasePart);
                 placingDigZone = false;
             }
-            else
+            else if (Nest.NestParts.Last().IsNotCollidingWithOtherChamber())
             {
                 toDigPoints();
                 placingDigZone = false;
+                Nest.NestParts.Last().setKinematic(true);
             }
         }
         else if (clickObject(terrainLayer, out RaycastHit hit))
@@ -533,6 +534,7 @@ public class FlyCamera : MonoBehaviour
                         {
                             nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
                             nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                            nestPartScript.setKinematic(false);
                         }
                     }
                     break;

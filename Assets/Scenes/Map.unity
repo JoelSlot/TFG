@@ -457,9 +457,10 @@ GameObject:
   m_Component:
   - component: {fileID: 196003841}
   - component: {fileID: 196003840}
-  - component: {fileID: 196003839}
   - component: {fileID: 196003842}
-  m_Layer: 2
+  - component: {fileID: 196003839}
+  - component: {fileID: 196003843}
+  m_Layer: 12
   m_Name: DigSphereStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -489,7 +490,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c3d11786ce71d754b9bbb51b6ce18d1a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -555,6 +556,28 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.001, y: 1.001, z: 1.001}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!64 &196003843
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196003837}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4096
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &281970058 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1579325990899706, guid: 2b5ba3f0e23ea4246a8cf4a37ffd8767, type: 3}
@@ -1486,9 +1509,10 @@ GameObject:
   m_Component:
   - component: {fileID: 856479751}
   - component: {fileID: 856479750}
-  m_Layer: 0
+  - component: {fileID: 856479752}
+  m_Layer: 12
   m_Name: NestPart
-  m_TagString: Untagged
+  m_TagString: NestPart
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1508,6 +1532,9 @@ MonoBehaviour:
   cilinder: {fileID: 2009118847}
   startSphere: {fileID: 196003837}
   endSphere: {fileID: 1396928760}
+  normalMaterial: {fileID: 2100000, guid: c3d11786ce71d754b9bbb51b6ce18d1a, type: 2}
+  errorMaterial: {fileID: 2100000, guid: c1a20c671406c294e96ec00ccfd27da1, type: 2}
+  rigidBody: {fileID: 856479752}
   mode: 0
   interval: 0.1
   gotPoints: 0
@@ -1529,6 +1556,33 @@ Transform:
   - {fileID: 2009118851}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &856479752
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856479749}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4096
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 0
+  m_ImplicitTensor: 0
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 2
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1957,7 +2011,8 @@ GameObject:
   - component: {fileID: 1396928764}
   - component: {fileID: 1396928763}
   - component: {fileID: 1396928762}
-  m_Layer: 2
+  - component: {fileID: 1396928765}
+  m_Layer: 12
   m_Name: DigSphereEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1987,7 +2042,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c3d11786ce71d754b9bbb51b6ce18d1a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2032,6 +2087,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 856479751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &1396928765
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1396928760}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4096
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1465707527 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
@@ -2515,7 +2592,7 @@ GameObject:
   - component: {fileID: 2009118850}
   - component: {fileID: 2009118849}
   - component: {fileID: 2009118852}
-  m_Layer: 2
+  m_Layer: 12
   m_Name: DigCilinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2545,7 +2622,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c3d11786ce71d754b9bbb51b6ce18d1a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2590,8 +2667,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 856479751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &2009118852
-CapsuleCollider:
+--- !u!64 &2009118852
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2600,19 +2677,18 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4096
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 0.6
-  m_Height: 0.5
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &2026811054
 GameObject:
   m_ObjectHideFlags: 0

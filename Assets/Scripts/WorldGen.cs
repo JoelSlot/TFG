@@ -455,7 +455,7 @@ public class WorldGen : MonoBehaviour
 
         //Se asume que el objeto ya ha sido colocado.
         nestPartScript.gotPoints = true;
-        nestPartScript.SetVisible(false);
+        //nestPartScript.SetVisible(false);
 
 
         Nest.NestParts.Add(nestPartScript);
