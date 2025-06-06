@@ -407,7 +407,7 @@ public class WorldGen : MonoBehaviour
 
     }
 
-    public void SaveMap()
+    public void SaveGame()
     {
         Debug.Log("Starting save");
         

@@ -369,7 +369,7 @@ public class FlyCamera : MonoBehaviour
         {
             WorldGen.camera_pos = new(transform.position);
             WorldGen.camera_euler = new(transform.eulerAngles);
-            WG.SaveMap();
+            WG.SaveGame();
         }
         //Move the camera
         CameraMovement();
