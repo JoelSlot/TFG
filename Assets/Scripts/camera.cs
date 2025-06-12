@@ -293,10 +293,12 @@ public class FlyCamera : MonoBehaviour
         }
     }
 
-
+    //Edita todos los puntos dentro de la esfera dada
     public void terrainEditSphere(Vector3 pos, float radius, int degree)
     {
+        //Obtiene los puntos dentro de la esfera y sus valores según su cercanía al centro
         PointsInSphere(pos, radius, out List<Tuple<Vector3Int, int>> points);
+        //Aplica los cambios de valores a los puntos
         WorldGen.EditTerrainAdd(points, degree);
     }
 
