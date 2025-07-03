@@ -339,3 +339,61 @@ Cambios hechos sobre el emisor de partículas:
 - Color sobre tiempo simplificado y cambiado. Se espera poder cambiar este color en el código para poder diferenciar los distintos caminos. Por ahora se ha dejado en rosa en vez del verde original.
 
 
+
+  
+  
+
+# Timeline de github
+
+Todos los updates de github que cambiaron ficheros de funcionamiento del TFG relevantes.
+
+Oct 28, 2024: primer commit del proyecto.
+
+- Modelo de hormiga con animación de caminar.
+    
+- Escenas de menú y mapa
+    
+- Script de hormiga, con punto de gravedad y uso de AddForce para permitir hormiga mover sobre cualquier superficie. Controles de movimiento manuales.
+    
+- Clase GameData con tablas de triángulos para marchincubes
+    
+- La clase MainMenu, que permitia al jugador pulsar los botones de la escena menú e ir a la escena de mapa en modo construcción o juego.
+    
+- La clase WorldGen con las funciones:
+    
+    - Creación de los chunks
+        
+    - Guardar y cargar mapa (sin incripción)
+        
+    - Generar un mapa aleatorio
+        
+    - Editar el mapa mediante EditTerrain
+        
+    
+- Clase FlyCamera con controles de cámera, hormigas y la esfera de edición de mapas.
+    
+- Clase chunk con funciones de generar y gestionar su sección del mapa.
+    
+
+  
+  
+
+Nov 8, 2024: fix de movimiento de la hormiga para rotar con terreno y camera
+
+- Editado clase Ant para que si no ve algo con su raycast central pero si con algunos otros rotar la hormiga manualmente para alinear con el terreno.
+    
+- Editado FlyCamera:
+    
+    - La cámara solo se mueve en el plano horizontal al usar wasd.
+        
+    - En el modo juego, la cámara ahora solo se mueve con el ratón cuando se mantiene pulsado el botón derecho
+        
+    - Limpieza de código
+        
+    - Añadido función clickObject que hace raycast de ratón sobre terreno y devuelve posición de colisión.
+        
+
+  
+  
+
+Nov 9, 2024
