@@ -79,7 +79,7 @@ public class NestPart : MonoBehaviour
             endSphere.SetActive(true);
             cilinder.SetActive(true);
             transform.localRotation = Quaternion.Euler(dir);
-            setPos(transform.position, endPos);
+            SetPos(transform.position, endPos);
         }
         else if (newMode == NestPartType.FoodChamber)
         {
@@ -92,7 +92,7 @@ public class NestPart : MonoBehaviour
 
     public NestPartType getMode() { return mode; }
 
-    public void setPos(Vector3 start, Vector3 end)
+    public void SetPos(Vector3 start, Vector3 end)
     {
         endPos = end;
         startPos = start;
@@ -128,20 +128,6 @@ public class NestPart : MonoBehaviour
         }
     }
 
-    public void setPos(Vector3 pos)
-    {
-        if (mode == NestPartType.Tunnel)
-        {
-            setPos(startPos, pos);
-        }
-        else if (mode == NestPartType.FoodChamber)
-        //The chamber uses startpos as its center, and endPos as one of it's corners
-        {
-            Vector3 change = pos - transform.position;
-            setPos(pos, endPos + change);
-        }
-    }
-
     public Vector3 getStartPos()
     {
         return startPos;
@@ -153,14 +139,14 @@ public class NestPart : MonoBehaviour
     }
 
 
-    public void addPos(Vector3 add)
+    public void AddPos(Vector3 add)
     {
-        setPos(startPos, endPos + add);
+        SetPos(startPos, endPos + add);
     }
 
-    public void addStartPos(Vector3 add)
+    public void AddStartPos(Vector3 add)
     {
-        setPos(startPos + add, endPos + add);
+        SetPos(startPos + add, endPos + add);
     }
 
     public void setMaterial(Material material)
@@ -211,7 +197,7 @@ public class NestPart : MonoBehaviour
                 endSphere.SetActive(true);
                 cilinder.SetActive(true);
                 transform.localRotation = Quaternion.Euler(dir);
-                setPos(transform.position, endPos);
+                SetPos(transform.position, endPos);
             }
             else if (mode == NestPartType.FoodChamber)
             {

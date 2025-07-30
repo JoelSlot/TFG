@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 public enum TaskType
 {
     Explore,
-    DigPoint,
+    Dig,
     GetCorn,
     CollectFromCob,
     GoOutside,
@@ -35,7 +35,7 @@ public class Task
     public Task(GameObject newGameObject, TaskType newType, List<CubePaths.CubeSurface> newPath)
     {
         type = newType;
-        if (type == TaskType.DigPoint) digPointId = Vector3Int.RoundToInt(newGameObject.transform.position);
+        if (type == TaskType.Dig) digPointId = Vector3Int.RoundToInt(newGameObject.transform.position);
         else if (type == TaskType.GetCorn) foodId = newGameObject.GetComponent<Corn>().id;
         else if (type == TaskType.CollectFromCob) foodId = newGameObject.GetComponent<CornCob>().id;
         else Debug.Log("WRONG TASKTYPE");
@@ -56,7 +56,7 @@ public class Task
             path = new()
         };
 
-        if (CubePaths.GetPathToMapPart(antSurface, NestPart.NestPartType.Outside, out GOtask.path)) return GOtask;
+        if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.Outside, out GOtask.path)) return GOtask;
 
         Debug.Log("No valid path, didnt create GoOutSideTask");
 
@@ -71,7 +71,7 @@ public class Task
         };
 
         //Used foodchamber for now as default
-        if (CubePaths.GetPathToMapPart(antSurface, NestPart.NestPartType.FoodChamber, out GOtask.path)) return GOtask;
+        if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.FoodChamber, out GOtask.path)) return GOtask;
 
         Debug.Log("No valid path");
 
@@ -94,7 +94,7 @@ public class Task
                 break;
         }
 
-        if (CubePaths.GetPathToMapPart(antSurface, type, out GOtask.path)) return GOtask;
+        if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path)) return GOtask;
 
         Debug.Log("No valid path");
 
@@ -173,7 +173,7 @@ public class Task
 
     public DigPoint GetDigPoint()
     {
-        if (isTaskType(TaskType.DigPoint))
+        if (isTaskType(TaskType.Dig))
             if (DigPoint.digPointDict.ContainsKey(digPointId))
                 return DigPoint.digPointDict[digPointId].digPoint;
 
@@ -185,7 +185,7 @@ public class Task
     {
         switch (type)
         {
-            case TaskType.DigPoint:
+            case TaskType.Dig:
                 if (!DigPoint.digPointDict.ContainsKey(digPointId))
                 {
                     //If the objective is not valid, the ant loses it.
@@ -240,7 +240,7 @@ public class Task
         switch (type)
         {
             case TaskType.Explore: return "Go to pos";
-            case TaskType.DigPoint: return "Dig point";
+            case TaskType.Dig: return "Dig point";
             case TaskType.GetCorn: return "Get food";
             case TaskType.GoOutside: return "Go outside";
             case TaskType.GoInside: return "Go inside";
@@ -259,7 +259,7 @@ public class Task
         switch (type)
         {
             case TaskType.Explore: return 0;
-            case TaskType.DigPoint: return 1;
+            case TaskType.Dig: return 1;
             case TaskType.GetCorn: return 2;
             case TaskType.GoOutside: return 3;
             case TaskType.GoInside: return 4;
@@ -278,7 +278,7 @@ public class Task
         switch (index)
         {
             case 0: return TaskType.Explore;
-            case 1: return TaskType.DigPoint;
+            case 1: return TaskType.Dig;
             case 2: return TaskType.GetCorn;
             case 3: return TaskType.GoOutside;
             case 4: return TaskType.GoInside;

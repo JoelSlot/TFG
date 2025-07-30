@@ -15,7 +15,7 @@ public class Ant : MonoBehaviour
     public CapsuleCollider terrainCapCollider;
     public CapsuleCollider antCapCollider;
     public GameObject carriedObject = null; // the head bone
-    public String taskName = "";
+    public string taskName = "";
     public GameObject staticEgg;
     public GameObject eggAnim;
     private Animator eggAnimator;
@@ -41,8 +41,6 @@ public class Ant : MonoBehaviour
     public int age = 0;
     public Task objective = Task.NoTask();
     public bool isControlled = false;
-    public int followingPheromone = -1; //if -1, not following a pheromone
-    public int creatingPheromone = -1; //id of the pheormone the ant is creating. -1 if none
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
     public HashSet<int> discoveredCobs = new(); //Cobs discovered outside of nest.
 
@@ -110,14 +108,12 @@ public class Ant : MonoBehaviour
         if (!born)
         {
             Animator.speed = 0; //To pause it the speed is set to 0.
-            transform.localScale = Vector3.one * Mathf.Clamp01(0.5f + (0.5f * (age + ageUpdateCounter/100f) / 100f));
         }
         else
         {
             eggAnim.SetActive(false);
             staticEgg.SetActive(false);
             Animator.SetBool("Born", true);
-            //Was gonna complicate my life a lot till i just put the transition to exit time.
             Animator.speed = 1;
         }
 
@@ -126,16 +122,19 @@ public class Ant : MonoBehaviour
         UpdateHolding();
         SetWalking(false); //El estado por defecto no camina
 
+        //Modificador del tamaño de la hormiga según su edad
+        transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter/100f) / 200f));
+        
 
         lastCube = Vector3Int.FloorToInt(transform.position);
 
         var builder = new BehaviourTreeBuilder();
         this.tree = builder
-            .Sequence("Main") //Todo: rename forgetful to normal and normal to forgetful.
+            .Sequence("Main")
                 .Selector("Get task if none")
                     .Condition("I have a task?", t => { return !objective.isTaskType(TaskType.None); })
 
-                    //If im holding food, go send food.
+                    //If im holding food, bring to nest.
                     .Sequence("If carrying bring to food chamber") //To do: expand this into giving food to larva?
                         .Condition("Carrying food check", t => IsHolding())
                         .Selector("Check where ant is")
@@ -154,49 +153,40 @@ public class Ant : MonoBehaviour
                     .Do("Sense nearby task", t => SenseTask())
                     .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
 
-                    .Sequence("If in nest go outside")
-                        .Condition("Am I in nest?", t => Nest.SurfaceInNest(antSurface))
-                        .Do("Set to go outside", t => {objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
+                    .Selector("Go outside")
+                        .Condition("Am outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
                     .End()
 
-                    .Sequence("If outside start exploring")
-                        .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
-                        .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
-                    .End()
+                    //.Sequence("If outside start exploring")
+                    //    .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                    .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
+                //.End()
                 .End()
 
                 .Selector("Do tasks")
 
                     .Sequence("Pick up corn routine")
-                        .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn))
+                        .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
                         .Condition("Is my task valid", t => objective.isValid(this))
                         .Sequence("Pick up sequence")
-                            .Do("Go to food", t => FollowObjectivePath())
-                            .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
-                        .End()
-                    .End()
-
-                    .Sequence("Pick from cob routine")
-                        .Condition("My task is picking from cob?", t => objective.isTaskType(TaskType.CollectFromCob))
-                        .Condition("Is my task valid", t => objective.isValid(this))
-                        .Sequence("Pick up sequence")
-                            .Do("Go to food", t => FollowObjectivePath())
+                            .Do("Go to food", t => FollowTaskPath())
                             .Do("Align with food", t => Align(objective.getPos()))
                             .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
                     .Sequence("Dig routine")
-                        .Condition("My task is digging?", t => objective.isTaskType(TaskType.DigPoint))
+                        .Condition("My task is digging?", t => objective.isTaskType(TaskType.Dig))
                         .Condition("Is my task valid", t => objective.isValid(this))
                         .Sequence("Dig sequence")
-                            .Do("Go to digPoint", t => FollowObjectivePath())
+                            .Do("Go to digPoint", t => FollowTaskPath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
                             .Do("Wait for dig", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
+                    /*
                     .Sequence("Go outside")
                         .Condition("Is my task going outside?", t => objective.isTaskType(TaskType.GoOutside))
                         .Do("Follow objective path", t => FollowObjectivePath())
@@ -205,30 +195,34 @@ public class Ant : MonoBehaviour
                             .Do("Complete objective", t => { objective = Task.NoTask(); return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
-
+                    */
 
                     .Sequence("Just follow path")
-                        .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel); })
+                        .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
                         .Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
-                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Sequence("Explore")
                         .Condition("Is my task exploring?", t => objective.isTaskType(TaskType.Explore))
-                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Objective complete or failed", t => CheckExploreStatus())
                     .End()
 
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
-                        .Do("Follow objective path", t => FollowObjectivePath())
+                        .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Check if in nest", t => CheckLostStatus())
                     .End()
 
                     .Sequence("Waiting")
                         .Condition("Am i waiting?", t => objective.isTaskType(TaskType.Wait))
-                        .Do("Decrease waiting counter", t => { Counter -= 1; if (Counter <= 0) { objective = Task.NoTask(); Counter = 0; } return BehaviourTreeStatus.Success; })
+                        .Do("Decrease waiting counter", t => { Counter -= 1; return BehaviourTreeStatus.Success; })
+                        .Selector("Terminar espera si contador es 0")
+                            .Condition("contador es mayor que 0?", t => Counter > 0)
+                            .Do("Terminar tarea de espera", t => { objective = Task.NoTask(); Counter = 0; return BehaviourTreeStatus.Success; })
+                        .End()
                     .End()
 
                 .End()
@@ -256,10 +250,10 @@ public class Ant : MonoBehaviour
         //Añadido para poder supervisar el estado en el que se encuentra la hormiga.
         taskName = objective.TaskToString();
 
-        if (Animator.speed == 0) //Añadido nueva cláusula. animator es 0 porque la hormiga no ha nacido aún.
+        if (Animator.speed == 0) //Cuando la hormiga no ha nacido aún:
         {
             Rigidbody.useGravity = true;
-            transform.localScale = Vector3.one * Mathf.Clamp01(0.5f + (0.5f * (age + ageUpdateCounter/100f) / 100f));
+            transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter/100f) / 200f));
             if (age > 100)
             {
                 transform.localScale = Vector3.one;
@@ -275,6 +269,7 @@ public class Ant : MonoBehaviour
             }
 
         }
+        //Si la hormiga ya ha nacido:
         else if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
         {
             Rigidbody.useGravity = false;
@@ -303,14 +298,9 @@ public class Ant : MonoBehaviour
                 else tree.Tick(new TimeData(Time.deltaTime));
 
             }
-            //Debug.Log("Task type: " + objective.TaskToString());
-
 
             if (changedSurface)
-                if (!Nest.SurfaceInNest(antSurface))
-                    //if (objective.type != TaskType.GoInside && objective.type != TaskType.GoToChamber && objective.type != TaskType.GoToTunnel)
-                    CubePaths.PlacePheromone(antSurface.pos);
-                else
+                if (Nest.SurfaceInNest(antSurface))
                 {
                     //Si hemos llegado al nido habiendo descubierto mazorcas, lo compartimos en el nido.
                     if (discoveredCobs.Count > 0)
@@ -318,8 +308,8 @@ public class Ant : MonoBehaviour
                         Nest.KnownCornCobs.AddRange(discoveredCobs);
                         discoveredCobs = new();
                     }
-
                 }
+                else CubePaths.PlacePheromone(antSurface.pos);
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
@@ -330,23 +320,14 @@ public class Ant : MonoBehaviour
 
         if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
 
-        if (eggAnim.activeSelf)
-        {
-            if (age < 108)
-            {
-                //eggAnim.transform.position = eggPos;
-                //eggAnim.transform.eulerAngles = eggDir;
-            }
-            else eggAnim.SetActive(false);
-        }
+        //Desactivar el huevo unos segundos despues de nacer.
+        if (eggAnim.activeSelf && age > 108)
+            eggAnim.SetActive(false);
 
     }
 
-    private Vector3 eggPos = new Vector3(-999, -999, -999);
-    private Vector3 eggDir = new(0, 0, 0);
-
     //Failure if lost path or wrong taskType. Success if reached end. Running if in progress.
-    private BehaviourTreeStatus FollowObjectivePath()
+    private BehaviourTreeStatus FollowTaskPath()
     {
         if (!objective.isTaskType(TaskType.None))
         {
@@ -443,6 +424,8 @@ public class Ant : MonoBehaviour
             Counter = 0;
             objective = Task.GoInsideTask(antSurface);
         }
+        else
+            objective = Task.LostTask(antSurface, transform.forward);
 
         return BehaviourTreeStatus.Success;
     }
@@ -471,7 +454,7 @@ public class Ant : MonoBehaviour
         while (sensedItems.Count > 0)
         {
             GameObject sensedItem = sensedItems.Dequeue();
-            //DigPoints tienen prioridad sobre comida
+            //DigPoints tienen prioridad sobre comida. Si se mira un objeto no DigPoint habiendo detectado ya uno, se ignora el objeto actual
             if (sensedItem.gameObject.layer != 9 && foundDigPoint) break;
             //Comida dentro de una cámara de comida no se recoge
             if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) break;
@@ -491,7 +474,7 @@ public class Ant : MonoBehaviour
                     //2. Being a short path
                     if (newScore > minDigPointScore)
                     {
-                        newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                        newTask = new Task(sensedItem, TaskType.Dig, newPath);
                         minDigPointScore = newScore;
                         minLength = newPath.Count;
                     }
@@ -499,7 +482,7 @@ public class Ant : MonoBehaviour
                     {
                         if (newPath.Count < minLength)
                         {
-                            newTask = new Task(sensedItem, TaskType.DigPoint, newPath);
+                            newTask = new Task(sensedItem, TaskType.Dig, newPath);
                             minLength = newPath.Count;
                         }
                     }
@@ -572,7 +555,7 @@ public class Ant : MonoBehaviour
         {
             Animator.SetBool("Pick up", true);
         }
-        if (objective.isTaskType(TaskType.DigPoint)) 
+        if (objective.isTaskType(TaskType.Dig)) 
         {
             Animator.SetBool("Dig", true);
         }
@@ -866,43 +849,10 @@ public class Ant : MonoBehaviour
 
     }
 
-    /*
-    private void PlacePheromone(bool[] rayCastHits, CubePaths.CubeSurface antSurface)
-    {
-        //DECIDE SI PONER PHEROMONA AAAAAAAAAAAAAAA---------------------------------------------------------
-        if (rayCastHits[4]) //si se crea camino y el raycast principal ve suelo
-        {
-            if (placedPher == null) //La hormiga no ha empezado aún su camino
-            {
-                placedPher = CubePaths.StartPheromoneTrail(antSurface);
-            }
-            else if (CubePaths.DoesSurfaceConnect(placedPher.GetSurface(), antSurface.pos)) //Si se ha llegado a un nuevo cubo adyacente
-            {   //Might somehow fuck up if ant moves to adyacent cube on unreachable surface SOMEHOW. 
-                placedPher = CubePaths.ContinuePheromoneTrail(antSurface, placedPher);
-            }
-            else //Si la hormiga se ha separado de su anterior camino
-            {
-                //si ha sido un salto corto, se rellena la distancia con la pheromona
-                if (CubePaths.GetPathToSurface(placedPher.GetSurface(), antSurface, 3, out List<CubePaths.CubeSurface> path))
-                {
-                    Debug.Log("DISCONECTED BUT NOT BY MUCH");
-                    CubePheromone prev = placedPher;
-                    foreach (var surface in path)
-                    {
-                        prev = CubePaths.ContinuePheromoneTrail(surface, prev);
-                    }
-                    placedPher = prev;
-                }
-                else
-                    placedPher = CubePaths.StartPheromoneTrail(antSurface);
-            }
-        }
-    }
-    */
 
     private void AdjustAntToGround(bool[] rayCastHits, float[] rayCastDist, Quaternion deltaRotation)
     {
-        if (!rayCastHits[4])
+        if (!rayCastHits[4]) // Si el raycast central no ve el terreno, hay que ajustar rápidamente su orientación en la dirección correcta hasta que si lo vea.
         {
             float xRotation = 0;
             float zRotation = 0;
@@ -917,7 +867,7 @@ public class Ant : MonoBehaviour
             deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
             Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
         }
-        else
+        else //Si el raycast central si ve terreno, la hormiga ajusta solo si la diferencia es notable entre los raycast de las esquinas esquinas
         {
             float xRotation = 0;
             float zRotation = 0;
@@ -1047,16 +997,16 @@ public class Ant : MonoBehaviour
         }
 
         //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
-            while (goalIndex == -1 && range < 5)
-            {
-                range++;
-                sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
+        while (goalIndex == -1 && range < 5)
+        {
+            range++;
+            sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
 
-                for (int i = 0; i < objective.path.Count; i += 1)
-                {
-                    if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
-                }
+            for (int i = 0; i < objective.path.Count; i += 1)
+            {
+                if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
             }
+        }
 
         //Si no se ha encontrado el camino, hemos fallado
         if (goalIndex == -1)

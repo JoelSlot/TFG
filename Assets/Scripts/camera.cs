@@ -461,19 +461,19 @@ public class FlyCamera : MonoBehaviour
             case NestPart.NestPartType.Tunnel:
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
-                    placeDigObject.addPos(new(movement.x, 0, movement.z));
+                    placeDigObject.AddPos(new(movement.x, 0, movement.z));
                     placeDigObject.addRadius(movement.y);
                 }
                 else
                 {
-                    placeDigObject.addPos(movement);
+                    placeDigObject.AddPos(movement);
                 }
                 break;
             case NestPart.NestPartType.FoodChamber:
                 if (Input.GetKey(KeyCode.LeftShift))
-                    placeDigObject.addPos(movement);
+                    placeDigObject.AddPos(movement);
                 else
-                    placeDigObject.addStartPos(movement);
+                    placeDigObject.AddStartPos(movement);
                 break;
         }
 
@@ -534,12 +534,12 @@ public class FlyCamera : MonoBehaviour
                         if (objectMode == obj.digTunnel)
                         {
                             nestPartScript.setMode(NestPart.NestPartType.Tunnel);
-                            nestPartScript.setPos(digStartPoint, digEndPoint);
+                            nestPartScript.SetPos(digStartPoint, digEndPoint);
                         }
                         else
                         {
                             nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
-                            nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                            nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                             nestPartScript.setKinematic(false);
                         }
                     }
@@ -558,7 +558,7 @@ public class FlyCamera : MonoBehaviour
 
                     CubePaths.CubeSurface clickedSurface = new(cube, hit.normal);
 
-                    CubePaths.GetPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
+                    CubePaths.GetKnownPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
 
                     CubePaths.DrawCube(cube, Color.red, 20);
 
@@ -602,12 +602,12 @@ public class FlyCamera : MonoBehaviour
                     if (objectMode == obj.digTunnel)
                     {
                         nestPartScript.setMode(NestPart.NestPartType.Tunnel);
-                        nestPartScript.setPos(digStartPoint, digEndPoint);
+                        nestPartScript.SetPos(digStartPoint, digEndPoint);
                     }
                     else
                     {
                         nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
-                        nestPartScript.setPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                        nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                         nestPartScript.setKinematic(false);
                     }
 

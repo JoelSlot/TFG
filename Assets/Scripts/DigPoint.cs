@@ -7,6 +7,10 @@ using UnityEngine.UI;
 public class DigPoint : MonoBehaviour
 {
 
+    //Remember that this class only exists to be a fisicial object. All the relevant info is in digPointData.
+    //But it is still necesary
+
+
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
 
 
@@ -20,8 +24,6 @@ public class DigPoint : MonoBehaviour
             value = val;
             digPoint = null;
         }
-
-        private digPointData() { digPoint = null; }
 
         public void update(digPointData newData)
         {

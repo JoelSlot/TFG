@@ -82,7 +82,7 @@ public class WorldGen : MonoBehaviour
         }
         else
         {
-            LoadMap(MainMenu.GameSettings.saveFile);
+            LoadGame(MainMenu.GameSettings.saveFile);
         }
         Physics.gravity = new Vector3(0, -15.0F, 0);
 
@@ -376,7 +376,7 @@ public class WorldGen : MonoBehaviour
         return direction.normalized;
     }
 
-    public void LoadMap(string saveFile)
+    public void LoadGame(string saveFile)
     {
         Debug.Log("Starting loading");
 
@@ -449,7 +449,7 @@ public class WorldGen : MonoBehaviour
         nestObj.SetActive(true);
         NestPart nestPartScript = nestObj.GetComponent<NestPart>();
         nestPartScript.setMode(NestPart.IndexToNestPartType(info.mode));
-        nestPartScript.setPos(info.startPos.ToVector3(), info.endPos.ToVector3());
+        nestPartScript.SetPos(info.startPos.ToVector3(), info.endPos.ToVector3());
         nestPartScript.setRadius(info.radius);
         nestPartScript.setActive(true);
 
@@ -470,6 +470,7 @@ public class WorldGen : MonoBehaviour
         Ant newAntScript = newAnt.GetComponent<Ant>();
         Ant.registerAnt(newAntScript);
         newAntScript.born = born;
+        newAntScript.age = 0;
 
         newAnt.name = "Ant " + newAntScript.id;
 

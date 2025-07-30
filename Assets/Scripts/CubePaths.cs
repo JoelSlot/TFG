@@ -242,12 +242,9 @@ public class CubePaths : MonoBehaviour
     //Dado la superficie actual y la dir en la que se quiere mover devuelve el punto a seguir para llegar
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
-        //Debug.Log("MOVEMENT GOAL 1");
+        //Si la dirección es inválida, ponemos el gol sobre el centro del cubo actual más la dirección por 400. Deberia no quedarse justo encima ni debajo de la hormiga con esa distancia.
         if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
         {
-            DrawCube(surface.pos, Color.black, 20);
-            DrawCube(surface.pos + dir, Color.black, 20);
-            //Debug.Log("NOT VALID DIR: " + dir);
             return surface.pos + Vector3.one / 2 + dir * 400;
         }
 
@@ -259,11 +256,11 @@ public class CubePaths : MonoBehaviour
             int cornerIndex = chunk.faceIndexes[faceIndex, i];
             if (!surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
             {
-                goal += chunk.cornerTable[cornerIndex];
+                goal += new Vector3(0.5f, 0.5f, 0.5f) - chunk.cornerTable[cornerIndex];
                 num++;
             }
         }
-        goal = surface.pos + goal / num;
+        goal = surface.pos + new Vector3(0.5f, 0.5f, 0.5f) + goal / num;
         //Para evitar goals que dejan a la hormiga en el sitio al estar justo encima de ellos:
         if (GetAdyacentSurface(surface, chunk.reverseFaceDirections[dir]).Count() == num) //Si los puntos que conectan los cubos son los unicos de la superficie del segundo cubo:
         {
@@ -286,19 +283,10 @@ public class CubePaths : MonoBehaviour
         //Debug.Log("MOVEMENT GOAL 2");
 
         //Si la segunda dir no es válida usamos solo dir 1
-        if (!chunk.reverseFaceDirections.TryGetValue(dir2, out int faceIndex2))
+        if (!chunk.reverseFaceDirections.TryGetValue(dir1, out int faceIndex1) || !chunk.reverseFaceDirections.TryGetValue(dir2, out int faceIndex2))
         {
             //Debug.Log("DIR 2 NOT VALID: " + dir2);
             return GetMovementGoal(surface, dir1);
-        }
-
-
-        if (!chunk.reverseFaceDirections.TryGetValue(dir1, out int faceIndex1))
-        {
-            DrawCube(surface.pos, Color.black, 20);
-            DrawCube(surface.pos + dir1, Color.black, 20);
-            //Debug.Log("DIR 1 NOT VALID: " + dir1);
-            return surface.pos + Vector3.one / 2 + dir1 * 2;
         }
 
         //Si la segunda dir es igual o opuesto al primero, no es importante y podemos usar solo el primero.
@@ -318,27 +306,28 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             int cornerIndex1 = chunk.faceIndexes[faceIndex1, i];
-            if (!surface.surfaceGroup[cornerIndex1]) //Si el punto se encuentra bajo la superficie
+            if (surface.surfaceGroup[cornerIndex1]) //Si el punto se encuentra bajo la superficie
             {
-                goal += chunk.cornerTable[cornerIndex1];
+                goal += new Vector3(0.5f, 0.5f, 0.5f) + chunk.cornerTable[cornerIndex1];
                 num++;
             }
 
+            //Mirar vértices de la segunda cara para problema de giro interno
             int cornerIndex2 = chunk.faceIndexes[faceIndex2, i];
             if (surface.surfaceGroup[cornerIndex2])
             {
                 bool sharedCorner = false;
-                for (int j = 0; j < 4; j++) if (chunk.faceIndexes[faceIndex1, j] == cornerIndex2) sharedCorner = true;
+                for (int j = 0; j < 4; j++)
+                    if (chunk.faceIndexes[faceIndex1, j] == cornerIndex2)
+                        sharedCorner = true;
                 if (sharedCorner) sharedEdge += 1;
                 else nonSharedEdge += 1;
             }
         }
-        goal = surface.pos + goal / num;
-
-        DrawFace(surface.pos, faceIndex1, Color.blue, 2);
-        DrawFace(surface.pos, faceIndex2, Color.red, 2);
+        goal = surface.pos + new Vector3(0.5f, 0.5f, 0.5f) + goal / num;
 
         //THIS SOLVED THE INNER TURN PROBLEM
+        //shared edge are those commen between 2nd face and 1st face. nonSharedEdge are those of 2nd face not in common.
         if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceDirections[faceIndex2] * 4;
 
         goal += chunk.faceDirections[faceIndex1] * 4;
@@ -684,7 +673,7 @@ public class CubePaths : MonoBehaviour
     }
 
 
-    public static bool GetPathToMapPart(CubeSurface start, NestPart.NestPartType type, out List<CubeSurface> path)
+    public static bool GetKnownPathToMapPart(CubeSurface start, NestPart.NestPartType type, out List<CubeSurface> path)
     {
         Debug.Log("Finding path...");
         path = new List<CubeSurface>();
@@ -702,7 +691,7 @@ public class CubePaths : MonoBehaviour
         CubeSurface reachedMapPart = start;
 
         while (frontera.Count > 0)
-        {
+        {   
             CubeSurface current = frontera.Dequeue();
 
             if (Nest.SurfaceInNestPart(current, type))
@@ -779,17 +768,6 @@ public class CubePaths : MonoBehaviour
         foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
         beyondRange = GetNextSurfaceRange(antSurface, antForward, beyondRange, ref checkedSurfaces);
         foreach (var surface in beyondRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
-
-        /*
-        Since SortedDictionary is sorted on the key, you can create a sorted list of keys with
-        var keys = new List<DateTime>(dictionary.Keys);
-        and then efficiently perform binary search on it:
-        var index = keys.BinarySearch(key);
-        As the documentation says, if index is positive or zero then the key exists; if it is negative, then ~index is the index where key would be found at if it existed. Therefore the index of the "immediately smaller" existing key is ~index - 1. Make sure you handle correctly the edge case where key is smaller than any of the existing keys and ~index - 1 == -1.
-        Of course the above approach really only makes sense if keys is built up once and then queried repeatedly; since it involves iterating over the whole sequence of keys and doing a binary search on top of that there's no point in trying this if you are only going to search once. In that case even naive iteration would be better.
-        
-        //var keys = new List<Vector3Int>(cubePherParticleDict.Keys);
-        */
 
 
         //Conseguir media de todos las feromonas cercanas.
@@ -931,7 +909,7 @@ public class CubePaths : MonoBehaviour
         //Si el rango es la superficie de la hormiga se cogen los adyacentes (para poner sus firststep)
         if (currentRange[0].Equals(antSurface))
         {
-            if (currentRange.Count != 1) Debug.Log("YOU FUCKED UPPPPP-------------------------");
+            if (currentRange.Count != 1) Debug.Log("Error: Range includes more than just ant initial position");
 
             List<CubeSurface> adyacentCubes = GetAdyacentSurfaces(antSurface, antForward);
             foreach (var son in adyacentCubes)

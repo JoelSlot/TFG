@@ -10,7 +10,7 @@ using Polenter.Serialization.Core;
 using Unity.VisualScripting;
 using UnityEngine;
 
-
+[Serializable]
 public class GameData
 {
 
@@ -268,8 +268,6 @@ public class GameData
         public int age { get; set; }
         public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
         public bool isControlled { get; set; }
-        public int followingPheromone { get; set; }
-        public int creatingPheromone { get; set; }
         public serializableVector3 pos { get; set; }
         public serializableQuaternion orientation { get; set; }
         public bool isHolding { get; set; }
@@ -288,8 +286,6 @@ public class GameData
             info.age = ant.age;
             info.objective = TaskInfo.ToData(ant.objective);
             info.isControlled = ant.isControlled;
-            info.followingPheromone = ant.followingPheromone;
-            info.creatingPheromone = ant.creatingPheromone;
             info.pos = new(ant.transform.position);
             info.orientation = new(ant.transform.rotation);
             info.Counter = ant.Counter;
@@ -470,7 +466,6 @@ public class GameData
         DigPoint.digPointDict = digPointDict;
         foreach (var id in initializedDigPoints)
         {
-
             DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
         }
 
@@ -529,12 +524,9 @@ public class GameData
             {
                 end = !nextPos();
                 if (end) nextBlock = true;
-                else if (repeatCount == 255) nextBlock = true;
-                else if (terrainMap[x, y, z] != currentValue) nextBlock = true;
-                else
-                {
-                    repeatCount++;
-                }
+                else if  (repeatCount == 255) nextBlock = true;
+                else if  (terrainMap[x, y, z] != currentValue) nextBlock = true;
+                else     repeatCount++;
             }
 
             if (repeatCount > 1)
@@ -557,10 +549,8 @@ public class GameData
                 i = 0;
                 localStream = new();
                 tagByte = new(new bool[8]);
-
             }
         }
-
 
         return mainStream;
     }
@@ -582,7 +572,7 @@ public class GameData
             return true;
         }
 
-        BitArray tagByte = new(255);
+        BitArray tagByte;
         bool end = false;
         int max = 0;
 

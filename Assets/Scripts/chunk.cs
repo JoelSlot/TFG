@@ -82,8 +82,6 @@ public class chunk
                 configIndex |= 1 << i;
         }
 
-        
-
         //Si la malla no pasa por el cubo salimos de la funci�n
         if (configIndex == 0 || configIndex == 255) return;
 
