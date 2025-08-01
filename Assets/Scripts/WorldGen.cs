@@ -40,6 +40,9 @@ public class WorldGen : MonoBehaviour
     public GameObject origAnt;
     public static GameObject originalAnt;
 
+    public GameObject origQueen;
+    public static GameObject originalQueen;
+
     public GameObject origNestPart;
     public static GameObject originalNestPart;
 
@@ -62,6 +65,7 @@ public class WorldGen : MonoBehaviour
         
         //Turn all non static members into static ones:
         originalAnt = origAnt;
+        originalQueen = origQueen;
         originalNestPart = origNestPart;
         originalCorn = origCorn;
         originalDigPoint = origDigPoint;
@@ -74,7 +78,7 @@ public class WorldGen : MonoBehaviour
         {
             terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
             memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-            PopulateTerrainMap();
+            PopulateNoiseMap();
             GenerateChunks();
             Nest.NestParts = new();
             Nest.KnownCornCobs = new();
@@ -125,7 +129,7 @@ public class WorldGen : MonoBehaviour
     /*
      * Crea el terreno. 
      */
-    public void PopulateTerrainMap()
+    public void PopulateFlatMap()
     {
         //Itera sobre todos los puntos del campo escalar
         for (int x = 0; x < x_dim + 1; x++)
@@ -145,6 +149,43 @@ public class WorldGen : MonoBehaviour
                     else
                         terrainMap[x, y, z] = 0;
 
+                    memoryMap[x,y,z] = terrainMap[x,y,z];
+                }
+            }
+        }
+
+        camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
+        newCameraPosInfo = true;
+
+        Debug.Log(string.Format("Terrain generated"));
+
+    }
+
+    public void PopulateNoiseMap()
+    {
+        //Itera sobre todos los puntos del campo escalar
+        for (int x = 0; x < x_dim + 1; x++)
+        {
+            for (int y = 0; y < y_dim + 1; y++)
+            {
+                for (int z = 0; z < z_dim + 1; z++)
+                {
+                    
+                    float perlinValue = Mathf.PerlinNoise(x / (float)x_dim, z / (float)z_dim);
+                    float relativeY = (float)y / (float)y_dim;
+                    float value = relativeY - perlinValue;
+
+
+
+                    if (z == 0 || z == z_dim || x == 0 || x == x_dim)
+                        terrainMap[x, y, z] = 0;
+                    else //if (y == Mathf.FloorToInt(height) || y == Mathf.CeilToInt(height))
+                        terrainMap[x, y, z] = 255 - Mathf.FloorToInt(value * 255);
+/*                  else if (y > height)
+                       terrainMap[x, y, z] = 0;
+                    else
+                        terrainMap[x, y, z] = 255;
+*/
                     memoryMap[x,y,z] = terrainMap[x,y,z];
                 }
             }
@@ -470,7 +511,10 @@ public class WorldGen : MonoBehaviour
         Ant newAntScript = newAnt.GetComponent<Ant>();
         Ant.registerAnt(newAntScript);
         newAntScript.born = born;
-        newAntScript.age = 0;
+        if (!born)
+            newAntScript.age = 0;
+        else
+            newAntScript.age = 100;
 
         newAnt.name = "Ant " + newAntScript.id;
 
@@ -502,10 +546,40 @@ public class WorldGen : MonoBehaviour
 
         Ant.antDictionary.Add(antInfo.id, newAntScript);
     }
+    
+    public static AntQueen InstantiateQueen(Vector3 pos, Quaternion orientation)
+    {
+        GameObject newQueen = Instantiate(originalQueen, pos, orientation); 
+        newQueen.layer = 7;
+        newQueen.SetActive(true);
+        AntQueen newQueenScript = newQueen.GetComponent<AntQueen>();
+
+        newQueen.name = "Ant Queen";
+        AntQueen.antQueen = newQueenScript;
+
+        return newQueenScript;
+    }
+
+    public static void InstantiateQueen(GameData.QueenInfo queenInfo)
+    {
+        Vector3 pos = queenInfo.pos.ToVector3();
+        Quaternion orientation = queenInfo.orientation.ToQuaternion();
+
+        GameObject newQueen = Instantiate(originalQueen, pos, orientation); 
+        newQueen.layer = 7;
+        newQueen.SetActive(true);
+        AntQueen newQueenScript = newQueen.GetComponent<AntQueen>();
+
+        newQueenScript.objective = new Task(queenInfo.objective);
+        newQueenScript.Counter = queenInfo.Counter;
+
+        newQueen.name = "Ant Queen";
+        AntQueen.antQueen = newQueenScript;
+    }
 
     public static Corn InstantiateCorn(Vector3 pos, Quaternion orientation)
     {
-        GameObject newCorn = Instantiate(originalCorn, pos, orientation); 
+        GameObject newCorn = Instantiate(originalCorn, pos, orientation);
         newCorn.SetActive(true);
         newCorn.layer = 10; //Food layer0
         Corn newCornScript = newCorn.GetComponent<Corn>();

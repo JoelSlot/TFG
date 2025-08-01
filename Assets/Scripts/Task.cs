@@ -233,6 +233,60 @@ public class Task
         return true;
     }
 
+    
+    public bool isValid(AntQueen ant)
+    {
+        switch (type)
+        {
+            case TaskType.Dig:
+                if (!DigPoint.digPointDict.ContainsKey(digPointId))
+                {
+                    //If the objective is not valid, the ant loses it.
+                    ant.objective = Task.NoTask();
+                    return false;
+                }
+                break;
+            case TaskType.GetCorn:
+                GameObject foodObj = GetFood();
+                //if the food item no longer exists
+                if (foodObj == null)
+                {
+                    ant.objective = Task.NoTask();
+                    return false;
+                }
+                //To check if held by ant, just see if held, it is not by corncob.
+                bool heldByAnt = false;
+                if (foodObj.transform.parent != null)
+                    if (foodObj.transform.parent.GetComponent<CornCob>() == null)
+                        heldByAnt = true;
+                // if it has moved somehow or has been picked up
+                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || heldByAnt)
+                {
+                    //If the objective is not valid, the ant loses it.
+                    ant.objective = Task.NoTask();
+                    return false;
+                }
+                break;
+            case TaskType.CollectFromCob:
+                //if the cornCob no longer exists:
+                if (GetFood() == null)
+                {
+                    ant.objective = Task.NoTask();
+                    return false;
+                }
+                // if it has moved somehow or has no more corn.
+                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || !GetFood().GetComponent<CornCob>().hasCorn())
+                {
+                    //If the objective is not valid, the ant loses it.
+                    ant.objective = Task.NoTask();
+                    return false;
+                }
+                break;
+        }
+        return true;
+    }
+
+
     public Vector3 getPos() { return pos; }
 
     public string TaskToString()

@@ -29,6 +29,7 @@ public class GameData
 
     public serializableVector3 camera_pos { get; set; }
     public serializableVector3 camera_euler { get; set; }
+    public QueenInfo queenInfo { get; set; }
     public HashSet<AntInfo> antInfoDict { get; set; }
     public HashSet<CornInfo> cornInfoDict { get; set; }
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
@@ -299,6 +300,35 @@ public class GameData
     }
 
     [Serializable]
+    public class QueenInfo
+    {
+        public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
+        public serializableVector3 pos { get; set; }
+        public serializableQuaternion orientation { get; set; }
+        public bool isHolding { get; set; }
+        public int Counter { get; set; }
+
+        private QueenInfo()
+        {
+
+        }
+
+        public static QueenInfo ToData(AntQueen ant)
+        {
+            QueenInfo info = new();
+            info.objective = TaskInfo.ToData(ant.objective);
+            info.pos = new(ant.transform.position);
+            info.orientation = new(ant.transform.rotation);
+            info.Counter = ant.Counter;
+
+            info.isHolding = ant.IsHolding();
+
+            return info;
+        }
+
+    }
+
+    [Serializable]
     public class TaskInfo
     {
         public Vector3Int digPointId { get; set; }
@@ -407,6 +437,8 @@ public class GameData
         data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
         data.terrainMemoryStream = data.EnCode(WorldGen.memoryMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
 
+        data.queenInfo = QueenInfo.ToData(AntQueen.antQueen);
+
         data.saveAnts();
 
         data.saveCorn();
@@ -443,6 +475,9 @@ public class GameData
 
     public void LoadGameObjects()
     {
+        
+        WorldGen.InstantiateQueen(queenInfo);
+        
         foreach (AntInfo info in antInfoDict)
         {
             WorldGen.InstantiateAnt(info);

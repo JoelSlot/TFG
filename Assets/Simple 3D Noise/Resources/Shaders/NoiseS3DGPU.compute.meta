@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 96963c05814907247b9287fd18c59596
+ComputeShaderImporter:
+  externalObjects: {}
+  currentAPIMask: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 79407
+  packageName: Simple 3D Noise
+  packageVersion: 1.1
+  assetPath: Assets/Simple 3D Noise/Resources/Shaders/NoiseS3DGPU.compute
+  uploadId: 310304

@@ -11,7 +11,6 @@ public class Ant : MonoBehaviour
 {
     public GameObject antObj;
     public Rigidbody Rigidbody;
-    public BoxCollider PherSenseRange;
     public CapsuleCollider terrainCapCollider;
     public CapsuleCollider antCapCollider;
     public GameObject carriedObject = null; // the head bone
@@ -101,7 +100,7 @@ public class Ant : MonoBehaviour
     {
         
         Rigidbody = antObj.GetComponent<Rigidbody>(); //El rigidbody se registra
-        PherSenseRange = antObj.GetComponent<BoxCollider>(); //El boxCollider se registra
+        Rigidbody.centerOfMass = new Vector3(0, 0.05f, 0); //aplicamos centro de masa
         Animator = antObj.GetComponent<Animator>(); //El Animator se registra
         Animator.enabled = true; //Se habilita el animator
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
@@ -691,14 +690,12 @@ public class Ant : MonoBehaviour
         //Obtenemos los datos de distancia hacia la pheromona
         Vector3 relativeGoal = Rigidbody.transform.InverseTransformPoint(goal); //relative position of the goal to the ant
         relativeGoal.y = 0; //Para calcular la distancia en el plano horizontal se quita el valor y
-        float horAngle = Vector3.Angle(Vector3.forward, relativeGoal);
-
 
         //MOST IMPORTANT CHANGE: MAKES EVERYTHING A LOT SMOOTHER.
         Vector3 goalVector = goal - transform.position;
         Vector3 proyectedGoal = Vector3.ProjectOnPlane(goalVector, hitNormal);
         Vector3 proyectedForward = Vector3.ProjectOnPlane(transform.forward, hitNormal);
-        horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
+        float horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
 
         Debug.DrawLine(transform.position, goal, Color.red, 0.35f);
     
@@ -842,7 +839,8 @@ public class Ant : MonoBehaviour
 
         //MOVE ANT FORWARD
         Vector3 proyectedVector = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.forward, surfaceNormalMedian); //Project movement over terrain
-        Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
+        //Rigidbody.position = Rigidbody.position + proyectedVector * speed; //Move forward
+        Rigidbody.MovePosition(Rigidbody.position + proyectedVector * speed);
 
         //
         AdjustAntToGround(rayCastHits, rayCastDist, deltaRotation);

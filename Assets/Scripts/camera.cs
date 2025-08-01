@@ -40,7 +40,7 @@ public class FlyCamera : MonoBehaviour
     float sphereScale = 1f;
 
 
-    public enum obj { None, Ant, Corn, digTunnel, digChamber, test }
+    public enum obj { None, Ant, AntQueen, Corn, digTunnel, digChamber, test }
 
     public obj objectMode = obj.None;
     public Ant SelectedAnt;
@@ -379,10 +379,11 @@ public class FlyCamera : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Alpha0)) { objectMode = obj.None; Debug.Log("Modo none"); } //cambiar modo a ninguno
             if (Input.GetKeyDown(KeyCode.Alpha1)) { objectMode = obj.Ant; Debug.Log("Modo ant"); } //cambiar modo a hormiga
-            if (Input.GetKeyDown(KeyCode.Alpha2)) { objectMode = obj.Corn; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
-            if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
-            if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
-            if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
+            if (Input.GetKeyDown(KeyCode.Alpha2)) { objectMode = obj.AntQueen; Debug.Log("Modo antqueen"); } //cambiar modo a hormiga reina
+            if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.Corn; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
+            if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
+            if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
+            if (Input.GetKeyDown(KeyCode.Alpha6)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
@@ -518,7 +519,10 @@ public class FlyCamera : MonoBehaviour
             {
                 case obj.Ant:
                     if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), false);
+                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
+                    break;
+                case obj.AntQueen:
+                    WorldGen.InstantiateQueen(hit.point, Quaternion.Euler(hit.normal));
                     break;
                 case obj.Corn:
                     WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
