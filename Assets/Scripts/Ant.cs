@@ -463,10 +463,20 @@ public class Ant : MonoBehaviour
                 int objLayer = sensedItem.gameObject.layer;
                 if (objLayer == 9) //9 is digpoint layer
                 {
+                    Vector3Int pos = Vector3Int.RoundToInt(sensedItem.transform.position);
+
+                    //Mirar si ya lo va a excavar otra hormiga
+                    foreach (Ant ant in antDictionary.Values)
+                    {
+                        if (ant.objective.isTaskType(TaskType.Dig))
+                            if (pos == Vector3Int.RoundToInt(ant.objective.getPos()))
+                                break;
+                    }
+
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
                     if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
 
-                    int newScore = DigPoint.ReachableScore(Vector3Int.RoundToInt(sensedItem.transform.position));
+                    int newScore = DigPoint.ReachableScore(pos);
 
                     //Thanks to this sistem, priorities are:
                     //1. Having a high reachable score
