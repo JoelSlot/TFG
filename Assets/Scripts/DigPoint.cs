@@ -18,6 +18,7 @@ public class DigPoint : MonoBehaviour
     {
         public int value { get; set; }
         public DigPoint digPoint = null;
+        public int antId = -1; //Id of the ant that is getting the digpoint
 
         public digPointData(int val)
         {
@@ -97,6 +98,8 @@ public class DigPoint : MonoBehaviour
             }
         }
         digPointDict.Remove(pos);
+
+
         if (terrainEdit.Count > 0) WorldGen.EditTerrainSet(terrainEdit);
     }
 
