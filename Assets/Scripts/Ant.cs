@@ -625,11 +625,23 @@ public class Ant : MonoBehaviour
 
     public void PutDownAction()
     {
+
+        Vector3 mouthPos = carriedObject.transform.position;
+        Vector3 rayCastOrig = mouthPos + transform.up - transform.forward * 0.2f;
+        Vector3 direction = rayCastOrig - mouthPos;
+        bool rayCastHits = Physics.Raycast(rayCastOrig, direction, out RaycastHit hitInfo, direction.magnitude, 1 << 6);
+        Debug.DrawLine(mouthPos, rayCastOrig, Color.cyan, 100);
+
+
         //carriedObject.
-        foreach(Transform child in carriedObject.transform)
+        foreach (Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
             child.GetComponent<BoxCollider>().enabled = true;
+            if (rayCastHits)
+            {
+                child.position = hitInfo.point - direction * 0.6f; //move the item over the terrain hit
+            }
         }
         carriedObject.transform.DetachChildren();
         Animator.SetBool("Put down", false);
