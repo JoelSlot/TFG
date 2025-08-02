@@ -316,14 +316,14 @@ public class FlyCamera : MonoBehaviour
             else
             {
                 //Instanciarlo si está en la superficie y no es pared (no deberia ser posible ambos pero por si acaso)
-                if (WorldGen.IsAboveSurface(pos) && newDigPointData.value < WorldGen.isolevel) newDigPointData.InstantiatePoint(pos);
+                if (WorldGen.IsAboveSurface(pos) && newDigPointData.value < WorldGen.isolevel) newDigPointData.InstantiatePoint(pos, false);
                 // Si no se encuentra sobre la superficie y no es pared miramos si algun adyacente si está en superficie
                 else if (newDigPointData.value < WorldGen.isolevel)
                 {
                     Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
                     //Si algun punto del alrededor se encuentra sobre la superficie lo instanciamos
                     foreach (Vector3Int direction in directions)
-                        if (WorldGen.IsAboveSurface(pos + direction)) newDigPointData.InstantiatePoint(pos);
+                        if (WorldGen.IsAboveSurface(pos + direction)) newDigPointData.InstantiatePoint(pos, false);
                 }
                 DigPoint.digPointDict.Add(pos, newDigPointData);
             }

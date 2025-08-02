@@ -35,6 +35,7 @@ public class GameData
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
     public HashSet<CornCobInfo> cornCobInfoDict { get; set; }
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict { get; set; }
+    public HashSet<serializableVector3Int> availableDigPointInfoDict { get; set; }
     public HashSet<serializableVector3Int> initializedDigPoints { get; set; }
     public HashSet<NestPartInfo> nestPartInfoDict { get; set; }
     public HashSet<int> knownCornCobs { get; set; }
@@ -131,6 +132,13 @@ public class GameData
     public void saveDigPoints()
     {
         digPointDict = DigPoint.digPointDict;
+
+        availableDigPointInfoDict = new();
+        foreach (var pos in DigPoint.availableDigPoints)
+        {
+            availableDigPointInfoDict.Add(new serializableVector3Int(pos));
+        }
+
         initializedDigPoints = new();
         foreach (var (id, digPointData) in digPointDict)
         {
@@ -513,7 +521,12 @@ public class GameData
         DigPoint.digPointDict = digPointDict;
         foreach (var id in initializedDigPoints)
         {
-            DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int());
+            DigPoint.digPointDict[id.ToVector3Int()].InstantiatePoint(id.ToVector3Int(), true);
+        }
+
+        foreach (var serializablePos in availableDigPointInfoDict)
+        {
+            DigPoint.availableDigPoints.Add(serializablePos.ToVector3Int());
         }
 
 

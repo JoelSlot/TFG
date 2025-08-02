@@ -477,7 +477,7 @@ public class Ant : MonoBehaviour
                     }
 
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
-                        if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
+                    if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
 
                     int newScore = DigPoint.ReachableScore(pos);
 

@@ -12,18 +12,20 @@ public class DigPoint : MonoBehaviour
 
 
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
+    public static HashSet<Vector3Int> availableDigPoints = new();
 
 
     public class digPointData
     {
         public int value { get; set; }
         public DigPoint digPoint = null;
-        public int antId = -1; //Id of the ant that is getting the digpoint
+        public int antId { get; set; } //Id of the ant that is getting the digpoint
 
         public digPointData(int val)
         {
             value = val;
             digPoint = null;
+            antId = -1;
         }
 
         public void update(digPointData newData)
@@ -31,12 +33,14 @@ public class DigPoint : MonoBehaviour
             value = Mathf.Min(newData.value, value);
         }
 
-        public void InstantiatePoint(Vector3Int pos)
+        public void InstantiatePoint(Vector3Int pos, bool loaded) //loaded bool so that not readded to availableDigPoints when loaded
         {
             if (digPoint == null)
             {
                 //Debug.Log("I HAVE BEEN CREATED AT " + pos);
                 digPoint = WorldGen.InstantiateDigPoint(pos);
+                //Add to available digpoints
+                if (!loaded) availableDigPoints.Add(Vector3Int.RoundToInt(digPoint.transform.position));
             }
         }
     }
@@ -89,7 +93,7 @@ public class DigPoint : MonoBehaviour
                 {
                     Debug.Log("AM instantiated: " + nextDigData.digPoint != null);
                     //Inicializamos si no lo está
-                    nextDigData.InstantiatePoint(key);
+                    nextDigData.InstantiatePoint(key, false);
                     //Quitar un poco de los alrededores
                     int newVal = WorldGen.SampleTerrain(key) - 2;
                     if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:

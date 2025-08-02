@@ -27,7 +27,64 @@ public class Nest : MonoBehaviour
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, ref Task objective)
     {
-        if (KnownCornCobs.Count > 0 && SurfaceInNest(antSurface))
+        if (GetNestDigTask(antSurface, ref objective))
+            return BehaviourTreeStatus.Success;
+        if (GetNestCollectTask(antSurface, ref objective))
+            return BehaviourTreeStatus.Success;
+        return BehaviourTreeStatus.Failure;
+    }
+
+    public static bool GetNestDigTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    {
+        objective = Task.NoTask();
+
+        if (SurfaceInNest(antSurface))
+        {
+            List<Vector3Int> available = DigPoint.availableDigPoints.ToList();
+            foreach (var pos in available) //Miramos cada posicion
+            {
+                //Si ya encontramos un camino a uno, salir
+                if (objective.isTaskType(TaskType.None)) break;
+
+                //Si no exisste el digPointData eliminamos de available
+                if (!DigPoint.digPointDict.ContainsKey(pos))
+                {
+                    DigPoint.availableDigPoints.Remove(pos);
+                    break;
+                }
+
+                int antId = DigPoint.digPointDict[pos].antId;
+                //Si ya lo tiene otra hormiga ignorarlo
+                if (antId != -1)
+                {
+                    if (Ant.antDictionary.TryGetValue(antId, out Ant digPointsAnt))
+                    {
+                        if (digPointsAnt.objective.isTaskType(TaskType.Dig))
+                            if (digPointsAnt.objective.digPointId == pos)
+                                break;
+                    }
+                }
+
+                //find path to it. If no path, remove from available
+                if (CubePaths.GetKnownPathToPoint(antSurface, pos, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                    objective = Task.DigTask(pos, newPath);
+                else DigPoint.availableDigPoints.Remove(pos);
+            }
+
+            //Devolvemos failure si no hemos entontrado una tarea
+            if (objective.isTaskType(TaskType.None))
+                return false;
+
+            return true;
+        }
+        else return false;
+    }
+
+    public static bool GetNestCollectTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    {
+        objective = Task.NoTask();
+
+        if (KnownCornCobs.Count > 0 && SurfaceInNest(antSurface) && objective.isTaskType(TaskType.None))
         {
             //Selecciona un indice de los conocidos aleatorio
             int cornIndex = KnownCornCobs.ElementAt(UnityEngine.Random.Range(0, KnownCornCobs.Count));
@@ -36,14 +93,14 @@ public class Nest : MonoBehaviour
                 if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 5, out List<CubePaths.CubeSurface> path))
                 {
                     objective = new Task(cob.gameObject, TaskType.CollectFromCob, path);
-                    return BehaviourTreeStatus.Success;
+                    return true;
                 }
                 else
                 {
                     //Quitamos de la lista si desde el nido mismo no se puede llegar.
                     KnownCornCobs.Remove(cornIndex);
                     Debug.Log("Please dont loop");
-                    return GetNestTask(antSurface, ref objective);
+                    return GetNestCollectTask(antSurface, ref objective);
                 }
             }
             else
@@ -51,11 +108,11 @@ public class Nest : MonoBehaviour
                 //Quitamos de la lista si es no válido.
                 KnownCornCobs.Remove(cornIndex);
                 Debug.Log("Please dont loop");
-                return GetNestTask(antSurface, ref objective);
+                return GetNestCollectTask(antSurface, ref objective);
             }
 
         }
-        else return BehaviourTreeStatus.Failure;
+        else return false;
     }
 
     public static bool PointInNest(Vector3 point)

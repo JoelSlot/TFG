@@ -48,6 +48,20 @@ public class Task
 
     }
 
+    public static Task DigTask(Vector3Int digPointId, List<CubePaths.CubeSurface> newPath)
+    {
+        if (!DigPoint.digPointDict.ContainsKey(digPointId)) return Task.NoTask();
+        if (DigPoint.digPointDict[digPointId].digPoint == null) return Task.NoTask();
+
+        Task newTask = new();
+        newTask.type = TaskType.Dig;
+        newTask.digPointId = digPointId;
+        newTask.pos = digPointId;
+        newTask.path = newPath;
+
+        return newTask;
+    }
+
     public static Task GoOutsideTask(CubePaths.CubeSurface antSurface)
     {
         Task GOtask = new()
