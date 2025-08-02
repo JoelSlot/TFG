@@ -29,7 +29,7 @@ public class GameData
 
     public serializableVector3 camera_pos { get; set; }
     public serializableVector3 camera_euler { get; set; }
-    public QueenInfo queenInfo { get; set; }
+    public HashSet<QueenInfo> queenInfoDict { get; set; }
     public HashSet<AntInfo> antInfoDict { get; set; }
     public HashSet<CornInfo> cornInfoDict { get; set; }
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
@@ -91,6 +91,16 @@ public class GameData
             antInfoDict.Add(AntInfo.ToData(ant));
         }
         Debug.Log("Num ants: " + antInfoDict.Count);
+    }
+
+    public void saveQueens()
+    {
+        queenInfoDict = new();
+        foreach (var queen in AntQueen.antQueenSet)
+        {
+            queenInfoDict.Add(QueenInfo.ToData(queen));
+        }
+        Debug.Log("Num queens: " + queenInfoDict.Count);
     }
 
     //Save all corn to the dictionary, and add links between held coins and the ants holding them
@@ -437,7 +447,7 @@ public class GameData
         data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
         data.terrainMemoryStream = data.EnCode(WorldGen.memoryMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
 
-        data.queenInfo = QueenInfo.ToData(AntQueen.antQueen);
+        data.saveQueens();
 
         data.saveAnts();
 
@@ -475,9 +485,11 @@ public class GameData
 
     public void LoadGameObjects()
     {
-        
-        WorldGen.InstantiateQueen(queenInfo);
-        
+        foreach (QueenInfo info in queenInfoDict)
+        {
+            WorldGen.InstantiateQueen(info);
+        }
+
         foreach (AntInfo info in antInfoDict)
         {
             WorldGen.InstantiateAnt(info);
@@ -552,7 +564,7 @@ public class GameData
         while (!end)
         {
             //Obtain repeatCount number of same values
-            currentValue = terrainMap[x, y, z];
+            currentValue = Mathf.Clamp(terrainMap[x, y, z], 0, 255);
             nextBlock = false;
             repeatCount = 1;
             while (!nextBlock)

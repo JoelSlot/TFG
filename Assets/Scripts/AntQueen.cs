@@ -31,7 +31,7 @@ public class AntQueen : MonoBehaviour
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
     IBehaviourTreeNode tree;
 
-    public static AntQueen antQueen;
+    public static HashSet<AntQueen> antQueenSet = new();
 
 
     //Datos que hay que guardar y cargar

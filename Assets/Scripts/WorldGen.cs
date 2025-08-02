@@ -555,7 +555,7 @@ public class WorldGen : MonoBehaviour
         AntQueen newQueenScript = newQueen.GetComponent<AntQueen>();
 
         newQueen.name = "Ant Queen";
-        AntQueen.antQueen = newQueenScript;
+        AntQueen.antQueenSet.Add(newQueenScript);
 
         return newQueenScript;
     }
@@ -574,7 +574,7 @@ public class WorldGen : MonoBehaviour
         newQueenScript.Counter = queenInfo.Counter;
 
         newQueen.name = "Ant Queen";
-        AntQueen.antQueen = newQueenScript;
+        AntQueen.antQueenSet.Add(newQueenScript);
     }
 
     public static Corn InstantiateCorn(Vector3 pos, Quaternion orientation)
