@@ -192,6 +192,8 @@ public class NestPart : MonoBehaviour
         {
             if (!DigPoint.digPointDict.ContainsKey(pos))
                 digPointsLeft.Remove(pos);
+            else
+                return false;
         }
 
         if (digPointsLeft.Count > 0)

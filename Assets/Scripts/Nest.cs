@@ -167,10 +167,14 @@ public class Nest : MonoBehaviour
             if (NestParts[i].mode == type)
             {
                 float marchingValue = NestParts[i].getMarchingValue(point);
-                if (marchingValue < WorldGen.isolevel * 1.05)
+                if (marchingValue < WorldGen.isolevel) // there was a * 1.05. Why???
                 {
-                    lastIndex = i;
-                    return true;
+                    //disregard undug chambers
+                    if (type == NestPart.NestPartType.Tunnel || NestParts[i].HasBeenDug())
+                    {
+                        lastIndex = i;
+                        return true;
+                    }
                 }
             }
         }
