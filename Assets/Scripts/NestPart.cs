@@ -59,14 +59,10 @@ public class NestPart : MonoBehaviour
     void Update()
     {
         if (!gotPoints)
-            if (mode != NestPartType.Tunnel)
-            {
-                if (IsNotCollidingWithOtherChamber())
-                {
-                    setMaterial(normalMaterial);
-                }
-                else setMaterial(errorMaterial);
-            }
+            if (IsValidPosition())
+                setMaterial(normalMaterial);
+            else
+                setMaterial(errorMaterial);
     }
 
     public void setMode(NestPartType newMode)
@@ -117,7 +113,7 @@ public class NestPart : MonoBehaviour
             startSphere.transform.localPosition = Vector3.zero;
             startSphere.transform.localScale = new Vector3(Mathf.Abs(distance.x), Mathf.Abs(distance.y), Mathf.Abs(distance.z));
 
-            
+
             rigidBody.MovePosition(startPos);
 
             transform.up = Vector3.up;
@@ -342,6 +338,88 @@ public class NestPart : MonoBehaviour
     }
 
 
+    public bool IsValidPosition()
+    {
+        if (mode != NestPartType.Tunnel)
+        {
+            if (!IsNotCollidingWithOtherChamber()) return false;
+
+            //Obtener todos los puntos a mirar
+            Vector3Int orig = Vector3Int.RoundToInt(this.startPos);
+            Vector3 distance = endPos - startPos;
+
+            Vector3Int[] check = {
+                orig,
+                Vector3Int.CeilToInt(orig + Vector3.up * (Mathf.Abs(distance.y / 2) + 1)),
+                Vector3Int.FloorToInt(orig + Vector3.left * (Mathf.Abs(distance.x / 2) + 1)), //floor because right is negative and we want the most distant
+                Vector3Int.CeilToInt(orig + Vector3.right * (Mathf.Abs(distance.x / 2) + 1)),
+                Vector3Int.FloorToInt(orig + Vector3.back * (Mathf.Abs(distance.z / 2) + 1)), //floor because right is negative and we want the most distant
+                Vector3Int.CeilToInt(orig + Vector3.forward * (Mathf.Abs(distance.z / 2) + 1)),
+                Vector3Int.FloorToInt(orig + Vector3.down * (Mathf.Abs(distance.y / 2) + 1)),
+                Vector3Int.FloorToInt(orig + Vector3.down * Mathf.Abs(distance.y / 2)),
+                Vector3Int.FloorToInt(orig + Vector3.down * (Mathf.Abs(distance.y / 2) - 1)),
+                Vector3Int.FloorToInt(orig + Vector3.down * (Mathf.Abs(distance.y / 2) - 2))
+                
+                };
+            Vector3Int[] check2 = {
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[1] + check[2]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[1] + check[3]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[1] + check[4]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[1] + check[5]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[2] + check[4]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[2] + check[5]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[3] + check[4]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[3] + check[5]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[6] + check[2]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[6] + check[3]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[6] + check[4]) / 2 - orig, 1)),
+                Vector3Int.RoundToInt(orig + ResizeToEllipseSurface((check[6] + check[5]) / 2 - orig, 1)),
+                check[7] + Vector3Int.left,
+                check[7] + Vector3Int.right,
+                check[7] + Vector3Int.forward,
+                check[7] + Vector3Int.back
+                };
+
+            for (int i = 0; i < 6; i++)
+            {
+                Debug.DrawLine(check[0], check[i], Color.yellow, 1);
+                if (WorldGen.WasAboveSurface(check[i])) return false;
+            }
+            for (int i = 6; i < check.Count(); i++)
+            {
+                Debug.DrawLine(check[0], check[i], Color.red, 1);
+                if (WorldGen.IsAboveSurface(check[i])) return false;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                Debug.DrawLine(check[0], check2[i], Color.yellow, 1);
+                if (WorldGen.WasAboveSurface(check2[i])) return false;
+            }
+            for (int i = 8; i < check2.Count(); i++)
+            {
+                Debug.DrawLine(check[0], check2[i], Color.red, 1);
+                if (WorldGen.IsAboveSurface(check2[i])) return false;
+            }
+
+            return true;
+        }
+        else
+        {
+            foreach (var part in Nest.NestParts)
+            {
+                if (part.mode != NestPartType.Tunnel)
+                {
+                    Vector3 distance = part.endPos - part.startPos;
+                    Vector3 chamberBottomPoint = part.startPos + Vector3.down * Mathf.Abs(distance.y / 2);
+                    if (DistancePointLine(chamberBottomPoint, startPos, endPos) < radius + 1)
+                        return false;
+                }
+            }
+            return true;
+        }
+    }
+
     // Your boolean function
     public bool IsNotCollidingWithOtherChamber()
     {
@@ -354,6 +432,17 @@ public class NestPart : MonoBehaviour
     {
         rigidBody.isKinematic = value;
     }
-    
+
+    public Vector3 ResizeToEllipseSurface(Vector3 vector, float addition)
+    {
+        Vector3 dim = endPos - startPos;
+        float a = Mathf.Abs(dim.x) / 2;
+        float b = Mathf.Abs(dim.y) / 2;
+        float c = Mathf.Abs(dim.z) / 2;
+
+        vector = vector.normalized;
+        float distance = 1 / Mathf.Sqrt((vector.x * vector.x) / (a * a) + (vector.y * vector.y) / (b * b) + (vector.z * vector.z) / (c * c));
+        return vector * (distance + addition);
+    }
 
 }
