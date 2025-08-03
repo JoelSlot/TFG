@@ -28,9 +28,16 @@ public class Nest : MonoBehaviour
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, ref Task objective)
     {
         if (GetNestDigTask(antSurface, ref objective))
+        {
+            Debug.Log("Got a dig task");
             return BehaviourTreeStatus.Success;
+        }
         if (GetNestCollectTask(antSurface, ref objective))
+        {
+            Debug.Log("Got a collect task");
             return BehaviourTreeStatus.Success;
+        }
+        Debug.Log("Did not get a requested task");
         return BehaviourTreeStatus.Failure;
     }
 
@@ -41,16 +48,20 @@ public class Nest : MonoBehaviour
         if (SurfaceInNest(antSurface))
         {
             List<Vector3Int> available = DigPoint.availableDigPoints.ToList();
+            Debug.Log("Number of available digpoints: " + available.Count);
+            int i = 0;
             foreach (var pos in available) //Miramos cada posicion
             {
+                i++;
+                Debug.Log("Checking number " + i);
                 //Si ya encontramos un camino a uno, salir
-                if (objective.isTaskType(TaskType.None)) break;
+                if (!objective.isTaskType(TaskType.None)) continue;
 
                 //Si no exisste el digPointData eliminamos de available
                 if (!DigPoint.digPointDict.ContainsKey(pos))
                 {
                     DigPoint.availableDigPoints.Remove(pos);
-                    break;
+                    continue;
                 }
 
                 int antId = DigPoint.digPointDict[pos].antId;
@@ -61,7 +72,7 @@ public class Nest : MonoBehaviour
                     {
                         if (digPointsAnt.objective.isTaskType(TaskType.Dig))
                             if (digPointsAnt.objective.digPointId == pos)
-                                break;
+                                continue;
                     }
                 }
 
@@ -70,6 +81,7 @@ public class Nest : MonoBehaviour
                     objective = Task.DigTask(pos, newPath);
                 else DigPoint.availableDigPoints.Remove(pos);
             }
+            Debug.Log("Number of available digpoints post check: " + DigPoint.availableDigPoints.Count);
 
             //Devolvemos failure si no hemos entontrado una tarea
             if (objective.isTaskType(TaskType.None))
@@ -90,7 +102,7 @@ public class Nest : MonoBehaviour
             int cornIndex = KnownCornCobs.ElementAt(UnityEngine.Random.Range(0, KnownCornCobs.Count));
             if (CornCob.cornCobDictionary.TryGetValue(cornIndex, out CornCob cob))
             {
-                if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 5, out List<CubePaths.CubeSurface> path))
+                if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 3, out List<CubePaths.CubeSurface> path))
                 {
                     objective = new Task(cob.gameObject, TaskType.CollectFromCob, path);
                     return true;

@@ -344,9 +344,9 @@ public class AntQueen : MonoBehaviour
         {
             GameObject sensedItem = sensedItems.Dequeue();
             //DigPoints tienen prioridad sobre comida. Si se mira un objeto no DigPoint habiendo detectado ya uno, se ignora el objeto actual
-            if (sensedItem.gameObject.layer != 9 && foundDigPoint) break;
+            if (sensedItem.gameObject.layer != 9 && foundDigPoint) continue;
             //Comida dentro de una cámara de comida no se recoge
-            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) break;
+            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) continue;
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
@@ -385,7 +385,7 @@ public class AntQueen : MonoBehaviour
                 else if (objLayer == 11) //11 is cornCobLayer
                 {
                     //Only count it if it has corn left
-                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) break;
+                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) continue;
                     //Set current pheromonePath to found corn!
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
 

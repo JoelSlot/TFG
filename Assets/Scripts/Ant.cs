@@ -152,15 +152,15 @@ public class Ant : MonoBehaviour
                     .Do("Sense nearby task", t => SenseTask())
                     .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
 
-                    .Selector("Go outside")
-                        .Condition("Am outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                    .Sequence("Go outside")
+                        .Condition("Am inside of nest?", t => Nest.SurfaceInNest(antSurface))
                         .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
                     .End()
 
-                    //.Sequence("If outside start exploring")
-                    //    .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
-                    .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
-                //.End()
+                    .Sequence("If outside start exploring")
+                        .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                        .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
+                    .End()
                 .End()
 
                 .Selector("Do tasks")
@@ -454,9 +454,9 @@ public class Ant : MonoBehaviour
         {
             GameObject sensedItem = sensedItems.Dequeue();
             //DigPoints tienen prioridad sobre comida. Si se mira un objeto no DigPoint habiendo detectado ya uno, se ignora el objeto actual
-            if (sensedItem.gameObject.layer != 9 && foundDigPoint) break;
+            if (sensedItem.gameObject.layer != 9 && foundDigPoint) continue;
             //Comida dentro de una cámara de comida no se recoge
-            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) break;
+            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) continue;
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
@@ -472,7 +472,7 @@ public class Ant : MonoBehaviour
                         {
                             if (digPointsAnt.objective.isTaskType(TaskType.Dig))
                                 if (digPointsAnt.objective.digPointId == pos)
-                                    break;
+                                    continue;
                         }
                     }
 
@@ -509,7 +509,7 @@ public class Ant : MonoBehaviour
                 else if (objLayer == 11) //11 is cornCobLayer
                 {
                     //Only count it if it has corn left
-                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) break;
+                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) continue;
                     //Set current pheromonePath to found corn!
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
 
@@ -670,7 +670,12 @@ public class Ant : MonoBehaviour
         {
             int key = -1;
             int cornId = obj.GetComponent<Corn>().id;
-            foreach(var (pos, id) in parentCob.cornCobCornDict) if (id == cornId) {key = pos; break;};
+            foreach (var (pos, id) in parentCob.cornCobCornDict)
+                if (id == cornId)
+                {
+                    key = pos;
+                    break;
+                }
             parentCob.cornCobCornDict.Remove(key);
         }
 
