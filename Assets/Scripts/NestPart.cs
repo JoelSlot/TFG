@@ -48,6 +48,7 @@ public class NestPart : MonoBehaviour
     private float radius = 1;
     public float interval;
     public bool gotPoints = false; //whether the points have been extracted yet.
+    public HashSet<Vector3Int> digPointsLeft = new();
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -184,6 +185,20 @@ public class NestPart : MonoBehaviour
 
     public Vector3 GetDir() { return dir; }
 
+    public bool HasBeenDug()
+    {
+        List<Vector3Int> positions = digPointsLeft.ToList();
+        foreach (var pos in positions)
+        {
+            if (!DigPoint.digPointDict.ContainsKey(pos))
+                digPointsLeft.Remove(pos);
+        }
+
+        if (digPointsLeft.Count > 0)
+            return false;
+
+        return true;
+    }
 
     public void setActive(bool active)
     {
@@ -212,8 +227,6 @@ public class NestPart : MonoBehaviour
         }
     }
 
-
-
     public void SetVisible(bool visible)
     {
         cilinder.GetComponent<MeshRenderer>().enabled = visible;
@@ -236,6 +249,7 @@ public class NestPart : MonoBehaviour
 
         int desiredVal = getMarchingValue(start);
         checkedPoints.Add(start);
+        digPointsLeft.Add(start);
         pointsToCheck.Enqueue(start);
         points.Add(start, new DigPoint.digPointData(desiredVal)); // used distance for a good while wondering why one of the center points was the wrong value when diggin the cave
 
@@ -257,7 +271,11 @@ public class NestPart : MonoBehaviour
                         pointsToCheck.Enqueue(son);
                     }
                     //Si el punto realmente cambiará el terreno, lo guardamos para ser excavado
-                    if (desiredVal < WorldGen.SampleTerrain(son) && !DigPoint.IsPointless(son)) points.Add(son, new DigPoint.digPointData(desiredVal));
+                    if (desiredVal < WorldGen.SampleTerrain(son) && !DigPoint.IsPointless(son))
+                    {
+                        points.Add(son, new DigPoint.digPointData(desiredVal));
+                        digPointsLeft.Add(son);
+                    }
                     //Registramos que ya hemos mirado este punto
                     checkedPoints.Add(son);
                 }

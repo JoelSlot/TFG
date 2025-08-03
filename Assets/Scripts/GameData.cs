@@ -388,6 +388,7 @@ public class GameData
         public serializableVector3 endPos { get; set; }
         public float radius { get; set; }
         public int mode { get; set; }
+        public HashSet<serializableVector3Int> digPointsLeft { get; set; }
 
         private NestPartInfo()
         {
@@ -401,8 +402,13 @@ public class GameData
                 mode = NestPart.NestPartTypeToIndex(nestPart.getMode()),
                 startPos = new(nestPart.getStartPos()),
                 endPos = new(nestPart.getEndPos()),
-                radius = nestPart.getRadius()
+                radius = nestPart.getRadius(),
+
+                digPointsLeft = new()
             };
+
+            foreach (var pos in nestPart.digPointsLeft)
+                info.digPointsLeft.Add(new serializableVector3Int(pos));
 
             return info;
         }

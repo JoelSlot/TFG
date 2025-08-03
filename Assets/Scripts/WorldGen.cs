@@ -494,6 +494,9 @@ public class WorldGen : MonoBehaviour
         nestPartScript.setRadius(info.radius);
         nestPartScript.setActive(true);
 
+        foreach (var serPos in info.digPointsLeft)
+            nestPartScript.digPointsLeft.Add(serPos.ToVector3Int());
+
         //Se asume que el objeto ya ha sido colocado.
         nestPartScript.gotPoints = true;
         //nestPartScript.SetVisible(false);
