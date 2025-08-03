@@ -95,6 +95,14 @@ public class NestPart : MonoBehaviour
         if (mode == NestPartType.Tunnel)
         {
             dir = end - start;
+
+            if (dir.magnitude > 20)
+            {
+                end = start + dir.normalized * 20;
+                endPos = end;
+                dir = end - start;
+            }
+
             startSphere.transform.localPosition = Vector3.zero;
             endSphere.transform.localPosition = Vector3.up * dir.magnitude;
             cilinder.transform.localPosition = Vector3.up * dir.magnitude / 2;
@@ -105,9 +113,9 @@ public class NestPart : MonoBehaviour
         else if (mode == NestPartType.FoodChamber)
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
-            endPos.x = Mathf.Max(endPos.x, startPos.x + 5);
-            endPos.y = Mathf.Max(endPos.y, startPos.y + 5);
-            endPos.z = Mathf.Max(endPos.z, startPos.z + 5);
+            endPos.x = Mathf.Clamp(endPos.x, startPos.x + 5, startPos.x + 20);
+            endPos.y = Mathf.Clamp(endPos.y, startPos.y + 5, startPos.y + 15);
+            endPos.z = Mathf.Clamp(endPos.z, startPos.z + 5, startPos.z + 20);
 
             Vector3 distance = endPos - startPos;
             startSphere.transform.localPosition = Vector3.zero;
