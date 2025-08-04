@@ -515,8 +515,8 @@ public class CubePaths : MonoBehaviour
     { ///UHHH NO PATHW EHN GO TO FOOD SO LIKE DRAW CUBES WHEN MAKING FINDING PATH SOU KNWO WHAT IS HAPPENIGN-
         path = new List<CubeSurface>();
 
-        PriorityQueue<CubeSurface, float> frontera = new();
-        frontera.Enqueue(start, 0);
+        PriorityQueue<Tuple<CubeSurface, int>, float> frontera = new();
+        frontera.Enqueue(new(start, 0), 0);
         Dictionary<CubeSurface, CubeSurface> previo = new();
         Dictionary<CubeSurface, float> coste = new();
         Dictionary<CubeSurface, int> longitud = new();
@@ -537,7 +537,7 @@ public class CubePaths : MonoBehaviour
 
         while (frontera.Count > 0)
         {
-            CubeSurface current = frontera.Dequeue();
+            (CubeSurface current, int range) = frontera.Dequeue();
 
             if (current.pos == objective)
             {
@@ -554,6 +554,7 @@ public class CubePaths : MonoBehaviour
             }
 
             List<CubeSurface> adyacentSurfaces = GetAdyacentSurfaces(current);
+            range++;
 
             foreach (var son in adyacentSurfaces)
             {
@@ -564,10 +565,11 @@ public class CubePaths : MonoBehaviour
                 if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
                 else if (newCost < prevCost) updateOrInsert = true;
 
-                if (!cubePheromones.ContainsKey(current.pos))
-                    if (!Nest.SurfaceInNest(current))
-                        updateOrInsert = false;
-
+                if (cubePheromones.ContainsKey(current.pos) || Nest.SurfaceInNest(current))
+                    range = 0;
+                
+                if (range > 1)
+                    updateOrInsert = false;
 
                 if (updateOrInsert)
                 {
@@ -575,7 +577,7 @@ public class CubePaths : MonoBehaviour
                     coste[son] = newCost;
                     longitud[son] = newLength;
                     float prioridad = newCost + heuristic(son.pos, objective);
-                    frontera.Enqueue(son, prioridad);
+                    frontera.Enqueue(new(son, range), prioridad);
                     previo[son] = current;
                 }
             }
@@ -678,8 +680,8 @@ public class CubePaths : MonoBehaviour
         Debug.Log("Finding path...");
         path = new List<CubeSurface>();
 
-        PriorityQueue<CubeSurface, float> frontera = new();
-        frontera.Enqueue(start, 0);
+        PriorityQueue<Tuple<CubeSurface, int>, float> frontera = new();
+        frontera.Enqueue(new(start, 0), 0);
         Dictionary<CubeSurface, CubeSurface> previo = new();
         Dictionary<CubeSurface, float> coste = new();
 
@@ -692,7 +694,7 @@ public class CubePaths : MonoBehaviour
 
         while (frontera.Count > 0)
         {   
-            CubeSurface current = frontera.Dequeue();
+            (CubeSurface current, int range) = frontera.Dequeue();
 
             if (Nest.SurfaceInNestPart(current, type))
             {
@@ -703,29 +705,32 @@ public class CubePaths : MonoBehaviour
 
             HashSet<CubeSurface> identifiableSurfaces = new();
 
-            if (Nest.SurfaceInNest(current) || cubePheromones.ContainsKey(current.pos)) //Si es dentro del nido miramos adyacentes
+            if (Nest.SurfaceInNest(current) || cubePheromones.ContainsKey(current.pos)) //Si es dentro del nido o feromonas rango es 0
+                range = 0;
+
+            if (range < 2)
             {
                 List<CubeSurface> adySurfaces = GetAdyacentSurfaces(current);
-
                 foreach (var son in adySurfaces) identifiableSurfaces.Add(son);
+                range++;
             }
 
             foreach (var son in identifiableSurfaces)
-            {
-                float newCost = coste[current] + 1;
-                bool updateOrInsert = false;
-                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
-                else if (newCost < prevCost) updateOrInsert = true;
-
-                if (updateOrInsert)
                 {
-                    DrawCube(son.pos, Color.black, 5);
-                    coste[son] = newCost;
-                    float prioridad = newCost;
-                    frontera.Enqueue(son, prioridad);
-                    previo[son] = current;
+                    float newCost = coste[current] + 1;
+                    bool updateOrInsert = false;
+                    if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                    else if (newCost < prevCost) updateOrInsert = true;
+
+                    if (updateOrInsert)
+                    {
+                        DrawCube(son.pos, Color.black, 5);
+                        coste[son] = newCost;
+                        float prioridad = newCost;
+                        frontera.Enqueue(new(son, range), prioridad);
+                        previo[son] = current;
+                    }
                 }
-            }
         }
 
         if (!pathExists) return false;
