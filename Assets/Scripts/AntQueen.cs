@@ -27,6 +27,9 @@ public class AntQueen : MonoBehaviour
     //public GameObject origPheromone;
 
     private Vector3Int lastCube; // Created at start, no need to save.
+    private TaskType lastTaskType; // created at start, no need to save.
+    private Vector3 goal = Vector3.zero;
+    private bool resetGoal = true;
     CubePaths.CubeSurface antSurface; // Updated at start of every frame, no need to save.
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
     IBehaviourTreeNode tree;
@@ -68,6 +71,7 @@ public class AntQueen : MonoBehaviour
         SetWalking(false); //El estado por defecto no camina
 
         lastCube = Vector3Int.FloorToInt(transform.position);
+        lastTaskType = TaskType.None;
 
         var builder = new BehaviourTreeBuilder();
         this.tree = builder
@@ -140,7 +144,7 @@ public class AntQueen : MonoBehaviour
 
                     .Sequence("Just follow path")
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
-                        .Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
+                        //.Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
                     .End()
@@ -173,16 +177,28 @@ public class AntQueen : MonoBehaviour
     }
 
     
-    Vector3Int nextPosDraw = Vector3Int.zero;
-    int ageUpdateCounter = 0;
     // Update is called once per frame
     void FixedUpdate()
     {
+
+        if (lastTaskType != objective.type)
+        {
+            resetGoal = true;
+            lastTaskType = objective.type;
+        }
+
+        Debug.DrawLine(transform.position, goal, Color.yellow);
+
+
         //Añadido para poder supervisar el estado en el que se encuentra la hormiga.
         taskName = objective.TaskToString();
 
         if (SenseGround(out int numHits, out bool[] rayCastHits, out float[] rayCastDist, out bool changedSurface))
         {
+
+            if (changedSurface)
+                resetGoal = true;
+
             Rigidbody.useGravity = false;
 
             DontTurn();
@@ -205,8 +221,8 @@ public class AntQueen : MonoBehaviour
 
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
-            CubePaths.DrawCube(nextPosDraw, Color.blue);
-            CubePaths.DrawCube(antSurface.pos, Color.black);
+            //CubePaths.DrawCube(nextPosDraw, Color.blue);
+            //CubePaths.DrawCube(antSurface.pos, Color.black);
         }
         else Rigidbody.useGravity = true;
 
@@ -224,7 +240,7 @@ public class AntQueen : MonoBehaviour
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
 
-            BehaviourTreeStatus status = SetGoalFromPath(antSurface, transform.position, out Vector3 goal);
+            BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
 
             if (status != BehaviourTreeStatus.Running)
             {
@@ -563,13 +579,6 @@ public class AntQueen : MonoBehaviour
         else objective = Task.NoTask();
     }
   
-    void RandomMovement()
-    {
-        speed = speed_per_second * Time.fixedDeltaTime;
-        Animator.SetBool("walking", true);
-    }
-
-
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
     void FollowGoal(Vector3 hitNormal, Vector3 goal, float minAngle)
@@ -585,7 +594,7 @@ public class AntQueen : MonoBehaviour
         Vector3 proyectedForward = Vector3.ProjectOnPlane(transform.forward, hitNormal);
         float horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
 
-        Debug.DrawLine(transform.position, goal, Color.red, 0.35f);
+        //Debug.DrawLine(transform.position, goal, Color.red, 0.35f);
     
         //Decidir si girar
         if (horAngle > 5)
@@ -688,7 +697,7 @@ public class AntQueen : MonoBehaviour
                 hitCubePos = Vector3Int.FloorToInt(hit.point);
             }
             else hitColor = Color.blue;
-            Debug.DrawRay(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
+            //Debug.DrawRay(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), hitColor);
         }
 
 
@@ -770,245 +779,11 @@ public class AntQueen : MonoBehaviour
         }
     }
 
-
-    //Si hay Comida cerca, pone como task recoger la comida con el path hacia la comida
-    //Si no hay, devuelve false.
-    private Task SenseFood()
-    {
-        int layermask = 1 << 10;
-        PriorityQueue<GameObject, float> sensedFood = new();
-        int maxColliders = 100;
-        Collider[] hitColliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
-        for (int i = 0; i < numColliders; i++)
-        {
-            GameObject food = hitColliders[i].transform.gameObject;
-            sensedFood.Enqueue(hitColliders[i].transform.gameObject, 100 - Vector3.Distance(food.transform.position, transform.position));
-        }
-
-        int minLength = int.MaxValue;
-        Task newTask = null;
-
-        while (sensedFood.Count > 0)
-        {
-            GameObject food = sensedFood.Dequeue();
-            List<CubePaths.CubeSurface> newPath;
-
-            bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(food.transform.position), 10, out newPath);
-            
-            if (isReachable && newPath.Count < minLength)
-            {         
-                //newTask = new Task(food.GetComponent<Corn>().id);
-                objective.path = newPath;
-                minLength = objective.path.Count;
-            }
-
-        }
-
-        return newTask;
-    }
-
-    //Si hay digpoints alcanzables cerca, devuelve true y pone el path de la hormiga al camino hacia el digpoint más cercano alcanzable.
-    //Si no hay, devuelve false.
-    /*private Task SenseDigPoints()
-    {
-        int layermask = 1 << 9;
-        PriorityQueue<GameObject, float> sensedDigPoints = new();
-        int maxColliders = 100;
-        Collider[] hitColliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, layermask);
-        for (int i = 0; i < numColliders; i++)
-        {
-            DigPoint digPoint = hitColliders[i].gameObject.GetComponent<DigPoint>();
-            sensedDigPoints.Enqueue(hitColliders[i].gameObject, 100 - Vector3.Distance(digPoint.transform.position, transform.position));
-        }
-
-        //int minDepth = int.MaxValue;
-        int minLength = int.MaxValue;
-
-        Task newTask = null;
-
-        while (sensedDigPoints.Count > 0)
-        {
-            GameObject digObject = sensedDigPoints.Dequeue();
-            DigPoint digPoint = digObject.GetComponent<DigPoint>();
-            List<CubePaths.CubeSurface> newPath;
-
-            //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
-            bool isReachable = CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(digPoint.transform.position), 10, out newPath);
-            
-            if (isReachable && newPath.Count < minLength)
-                //((digPoint.depth < minDepth) ||
-                //(digPoint.depth == minDepth && newPath.Count < minLength)))
-            {         
-                newTask = new Task(digPoint.transform.position);
-                newTask.path = newPath;
-                //minDepth = digPoint.depth;
-                minLength = objective.path.Count;
-            }
-
-        }
-
-        return newTask;
-    }*/
-
-    //Pone el 
-    private BehaviourTreeStatus SetGoalFromPath(CubePaths.CubeSurface antSurface, Vector3 pos, out Vector3 goal)
-    {
-
-        goal = Vector3.zero;
-
-        //Debug.Log("SettingGoal");
-        if (objective.path.Count == 0)
-        {
-            Debug.Log("Path completed");
-            return BehaviourTreeStatus.Success; 
-        }//Para evitar seguir camino nonexistente.
-
-
-        List<CubePaths.CubeSurface> sensedRange = new();
-        int goalIndex = -1;
-        int range = 0;
-        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
-        
-        sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces); //Initial one.
-
-        var sameCube = sensedRange[0];
-
-        if (sameCube.Equals(objective.path.Last()))
-        {
-            Debug.Log("Same");
-            objective.path = new();
-            return BehaviourTreeStatus.Success;
-        }
-
-        //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
-        while (goalIndex == -1 && range < 5)
-        {
-            range++;
-            sensedRange = CubePaths.GetNextSurfaceRange(antSurface, transform.forward, sensedRange, ref checkedSurfaces);
-
-            for (int i = 0; i < objective.path.Count; i += 1)
-            {
-                if (sensedRange.Exists(x => x.Equals(objective.path[i]))) goalIndex = i;
-            }
-        }
-
-        //Si no se ha encontrado el camino, hemos fallado
-        if (goalIndex == -1)
-        {
-            Debug.Log("not found");
-            objective.path = new();
-            return BehaviourTreeStatus.Failure;
-        }
-
-
-        CubePaths.CubeSurface firstStep = objective.path[goalIndex];
-
-        //Debug.Log("First step: " + firstStep.pos + " at range " + range);
-
-        Vector3Int dir = firstStep.pos - antSurface.pos;
-
-        //Si NO es el ultimo paso del camino, obtenemos movement goal usando dos siguientes pasos. Sino solo el útlimo que queda.
-        if (goalIndex < objective.path.Count - 1) goal = CubePaths.GetMovementGoal(antSurface, dir, objective.path[goalIndex + 1].pos - objective.path[goalIndex].pos);
-        else goal = CubePaths.GetMovementGoal(antSurface, dir);
-
-        nextPosDraw = firstStep.pos;
-
-        return BehaviourTreeStatus.Running;
-    }
  
-    //Devuelve true si ha encontrado una pheromona
-    /*private bool SensePheromones(CubePaths.CubeSurface antSurface, out Vector3 goal) 
-    {
-        goal = Vector3.zero;
-        List<CubePaths.CubeSurface> sensedRange = new();
-        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
-        bool foundGoal = false;
-        int range = -1;
-
-        CubePheromone objectivePher = null;
-        CubePaths.CubeSurface firstStep = new();
-
-        Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
-
-        while (!foundGoal && range < 5)
-        {
-            range++;
-            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
-
-            //Put all pheromones on a list
-            List<CubePheromone> sensedPheromones = new();
-            foreach (var surface in sensedRange)
-            {
-                //CubePaths.DrawSurface(surface, colors[range], 2);
-                //CubePaths.DrawCube(surface.pos, colors[range], 2);
-                if (CubePaths.cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> surfacePhers))
-                    sensedPheromones.AddRange(surfacePhers);
-            }
-            //
-
-            objectivePher = ChoosePheromone(sensedPheromones);
-            if (objectivePher != null)
-            {
-                foundGoal = true;
-                firstStep = objectivePher.surface;
-            }
-        }
-
-        //Si no se ha encontrado objetivo, devolvemos falso.
-        if (!foundGoal)
-        {
-            //("NO PHEROMONES FOUND/CHOSEN");
-            return false;
-        }
-
-        //Si la pheromona está en la superficie actual seguimos su camino
-        if (range == 0)
-        {
-            if (objectivePher.isLast(followingForwards))
-            {
-                followingForwards = !followingForwards;
-                //Debug.Log("Switched following");
-            }
-            if (objectivePher.isLast(followingForwards))
-            {
-                Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
-                return false;
-            }
-
-            firstStep = objectivePher.GetNext(followingForwards).GetSurface();
-        }
-        else
-            while (!checkedSurfaces[firstStep].Equals(firstStep))
-            {
-                firstStep = checkedSurfaces[firstStep];
-            }
-        
-        Vector3Int dir = firstStep.pos - antSurface.pos;
-
-        goal = CubePaths.GetMovementGoal(antSurface, dir);
-
-        nextPosDraw = firstStep.pos;
-
-        return true;
-
-    }*/
-
 
     public AnimatorStateInfo GetAnimatorStateInfo()
     {
         return Animator.GetCurrentAnimatorStateInfo(0);
     }
-
-    /* Da igual lo que probe, play no pone a la hormiga en ese state, simplemente juega el state y se queda pillado hasta que interactuar con el animator lo lleva al state original inmediatamente.
-    private void playLoadedAnimation()
-    {
-        if (loadedAnimHashPath != -1)
-            if (Animator != null)
-                Animator.Play(loadedAnimHashPath, 0, loadedAnimHashPath);
-            else Debug.Log("NO ANIMATOR");
-    }
-    */
 
 }

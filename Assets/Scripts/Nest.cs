@@ -149,7 +149,7 @@ public class Nest : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             if (surface.surfaceGroup[i])
-                if (PointInNest(chunk.cornerTable[i] + surface.pos))
+                if (PointInNest(chunk.cornerIdToPos[i] + surface.pos))
                     return true;
         }
         return false;
@@ -195,7 +195,7 @@ public class Nest : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             if (surface.surfaceGroup[i])
-                if (PointInNestPart(chunk.cornerTable[i] + surface.pos, type))
+                if (PointInNestPart(chunk.cornerIdToPos[i] + surface.pos, type))
                     return true;
         }
         return false;

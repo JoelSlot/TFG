@@ -71,7 +71,7 @@ public class chunk
         float[] cubeVertices = new float[8];
         for (int i = 0; i < 8; i++)
         {
-            cubeVertices[i] = WorldGen.SampleTerrain(position + cornerTable[i]);
+            cubeVertices[i] = WorldGen.SampleTerrain(position + cornerIdToPos[i]);
         }
 
         //Obtener el �ndice que se usa en las tablas de ejes y tri�ngulos
@@ -104,8 +104,8 @@ public class chunk
                 if (indice == -1) return;
 
                 //Obtener los dos v�rtices que forman el eje y sus valores
-                Vector3 vert1pos = position + cornerTable[edgeIndexes[indice, 0]];
-                Vector3 vert2pos = position + cornerTable[edgeIndexes[indice, 1]];
+                Vector3 vert1pos = position + cornerIdToPos[edgeIdToCornerId[indice, 0]];
+                Vector3 vert2pos = position + cornerIdToPos[edgeIdToCornerId[indice, 1]];
                 float vert1val = WorldGen.SampleTerrain(vert1pos);
                 float vert2val = WorldGen.SampleTerrain(vert2pos);
 
@@ -236,7 +236,7 @@ public class chunk
     */
 
     //tabla de esquinas: las 8 esquinas del cubo
-    public static Vector3Int[] cornerTable = new Vector3Int[8]
+    public static Vector3Int[] cornerIdToPos = new Vector3Int[8]
     {
         new Vector3Int(0, 0, 0),
         new Vector3Int(1, 0, 0),
@@ -248,7 +248,8 @@ public class chunk
         new Vector3Int(0, 1, 1)
     };
 
-    public static Dictionary<Vector3Int, int> reverseCornerTable = new Dictionary<Vector3Int, int>
+    //Tabla reversa de esquinas. Dada la posicion de la esquina, devuelve su indice
+    public static Dictionary<Vector3Int, int> cornerPosToId = new Dictionary<Vector3Int, int>
     {
         {new Vector3Int(0, 0, 0), 0},
         {new Vector3Int(1, 0, 0), 1},
@@ -261,13 +262,14 @@ public class chunk
     };
 
     //tabla de ejes. Para cada eje los �ndices de los v�rtices que lo forman.
-    public static int[,] edgeIndexes = new int[12, 2] {
+    public static int[,] edgeIdToCornerId = new int[12, 2] {
 
         {0, 1}, {1, 2}, {3, 2}, {0, 3}, {4, 5}, {5, 6}, {7, 6}, {4, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
 
     };
 
-    public static int[,] faceIndexes = new int[6,4]
+    //tabla de caras. Dada indice de cara y pos devuelve esquina de esa cara numero pos
+    public static int[,] faceIdToCornerId = new int[6, 4]
     {
         {0, 1, 3, 2}, // back face
         {4, 5, 7, 6}, // forward face
@@ -277,7 +279,8 @@ public class chunk
         {0, 1, 4, 5}  // down face
     };
 
-    public static Vector3Int[] faceDirections = new Vector3Int[6]
+    //tabla de caras. Dado indice de cara devuelve su dir respecto centro del cubo.
+    public static Vector3Int[] faceIdToDirTable = new Vector3Int[6]
     {
         Vector3Int.back, // back face
         Vector3Int.forward, // forward face
@@ -287,7 +290,8 @@ public class chunk
         Vector3Int.down  // down face
     };
 
-    public static Dictionary<Vector3Int, int> reverseFaceDirections = new Dictionary<Vector3Int, int>()
+    //tabla reverso de caras. Dada la direccion de una cara, devuelve su índice
+    public static Dictionary<Vector3Int, int> dirToFaceIdTable = new Dictionary<Vector3Int, int>()
     {
         {Vector3Int.back, 0},// back face
         {Vector3Int.forward, 1},// forward face

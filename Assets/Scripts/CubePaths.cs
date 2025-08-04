@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using System.Linq;
 using System.Security.Authentication.ExtendedProtection;
+using FluentBehaviourTree;
 
 public class CubePaths : MonoBehaviour
 {
@@ -52,7 +53,7 @@ public class CubePaths : MonoBehaviour
 
     public static CubeSurface GetAdyacentSurface(CubeSurface origSurface, int faceIndex)
     {
-        Vector3Int dir = chunk.faceDirections[faceIndex]; //Get dir
+        Vector3Int dir = chunk.faceIdToDirTable[faceIndex]; //Get dir
         bool[] newCornerValues = CubeCornerValues(origSurface.pos + dir); //Get new cube cornerValues
         Vector3Int newSurfaceCorner = TrueCorner(faceIndex, origSurface.surfaceGroup) - dir; //Get corner value
         bool[] newGroupCornerValues = GetGroup(newSurfaceCorner, newCornerValues);
@@ -74,7 +75,7 @@ public class CubePaths : MonoBehaviour
 
         List<int> index = new List<int> { 0, 1, 2, 3, 4, 5 };
 
-        index.Sort((x, y) => (int)(Vector3.Angle(forwardDir, chunk.faceDirections[x]) - Vector3.Angle(forwardDir, chunk.faceDirections[y])));
+        index.Sort((x, y) => (int)(Vector3.Angle(forwardDir, chunk.faceIdToDirTable[x]) - Vector3.Angle(forwardDir, chunk.faceIdToDirTable[y])));
 
         for (int i = 0; i < 6; i++)
         {
@@ -113,7 +114,7 @@ public class CubePaths : MonoBehaviour
     {
         bool[] cornerValues = new bool[8];
         for (int i = 0; i < 8; i++)
-            cornerValues[i] = WorldGen.IsAboveSurface(cube + chunk.cornerTable[i]);
+            cornerValues[i] = WorldGen.IsAboveSurface(cube + chunk.cornerIdToPos[i]);
         return cornerValues;
     }
 
@@ -127,10 +128,10 @@ public class CubePaths : MonoBehaviour
     */
     public static Vector3Int TrueCorner(int faceIndex, bool[] cornerValues)
     {
-        if (cornerValues[chunk.faceIndexes[faceIndex, 0]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 0]];
-        if (cornerValues[chunk.faceIndexes[faceIndex, 1]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 1]];
-        if (cornerValues[chunk.faceIndexes[faceIndex, 2]]) return chunk.cornerTable[chunk.faceIndexes[faceIndex, 2]];
-        return chunk.cornerTable[chunk.faceIndexes[faceIndex, 3]];
+        if (cornerValues[chunk.faceIdToCornerId[faceIndex, 0]]) return chunk.cornerIdToPos[chunk.faceIdToCornerId[faceIndex, 0]];
+        if (cornerValues[chunk.faceIdToCornerId[faceIndex, 1]]) return chunk.cornerIdToPos[chunk.faceIdToCornerId[faceIndex, 1]];
+        if (cornerValues[chunk.faceIdToCornerId[faceIndex, 2]]) return chunk.cornerIdToPos[chunk.faceIdToCornerId[faceIndex, 2]];
+        return chunk.cornerIdToPos[chunk.faceIdToCornerId[faceIndex, 3]];
     }
 
 
@@ -151,9 +152,9 @@ public class CubePaths : MonoBehaviour
             chunk.faceIndexes[faceIndex, 2] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 2]] + ", " +
             chunk.faceIndexes[faceIndex, 3] + ": " + cornerValues[chunk.faceIndexes[faceIndex, 3]] + ", " );*/
         return !(
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 1]] &&
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 2]] &&
-            cornerValues[chunk.faceIndexes[faceIndex, 0]] == cornerValues[chunk.faceIndexes[faceIndex, 3]]);
+            cornerValues[chunk.faceIdToCornerId[faceIndex, 0]] == cornerValues[chunk.faceIdToCornerId[faceIndex, 1]] &&
+            cornerValues[chunk.faceIdToCornerId[faceIndex, 0]] == cornerValues[chunk.faceIdToCornerId[faceIndex, 2]] &&
+            cornerValues[chunk.faceIdToCornerId[faceIndex, 0]] == cornerValues[chunk.faceIdToCornerId[faceIndex, 3]]);
     }
 
     /*
@@ -168,7 +169,7 @@ public class CubePaths : MonoBehaviour
     public static bool[] GetGroup(Vector3Int antCorner, bool[] cornerValues)
     {
         bool[] group = new bool[8]; //Valor defecto de bool es falso (CONFIRMED)
-        group[chunk.reverseCornerTable[antCorner]] = true; //BIG ISSUE BY FORGETTING THIS
+        group[chunk.cornerPosToId[antCorner]] = true; //BIG ISSUE BY FORGETTING THIS
         HashSet<Vector3Int> checkedCorners = new HashSet<Vector3Int>();
         Queue<Vector3Int> cornersToCheck = new Queue<Vector3Int>();
         cornersToCheck.Enqueue(antCorner);
@@ -181,9 +182,9 @@ public class CubePaths : MonoBehaviour
             {
                 if (!checkedCorners.Contains(adyCorner)) // si no lo hemos mirado
                 {
-                    if (cornerValues[chunk.reverseCornerTable[adyCorner]]) // si está sobre el suelo
+                    if (cornerValues[chunk.cornerPosToId[adyCorner]]) // si está sobre el suelo
                     {
-                        group[chunk.reverseCornerTable[adyCorner]] = true; // Añadimos la esquina al grupo
+                        group[chunk.cornerPosToId[adyCorner]] = true; // Añadimos la esquina al grupo
                         cornersToCheck.Enqueue(adyCorner); // Y lo preparamos para mirar sus adyacentes
                     }
                 }
@@ -220,7 +221,7 @@ public class CubePaths : MonoBehaviour
     {
         Vector3Int returnCorner = Vector3Int.zero;
         float minAngle = 180;
-        foreach (Vector3Int corner in chunk.cornerTable)
+        foreach (Vector3Int corner in chunk.cornerIdToPos)
         {
             float angle = Vector3.Angle(-normal, CornerNormal(corner));
             if (angle < minAngle)
@@ -243,82 +244,173 @@ public class CubePaths : MonoBehaviour
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir)
     {
         //Si la dirección es inválida, ponemos el gol sobre el centro del cubo actual más la dirección por 400. Deberia no quedarse justo encima ni debajo de la hormiga con esa distancia.
-        if (!chunk.reverseFaceDirections.TryGetValue(dir, out int faceIndex))
+        if (!chunk.dirToFaceIdTable.ContainsKey(dir))
         {
+            //Debug.Log("Fucked up dir-------------------------------" + dir.x + ", " + dir.y + ", " + dir.z);
             return surface.pos + Vector3.one / 2 + dir * 400;
         }
 
-        Vector3 goal = Vector3.zero;
-        int num = 0;
-        //DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
+        //DrawCube(surface.pos + dir, Color.red);
+
+        Vector3 goal = surface.pos + Vector3.one * 0.5f; //poner gol en centro del cubo actual de la hormiga
+
+        Vector3Int reverseDir = dir * -1;
+        int numBelowSurfReverse = 0;
         for (int i = 0; i < 4; i++)
         {
-            int cornerIndex = chunk.faceIndexes[faceIndex, i];
-            if (!surface.surfaceGroup[cornerIndex]) //Si el punto no se encuentra bajo la superficie
-            {
-                goal += new Vector3(0.5f, 0.5f, 0.5f) - chunk.cornerTable[cornerIndex];
-                num++;
-            }
+            int cornerId = chunk.faceIdToCornerId[chunk.dirToFaceIdTable[reverseDir], i];
+            if (surface.surfaceGroup[cornerId])
+                numBelowSurfReverse++;
         }
-        goal = surface.pos + new Vector3(0.5f, 0.5f, 0.5f) + goal / num;
-        //Para evitar goals que dejan a la hormiga en el sitio al estar justo encima de ellos:
-        if (GetAdyacentSurface(surface, chunk.reverseFaceDirections[dir]).Count() == num) //Si los puntos que conectan los cubos son los unicos de la superficie del segundo cubo:
+
+        int countedCorners = 0;
+        Vector3 medianDir = dir;
+        for (int i = 0; i < 4; i++)
         {
-            for (int i = 0; i < 4; i++)
+            int cornerId = chunk.faceIdToCornerId[chunk.dirToFaceIdTable[dir], i];
+            if ((numBelowSurfReverse > 2 && surface.surfaceGroup[cornerId]) || (numBelowSurfReverse < 2 && !surface.surfaceGroup[cornerId]))
             {
-                int cornerIndex = chunk.faceIndexes[faceIndex, i];
-                if (surface.surfaceGroup[cornerIndex]) //Si el punto se encuentra bajo la superficie
-                {
-                    goal += (chunk.cornerTable[cornerIndex] - Vector3.one * 0.5f) * 40;
-                }
+                medianDir += chunk.cornerIdToPos[cornerId] - Vector3.one * 0.5f;
+                countedCorners++;
             }
         }
-        Debug.DrawLine(goal, goal + chunk.faceDirections[faceIndex] * 4, Color.blue, 10);
-        return goal + chunk.faceDirections[faceIndex] * 400;
+
+        medianDir /= countedCorners + 1;
+
+        //Debug.DrawRay(goal, medianDir * 400, Color.blue);
+        return goal + medianDir * 400;
     }
 
     //Dado la superficie actual y las dos siguientes direcciones, devuelve el punto a seguir
     public static Vector3 GetMovementGoal(CubeSurface surface, Vector3Int dir1, Vector3Int dir2)
     {
-        //Debug.Log("MOVEMENT GOAL 2");
 
-        //Si la segunda dir no es válida usamos solo dir 1
-        if (!chunk.reverseFaceDirections.TryGetValue(dir1, out int faceIndex1) || !chunk.reverseFaceDirections.TryGetValue(dir2, out int faceIndex2))
+        //Si la dirección es inválida, ponemos el gol sobre el centro del cubo actual más la dirección por 400. Deberia no quedarse justo encima ni debajo de la hormiga con esa distancia.
+        if (!chunk.dirToFaceIdTable.TryGetValue(dir1, out int faceIndex))
         {
-            //Debug.Log("DIR 2 NOT VALID: " + dir2);
-            return GetMovementGoal(surface, dir1);
+            //Debug.Log("Fucked up dir-------------------------------" + dir1.x + ", " + dir1.y + ", " + dir1.z);
+            return surface.pos + Vector3.one / 2 + dir1 * 400;
         }
 
-        //Si la segunda dir es igual o opuesto al primero, no es importante y podemos usar solo el primero.
-        if (faceIndex1 == faceIndex2 || faceIndex1 == -faceIndex2)
+        //DrawCube(surface.pos + dir1, Color.red);
+        //DrawCube(surface.pos + dir1 + dir2, Color.green);
+
+        Vector3 center = surface.pos + Vector3.one * 0.5f; //poner gol en centro del cubo actual de la hormiga
+        Vector3 localCenter = Vector3.one * 0.5f;
+
+        Vector3Int reverseDir = dir1 * -1;
+        int numBelowSurfReverse = 0;
+        for (int i = 0; i < 4; i++)
         {
-            //Debug.Log("DIR 2 == DIR 1: " + dir1);
-            return GetMovementGoal(surface, dir1);
+            int cornerId = chunk.faceIdToCornerId[chunk.dirToFaceIdTable[reverseDir], i];
+            if (surface.surfaceGroup[cornerId])
+                numBelowSurfReverse++;
         }
 
-        Vector3 goal = Vector3.zero;
-        int num = 0;
-        //DrawFace(surface.pos, faceIndex, Color.magenta, 1000);
+        int countedCorners = 0;
+        Vector3 medianDir = dir1;
+        Vector3 backFaceToSurfaceDir = Vector3.zero;
+        for (int i = 0; i < 4; i++)
+        {
+            int cornerId = chunk.faceIdToCornerId[chunk.dirToFaceIdTable[dir1], i];
+            if ((numBelowSurfReverse > 2 && surface.surfaceGroup[cornerId]) || (numBelowSurfReverse < 2 && !surface.surfaceGroup[cornerId]))
+            {
+                medianDir += chunk.cornerIdToPos[cornerId] - localCenter;
+                countedCorners++;
+            }
+            if (numBelowSurfReverse == 2 && surface.surfaceGroup[cornerId])
+            {
+                backFaceToSurfaceDir += chunk.cornerIdToPos[cornerId] - (Vector3)reverseDir * 0.5f;
+            }
+        }
+
+        medianDir /= countedCorners + 1;
+
+        //Debug.DrawRay(center, medianDir * 400, Color.blue);
+        Vector3 goal1 = center + medianDir * 400;
+
+        //Si la segunda dir no es válida o las dos direcciones son iguales
+        if (!chunk.dirToFaceIdTable.ContainsKey(dir2) || dir1 == dir2 || dir1 == dir2 * -1)
+        {
+            if (!chunk.dirToFaceIdTable.ContainsKey(dir2))
+                //Debug.Log("Fucked up dir2-------------------------------" + dir2.x + ", " + dir2.y + ", " + dir2.z);
+                return goal1;
+        }
+
+        //Mirar si la segunda direccion se opone a la direccion del primer gol
+        if (Math.Sign(dir2.x) * Math.Sign(medianDir.x) == -1)
+        {
+            //Debug.Log("Using 1 dir after normal check x: " + Math.Sign(dir2.x) + " vs " + Math.Sign(medianDir.x));
+            return goal1;
+        }
+        if (Math.Sign(dir2.y) * Math.Sign(medianDir.y) == -1)
+        {
+            //Debug.Log("Using 1 dir after normal check y: " + Math.Sign(dir2.y) + " vs " + Math.Sign(medianDir.y));
+            return goal1;
+        }
+        if (Math.Sign(dir2.z) * Math.Sign(medianDir.z) == -1)
+        {
+            //Debug.Log("Using 1 dir after normal check z: " + Math.Sign(dir2.z) + " vs " + Math.Sign(medianDir.z));
+            return goal1;
+        }
+
+        //Debug.Log("COmparing backSurfaceDir to dir2. BacksurfaceDir = " + backFaceToSurfaceDir.x + ", " + backFaceToSurfaceDir.y + ", " + backFaceToSurfaceDir.z);
+        //Debug.Log("dir2: " + dir2.x + ", " + dir2.y + ", " + dir2.z);
+
+        if (numBelowSurfReverse == 2)
+        {
+            //Mirar si la segunda direccion se opone a la direccion del primer gol
+            if (Math.Sign(dir2.x) * Math.Sign(backFaceToSurfaceDir.x) != 0)
+            {
+                //Debug.Log("Using 1 dir after backface check x: " + Math.Sign(dir2.x));
+                return goal1;
+            }
+            if (Math.Sign(dir2.y) * Math.Sign(backFaceToSurfaceDir.y) != 0)
+            {
+                //Debug.Log("Using 1 dir after backface check y: " + Math.Sign(dir2.y));
+                return goal1;
+            }
+            if (Math.Sign(dir2.z) * Math.Sign(backFaceToSurfaceDir.z) != 0)
+            {
+                //Debug.Log("Using 1 dir after backface check z: " + Math.Sign(dir2.z));
+                return goal1;
+            }
+        }
+
+        //DrawCube(surface.pos + dir1 + dir2, Color.blue);
+
+        //Debug.DrawRay(center, (medianDir + dir2) * 400, Color.yellow);
+        return center + (medianDir + dir2) * 400;
+        /*
+        if (numDims != 1)
+        {
+            Debug.DrawLine(surface.pos + 0.5f * Vector3.one, goal1 + dir2 * 100, Color.yellow);
+            return goal1 + dir2 * 100;
+        }
 
         int sharedEdge = 0;
         int nonSharedEdge = 0;
 
+        DrawCube(surface.pos + dir1 + dir2, Color.red, 20);
+        DrawCube(surface.pos + dir1, Color.blue, 20);
+
+        Vector3 goal = Vector3.zero;
         for (int i = 0; i < 4; i++)
         {
-            int cornerIndex1 = chunk.faceIndexes[faceIndex1, i];
+            int cornerIndex1 = chunk.faceIdToCornerId[faceIndex1, i];
             if (surface.surfaceGroup[cornerIndex1]) //Si el punto se encuentra bajo la superficie
             {
-                goal += new Vector3(0.5f, 0.5f, 0.5f) + chunk.cornerTable[cornerIndex1];
+                goal += new Vector3(0.5f, 0.5f, 0.5f) + chunk.cornerIdToPos[cornerIndex1];
                 num++;
             }
 
             //Mirar vértices de la segunda cara para problema de giro interno
-            int cornerIndex2 = chunk.faceIndexes[faceIndex2, i];
+            int cornerIndex2 = chunk.faceIdToCornerId[faceIndex2, i];
             if (surface.surfaceGroup[cornerIndex2])
             {
                 bool sharedCorner = false;
                 for (int j = 0; j < 4; j++)
-                    if (chunk.faceIndexes[faceIndex1, j] == cornerIndex2)
+                    if (chunk.faceIdToCornerId[faceIndex1, j] == cornerIndex2)
                         sharedCorner = true;
                 if (sharedCorner) sharedEdge += 1;
                 else nonSharedEdge += 1;
@@ -328,11 +420,12 @@ public class CubePaths : MonoBehaviour
 
         //THIS SOLVED THE INNER TURN PROBLEM
         //shared edge are those commen between 2nd face and 1st face. nonSharedEdge are those of 2nd face not in common.
-        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceDirections[faceIndex2] * 4;
+        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceIdToDirTable[faceIndex2] * 4;
 
-        goal += chunk.faceDirections[faceIndex1] * 4;
+        goal += chunk.faceIdToDirTable[faceIndex1] * 4;
 
         return goal;
+        */
     }
 
 
@@ -341,7 +434,7 @@ public class CubePaths : MonoBehaviour
     {
         Vector3Int dir = cube2 - surface1.pos; //La dir al segundo cubo //This was reversed, so it caused problems
         //Debug.Log("pos: " + cube2 + " - " + surface1.pos);
-        if (!chunk.reverseFaceDirections.TryGetValue(dir, out int dirIndex))
+        if (!chunk.dirToFaceIdTable.TryGetValue(dir, out int dirIndex))
         {
             //Debug.Log("Not adyacent");
             return false; //Si no son dayacente falso
@@ -499,12 +592,12 @@ public class CubePaths : MonoBehaviour
 
         while (!reachedSurface.Equals(start))
         {
-            DrawCube(reachedSurface.pos, Color.blue, 40);
-            DrawSurface(reachedSurface, Color.black, 40);
+            //DrawCube(reachedSurface.pos, Color.blue, 40);
+            //DrawSurface(reachedSurface, Color.black, 40);
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING 
             reachedSurface = previo[reachedSurface];
         }
-        DrawCube(reachedSurface.pos, Color.blue, 40);
+        //DrawCube(reachedSurface.pos, Color.blue, 40);
 
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
@@ -567,7 +660,7 @@ public class CubePaths : MonoBehaviour
 
                 if (cubePheromones.ContainsKey(current.pos) || Nest.SurfaceInNest(current))
                     range = 0;
-                
+
                 if (range > 1)
                     updateOrInsert = false;
 
@@ -587,12 +680,12 @@ public class CubePaths : MonoBehaviour
 
         while (!reachedSurface.Equals(start))
         {
-            DrawCube(reachedSurface.pos, Color.blue, 40);
-            DrawSurface(reachedSurface, Color.black, 40);
+            //DrawCube(reachedSurface.pos, Color.blue, 40);
+            //DrawSurface(reachedSurface, Color.black, 40);
             path.Insert(0, reachedSurface); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING 
             reachedSurface = previo[reachedSurface];
         }
-        DrawCube(reachedSurface.pos, Color.blue, 40);
+        //DrawCube(reachedSurface.pos, Color.blue, 40);
 
         //Debug.Log("found path length: " + path.Count);
         return gotToPoint;
@@ -601,7 +694,7 @@ public class CubePaths : MonoBehaviour
 
     public static bool GetPathToSurface(CubeSurface start, CubeSurface objective, int lengthLimit, out List<CubeSurface> path)
     {
-        Debug.Log("Finding path...");
+        //Debug.Log("Finding path...");
         path = new List<CubeSurface>();
 
         PriorityQueue<CubeSurface, float> frontera = new();
@@ -670,14 +763,14 @@ public class CubePaths : MonoBehaviour
         }
 
         //Debug.Log("found path length: " + path.Count);
-        if (!pathExists) Debug.Log("Not found!");
+        //if (!pathExists) Debug.Log("Not found!");
         return pathExists;
     }
 
 
     public static bool GetKnownPathToMapPart(CubeSurface start, NestPart.NestPartType type, out List<CubeSurface> path)
     {
-        Debug.Log("Finding path...");
+        //Debug.Log("Finding path...");
         path = new List<CubeSurface>();
 
         PriorityQueue<Tuple<CubeSurface, int>, float> frontera = new();
@@ -693,7 +786,7 @@ public class CubePaths : MonoBehaviour
         CubeSurface reachedMapPart = start;
 
         while (frontera.Count > 0)
-        {   
+        {
             (CubeSurface current, int range) = frontera.Dequeue();
 
             if (Nest.SurfaceInNestPart(current, type))
@@ -716,35 +809,36 @@ public class CubePaths : MonoBehaviour
             }
 
             foreach (var son in identifiableSurfaces)
-                {
-                    float newCost = coste[current] + 1;
-                    bool updateOrInsert = false;
-                    if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
-                    else if (newCost < prevCost) updateOrInsert = true;
+            {
+                float newCost = coste[current] + 1;
+                bool updateOrInsert = false;
+                if (!coste.TryGetValue(son, out float prevCost)) updateOrInsert = true;
+                else if (newCost < prevCost) updateOrInsert = true;
 
-                    if (updateOrInsert)
-                    {
-                        DrawCube(son.pos, Color.black, 5);
-                        coste[son] = newCost;
-                        float prioridad = newCost;
-                        frontera.Enqueue(new(son, range), prioridad);
-                        previo[son] = current;
-                    }
+                if (updateOrInsert)
+                {
+                    //DrawCube(son.pos, Color.black, 5);
+                    coste[son] = newCost;
+                    float prioridad = newCost;
+                    frontera.Enqueue(new(son, range), prioridad);
+                    previo[son] = current;
                 }
+            }
         }
 
         if (!pathExists) return false;
 
         while (!reachedMapPart.Equals(start))
         {
-            DrawCube(reachedMapPart.pos, Color.blue, 4);
-            DrawSurface(reachedMapPart, Color.black, 40);
-            path.Insert(0, reachedMapPart); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
+            //DrawCube(reachedMapPart.pos, Color.blue, 4);
+            //DrawSurface(reachedMapPart, Color.black, 40);
+            path.Insert(0, reachedMapPart);
             reachedMapPart = previo[reachedMapPart];
         }
+        path.Insert(0, reachedMapPart);
 
         //Debug.Log("found path length: " + path.Count);
-        if (!pathExists) Debug.Log("Not found!");
+        //if (!pathExists) Debug.Log("Not found!");
         return pathExists;
     }
 
@@ -755,14 +849,14 @@ public class CubePaths : MonoBehaviour
         path = new();
         HashSet<Vector3Int> nearbyPheromones = new();
 
-        Debug.Log("Looking for surface");
+        //Debug.Log("Looking for surface");
 
         int range = UnityEngine.Random.Range(4, 10);
 
         for (int r = 0; r < range; r++)
         {
             sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref checkedSurfaces); //Initial one.
-            if (r < 8)foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
+            if (r < 8) foreach (var surface in sensedRange) if (cubePheromones.ContainsKey(surface.pos)) nearbyPheromones.Add(surface.pos);
             if (sensedRange.Count == 0)
                 return false;
         }
@@ -814,8 +908,8 @@ public class CubePaths : MonoBehaviour
         //convertir a un path
         while (!chosen.Equals(antSurface))
         {
-            DrawCube(chosen.pos, Color.green, 4);
-            DrawSurface(chosen, Color.black, 4);
+            //DrawCube(chosen.pos, Color.green, 4);
+            //DrawSurface(chosen, Color.black, 4);
             path.Insert(0, chosen); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             chosen = checkedSurfaces[chosen];
         }
@@ -831,7 +925,7 @@ public class CubePaths : MonoBehaviour
         Dictionary<CubeSurface, CubeSurface> checkedSurfaces = new();
         path = new();
 
-        Debug.Log("Looking for surface");
+        //Debug.Log("Looking for surface");
 
         int range = UnityEngine.Random.Range(3, 6);
 
@@ -869,8 +963,8 @@ public class CubePaths : MonoBehaviour
         //convertir a un path
         while (!chosen.Equals(antSurface))
         {
-            DrawCube(chosen.pos, Color.green, 4);
-            DrawSurface(chosen, Color.black, 4);
+            //DrawCube(chosen.pos, Color.green, 4);
+            //DrawSurface(chosen, Color.black, 4);
             path.Insert(0, chosen); //DONT USE APPEND EVER AGAIN YOU STUPID FUCING IDIOT
             chosen = checkedSurfaces[chosen];
         }
@@ -954,7 +1048,7 @@ public class CubePaths : MonoBehaviour
     {
         for (int i = 0; i < 12; i++)
         {
-            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color, time);
+            Debug.DrawLine(cube + chunk.cornerIdToPos[chunk.edgeIdToCornerId[i, 0]], cube + chunk.cornerIdToPos[chunk.edgeIdToCornerId[i, 1]], color, time);
         }
     }
 
@@ -962,7 +1056,7 @@ public class CubePaths : MonoBehaviour
     {
         for (int i = 0; i < 12; i++)
         {
-            Debug.DrawLine(cube + chunk.cornerTable[chunk.edgeIndexes[i, 0]], cube + chunk.cornerTable[chunk.edgeIndexes[i, 1]], color);
+            Debug.DrawLine(cube + chunk.cornerIdToPos[chunk.edgeIdToCornerId[i, 0]], cube + chunk.cornerIdToPos[chunk.edgeIdToCornerId[i, 1]], color);
         }
     }
 
@@ -972,7 +1066,7 @@ public class CubePaths : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             if (!cubeSurface.surfaceGroup[i])
-                Debug.DrawLine(cubeSurface.pos + Vector3.one / 2, cubeSurface.pos + chunk.cornerTable[i], color, time);
+                Debug.DrawLine(cubeSurface.pos + Vector3.one / 2, cubeSurface.pos + chunk.cornerIdToPos[i], color, time);
         }
     }
 
@@ -980,7 +1074,7 @@ public class CubePaths : MonoBehaviour
     {
         for (int i = 0; i < 4; i++)
         {
-            Debug.DrawLine(pos + chunk.cornerTable[chunk.faceIndexes[faceId, i % 4]], pos + chunk.cornerTable[chunk.faceIndexes[faceId, (i + 1) % 4]], color, time);
+            Debug.DrawLine(pos + chunk.cornerIdToPos[chunk.faceIdToCornerId[faceId, i % 4]], pos + chunk.cornerIdToPos[chunk.faceIdToCornerId[faceId, (i + 1) % 4]], color, time);
         }
     }
 
@@ -1008,6 +1102,148 @@ public class CubePaths : MonoBehaviour
                     cubePheromones.Remove(key);
             }
         }
+    }
+
+    //Pone el 
+    public static BehaviourTreeStatus SetGoalFromPath(CubeSurface antSurface, Vector3 antForward, ref Task objective, ref bool needNew, ref Vector3 goal)
+    {
+        
+        if (objective.path.Count == 0)
+        {
+            Debug.Log("Path completed");
+            return BehaviourTreeStatus.Success;
+        }//Para evitar seguir camino nonexistente.
+
+        if (antSurface.Equals(objective.path.Last()))
+            return BehaviourTreeStatus.Success;
+
+        if (!needNew)
+            return BehaviourTreeStatus.Running;
+
+        needNew = false;
+        
+
+        //Obtener indice de superficie de hormiga en la lista de pasos. Devuelve -1 si no encima de camino
+        int antSurfacePathPos = objective.path.FindIndex(x => x.Equals(antSurface));
+        if (antSurfacePathPos != -1)
+        {
+            if (antSurfacePathPos == objective.path.Count - 1)
+            {
+                Debug.Log("Reached end of path");
+                objective.path = new();
+                return BehaviourTreeStatus.Success;
+            }//Para mirar si se ha llegado al final
+
+            else if (antSurfacePathPos == objective.path.Count - 2)
+            {
+                Debug.Log("Reached second to last surface of path");
+                Vector3Int dir = objective.path.Last().pos - antSurface.pos;
+                goal = GetMovementGoal(antSurface, dir);
+                return BehaviourTreeStatus.Running;
+            }
+
+            else
+            {
+                Debug.Log("On path, following next two steps");
+                Vector3Int dir1 = objective.path[antSurfacePathPos + 1].pos - antSurface.pos;
+                Vector3Int dir2 = objective.path[antSurfacePathPos + 2].pos - objective.path[antSurfacePathPos + 1].pos;
+                goal = GetMovementGoal(antSurface, dir1, dir2);
+                return BehaviourTreeStatus.Running;
+            }
+
+        }
+        
+        int range = 0;
+        Dictionary<CubeSurface, CubeSurface> previousSurfaces = new();
+        List<CubeSurface> sensedRange = GetNextSurfaceRange(antSurface, antForward, new(), ref previousSurfaces);
+        //IR AUMENTANDO RANGO HASTA QUE RANGO CONTENGA PARTE DEL CAMINO, Y DEVOLVER INDICE DEL BLOQUE ENCONTRADO
+        while (antSurfacePathPos == -1 && range < 5)
+        {
+            range++;
+            sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref previousSurfaces);
+
+            for (int i = 0; i < objective.path.Count; i += 1)
+            {
+                foreach (var rangeSurface in sensedRange)
+                {
+                    if (rangeSurface.Equals(objective.path[i]))
+                    {
+                        antSurfacePathPos = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (range < 2) //Si hemos encontrado el camino justo al lado, miramos un rango más
+        {
+            sensedRange = GetNextSurfaceRange(antSurface, antForward, sensedRange, ref previousSurfaces);
+            bool foundBetter = false;
+            for (int i = antSurfacePathPos + 1; i < objective.path.Count; i += 1) //Miramos si hay superficie más avanzada que la detectada
+            {
+                foreach (var rangeSurface in sensedRange)
+                {
+                    if (rangeSurface.Equals(objective.path[i]))
+                    {
+                        antSurfacePathPos = i;
+                        foundBetter = true;
+                        break;
+                    }
+                }
+            }
+            if (foundBetter) range++; //If we did find a better one on next range, save that range
+            if (foundBetter) Debug.Log("Found better in next range!");
+        }
+
+
+        //Si no se ha encontrado el camino, hemos fallado
+        if (antSurfacePathPos == -1)
+        {
+            Debug.Log("not found");
+            objective.path = new();
+            return BehaviourTreeStatus.Failure;
+        }
+
+        CubeSurface found = objective.path[antSurfacePathPos];
+
+        if (range == 1) //Si estamos justo al lado del camino
+        {
+            if (antSurfacePathPos == objective.path.Count - 1)
+            {
+                Debug.Log("Next to last surface of path");
+                Vector3Int dir = objective.path.Last().pos - antSurface.pos;
+                goal = GetMovementGoal(antSurface, dir);
+                return BehaviourTreeStatus.Running;
+            }
+
+            else
+            {
+                Debug.Log("Next to a surface of the path");
+                Vector3Int dir1 = objective.path[antSurfacePathPos].pos - antSurface.pos;
+                Vector3Int dir2 = objective.path[antSurfacePathPos + 1].pos - objective.path[antSurfacePathPos].pos;
+                goal = GetMovementGoal(antSurface, dir1, dir2);
+                return BehaviourTreeStatus.Running;
+            }
+        }
+
+
+        //If not next to path, get next two surfaces to get there
+        CubeSurface nextSurface = previousSurfaces[found];
+        CubeSurface nextNextSurface = found;
+        while (!previousSurfaces[nextSurface].Equals(antSurface))
+        {
+            nextNextSurface = nextSurface;
+            nextSurface = previousSurfaces[nextSurface];
+        }
+
+        {
+            Debug.Log("Going to path");
+            Vector3Int dir1 = nextSurface.pos - antSurface.pos;
+            Vector3Int dir2 = nextNextSurface.pos - nextSurface.pos;
+            goal = GetMovementGoal(antSurface, dir1, dir2);
+            return BehaviourTreeStatus.Running;
+        }
+
     }
 
 }

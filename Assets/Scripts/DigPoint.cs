@@ -91,7 +91,7 @@ public class DigPoint : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("AM instantiated: " + nextDigData.digPoint != null);
+                    //Debug.Log("AM instantiated: " + nextDigData.digPoint != null);
                     //Inicializamos si no lo está
                     nextDigData.InstantiatePoint(key, false);
                     //Quitar un poco de los alrededores

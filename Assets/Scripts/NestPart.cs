@@ -410,23 +410,23 @@ public class NestPart : MonoBehaviour
 
             for (int i = 0; i < 6; i++)
             {
-                Debug.DrawLine(check[0], check[i], Color.yellow, 1);
+                //Debug.DrawLine(check[0], check[i], Color.yellow, 1);
                 if (WorldGen.WasAboveSurface(check[i])) return false;
             }
             for (int i = 6; i < check.Count(); i++)
             {
-                Debug.DrawLine(check[0], check[i], Color.red, 1);
+                //Debug.DrawLine(check[0], check[i], Color.red, 1);
                 if (WorldGen.IsAboveSurface(check[i])) return false;
             }
 
             for (int i = 0; i < 8; i++)
             {
-                Debug.DrawLine(check[0], check2[i], Color.yellow, 1);
+                //Debug.DrawLine(check[0], check2[i], Color.yellow, 1);
                 if (WorldGen.WasAboveSurface(check2[i])) return false;
             }
             for (int i = 8; i < check2.Count(); i++)
             {
-                Debug.DrawLine(check[0], check2[i], Color.red, 1);
+                //Debug.DrawLine(check[0], check2[i], Color.red, 1);
                 if (WorldGen.IsAboveSurface(check2[i])) return false;
             }
 
