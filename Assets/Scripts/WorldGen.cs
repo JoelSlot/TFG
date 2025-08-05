@@ -196,6 +196,9 @@ public class WorldGen : MonoBehaviour
             }
         }
 
+        ApplyTerrainRedundancy();
+        ApplyPastTerrainRedundancy();
+
         camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
         newCameraPosInfo = true;
 
@@ -422,6 +425,60 @@ public class WorldGen : MonoBehaviour
         return direction.normalized;
     }
 
+
+    //Para guardar espacio, esta funcion se puede usar para obtener el valor por defecto 0 o 255 de un punto si no impacta el mapa.
+    public static int GetRedundantTerrainSample(Vector3Int pos)
+    {
+        int val = SampleTerrain(pos);
+        if (val == 0 || val == 255) return val;
+
+        bool isAbove = IsAboveSurface(pos);
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        foreach (Vector3Int direction in directions)
+        {
+            if (InRange(pos))
+                if (isAbove != IsAboveSurface(pos + direction))
+                    return val;
+        }
+        if (isAbove) return 0;
+        return 255;
+    }
+
+    public static int GetRedundantPastTerrainSample(Vector3Int pos)
+    {
+        int val = SamplePastTerrain(pos);
+        if (val == 0 || val == 255) return val;
+
+        bool isAbove = WasAboveSurface(pos);
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        foreach (Vector3Int direction in directions)
+        {
+            if (InRange(pos))
+                if (isAbove != WasAboveSurface(pos + direction))
+                    return val;
+        }
+        if (isAbove) return 0;
+        return 255;
+    }
+
+    public static void ApplyTerrainRedundancy()
+    {
+        //Itera sobre todos los puntos del campo escalar
+        for (int x = 0; x < x_dim + 1; x++)
+            for (int y = 0; y < y_dim + 1; y++)
+                for (int z = 0; z < z_dim + 1; z++)
+                    terrainMap[x, y, z] = GetRedundantTerrainSample(new(x, y, z));
+    }
+
+    public static void ApplyPastTerrainRedundancy()
+    {
+        //Itera sobre todos los puntos del campo escalar
+        for (int x = 0; x < x_dim + 1; x++)
+            for (int y = 0; y < y_dim + 1; y++)
+                for (int z = 0; z < z_dim + 1; z++)
+                    memoryMap[x, y, z] = GetRedundantPastTerrainSample(new(x, y, z));
+    }
+
     public void LoadGame(string saveFile)
     {
         Debug.Log("Starting loading");
@@ -456,6 +513,9 @@ public class WorldGen : MonoBehaviour
     public void SaveGame()
     {
         Debug.Log("Starting save");
+
+        ApplyTerrainRedundancy();
+        ApplyPastTerrainRedundancy();
         
         GameData newData = GameData.Save();
 
