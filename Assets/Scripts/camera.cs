@@ -78,11 +78,17 @@ public class FlyCamera : MonoBehaviour
         {
             cameraUnderground = false;
             camera.backgroundColor = new Color(0, 191, 255);
+
+            if (!WorldGen.WasAboveSurface(transform.position) && !placingDigZone)
+                Nest.Hide();
+            else Nest.Show();
         }
         else
         {
             cameraUnderground = true;
             camera.backgroundColor = Color.black;
+            
+            Nest.Show();
         }
     }
 
@@ -506,14 +512,37 @@ public class FlyCamera : MonoBehaviour
                 Destroy(ErasePart);
                 placingDigZone = false;
             }
-            else if (Nest.NestParts.Last().IsNotCollidingWithOtherChamber())
+            else if (Nest.NestParts.Last().IsValidPosition())
             {
                 toDigPoints();
                 placingDigZone = false;
                 Nest.NestParts.Last().setKinematic(true);
             }
         }
-        else if (clickObject(terrainLayer, out RaycastHit hit))
+        else if (clickObject(nestLayer, out RaycastHit hit))
+        {
+            if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
+                if (!placingDigZone)
+                {
+                    placingDigZone = true;
+                    digStartPoint = hit.point;
+                    digEndPoint = hit.point;
+                    NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
+                    if (objectMode == obj.digTunnel)
+                    {
+                        nestPartScript.setMode(NestPart.NestPartType.Tunnel);
+                        nestPartScript.SetPos(digStartPoint, digEndPoint);
+                    }
+                    else
+                    {
+                        nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
+                        nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                        nestPartScript.setKinematic(false);
+                    }
+
+                }
+        }
+        else if (clickObject(terrainLayer, out hit))
         {
             switch (objectMode)
             {
@@ -529,7 +558,7 @@ public class FlyCamera : MonoBehaviour
                     break;
                 case obj.digTunnel:
                 case obj.digChamber:
-                    if (!placingDigZone)
+                    if (!placingDigZone && Nest.NestParts.Count == 0)
                     {
                         placingDigZone = true;
                         digStartPoint = hit.point;
@@ -594,29 +623,7 @@ public class FlyCamera : MonoBehaviour
                     break;
             }
         }
-        else if (clickObject(nestLayer, out hit))
-        {
-            if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
-                if (!placingDigZone)
-                {
-                    placingDigZone = true;
-                    digStartPoint = hit.point;
-                    digEndPoint = hit.point;
-                    NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
-                    if (objectMode == obj.digTunnel)
-                    {
-                        nestPartScript.setMode(NestPart.NestPartType.Tunnel);
-                        nestPartScript.SetPos(digStartPoint, digEndPoint);
-                    }
-                    else
-                    {
-                        nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
-                        nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
-                        nestPartScript.setKinematic(false);
-                    }
-
-                }
-        }
+        
     }
 
 

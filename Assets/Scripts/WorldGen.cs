@@ -394,34 +394,38 @@ public class WorldGen : MonoBehaviour
         // Interpolar por eje z
         return Mathf.RoundToInt(Mathf.Lerp(c0, c1, zd));
     }
-
     public static bool WasAboveSurface(Vector3Int point)
     {
         return isolevel > SamplePastTerrain(point);
     }
+    public static bool WasAboveSurface(Vector3 point)
+    {
+        return isolevel > SamplePastTerrain(point);
+    }
+
     public static Vector3 SurfaceDirection(Vector3Int point)
     {
         if (!IsAboveSurface(point)) return Vector3.up;
-        Vector3 direction = new Vector3(0,0,0);
-        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z))) direction.x -=1;
-        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z))) direction.x +=1;
-        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z))) direction.y -=1;
-        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z))) direction.y +=1;
-        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z-1))) direction.z -=1;
-        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z+1))) direction.z +=1;
+        Vector3 direction = new Vector3(0, 0, 0);
+        if (!IsAboveSurface(new Vector3(point.x - 1, point.y, point.z))) direction.x -= 1;
+        if (!IsAboveSurface(new Vector3(point.x + 1, point.y, point.z))) direction.x += 1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y - 1, point.z))) direction.y -= 1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y + 1, point.z))) direction.y += 1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z - 1))) direction.z -= 1;
+        if (!IsAboveSurface(new Vector3(point.x, point.y, point.z + 1))) direction.z += 1;
         if (!(direction.x == 0 && direction.y == 0 && direction.z == 0)) return direction.normalized;
-        if (!IsAboveSurface(new Vector3(point.x-1, point.y-1, point.z))) {direction.x -=1; direction.y -=1;}
-        if (!IsAboveSurface(new Vector3(point.x-1, point.y+1, point.z))) {direction.x -=1; direction.y +=1;}
-        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z-1))) {direction.x -=1; direction.z -=1;}
-        if (!IsAboveSurface(new Vector3(point.x-1, point.y, point.z+1))) {direction.x -=1; direction.z +=1;}
-        if (!IsAboveSurface(new Vector3(point.x+1, point.y-1, point.z))) {direction.x +=1; direction.y -=1;}
-        if (!IsAboveSurface(new Vector3(point.x+1, point.y+1, point.z))) {direction.x +=1; direction.y +=1;}
-        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z-1))) {direction.x +=1; direction.z -=1;}
-        if (!IsAboveSurface(new Vector3(point.x+1, point.y, point.z+1))) {direction.x +=1; direction.z +=1;}
-        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z-1))) {direction.y -=1; direction.z -=1;}
-        if (!IsAboveSurface(new Vector3(point.x, point.y-1, point.z+1))) {direction.y -=1; direction.z +=1;}
-        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z-1))) {direction.y +=1; direction.z -=1;}
-        if (!IsAboveSurface(new Vector3(point.x, point.y+1, point.z+1))) {direction.y +=1; direction.z +=1;}
+        if (!IsAboveSurface(new Vector3(point.x - 1, point.y - 1, point.z))) { direction.x -= 1; direction.y -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x - 1, point.y + 1, point.z))) { direction.x -= 1; direction.y += 1; }
+        if (!IsAboveSurface(new Vector3(point.x - 1, point.y, point.z - 1))) { direction.x -= 1; direction.z -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x - 1, point.y, point.z + 1))) { direction.x -= 1; direction.z += 1; }
+        if (!IsAboveSurface(new Vector3(point.x + 1, point.y - 1, point.z))) { direction.x += 1; direction.y -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x + 1, point.y + 1, point.z))) { direction.x += 1; direction.y += 1; }
+        if (!IsAboveSurface(new Vector3(point.x + 1, point.y, point.z - 1))) { direction.x += 1; direction.z -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x + 1, point.y, point.z + 1))) { direction.x += 1; direction.z += 1; }
+        if (!IsAboveSurface(new Vector3(point.x, point.y - 1, point.z - 1))) { direction.y -= 1; direction.z -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x, point.y - 1, point.z + 1))) { direction.y -= 1; direction.z += 1; }
+        if (!IsAboveSurface(new Vector3(point.x, point.y + 1, point.z - 1))) { direction.y += 1; direction.z -= 1; }
+        if (!IsAboveSurface(new Vector3(point.x, point.y + 1, point.z + 1))) { direction.y += 1; direction.z += 1; }
         return direction.normalized;
     }
 

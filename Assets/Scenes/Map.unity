@@ -1519,6 +1519,9 @@ MonoBehaviour:
   errorMaterial: {fileID: 2100000, guid: c1a20c671406c294e96ec00ccfd27da1, type: 2}
   unDugMaterial: {fileID: 2100000, guid: 1901b0ceb5317df40b41d018a2600bdc, type: 2}
   rigidBody: {fileID: 856479752}
+  cilinderRenderer: {fileID: 2009118849}
+  startSphereRenderer: {fileID: 196003839}
+  endSphereRenderer: {fileID: 1396928762}
   mode: 0
   interval: 0.1
   gotPoints: 0

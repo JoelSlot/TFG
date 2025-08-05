@@ -16,6 +16,10 @@ public class NestPart : MonoBehaviour
     public Material unDugMaterial;
     public Rigidbody rigidBody;
 
+    public MeshRenderer cilinderRenderer;
+    public MeshRenderer startSphereRenderer;
+    public MeshRenderer endSphereRenderer;
+
     public enum NestPartType { Tunnel, FoodChamber, Outside }
 
     public static int NestPartTypeToIndex(NestPartType type)
@@ -60,6 +64,20 @@ public class NestPart : MonoBehaviour
         errorMaterial.renderQueue = 3001;
         normalMaterial.renderQueue = 3002;
         unDugMaterial.renderQueue = 3003;
+    }
+
+    public void Show()
+    {
+        cilinderRenderer.enabled = true;
+        startSphereRenderer.enabled = true;
+        endSphereRenderer.enabled = true;
+    }
+
+    public void Hide()
+    {
+        cilinderRenderer.enabled = false;
+        startSphereRenderer.enabled = false;
+        endSphereRenderer.enabled = false;
     }
 
     // Update is called once per frame
@@ -446,16 +464,19 @@ public class NestPart : MonoBehaviour
         }
         else
         {
+            if (WorldGen.IsAboveSurface(startPos) && WorldGen.IsAboveSurface(endPos))
+                return false;
+
             foreach (var part in Nest.NestParts)
-            {
-                if (part.mode != NestPartType.Tunnel)
                 {
-                    Vector3 distance = part.endPos - part.startPos;
-                    Vector3 chamberBottomPoint = part.startPos + Vector3.down * Mathf.Abs(distance.y / 2);
-                    if (DistancePointLine(chamberBottomPoint, startPos, endPos) < radius + 1)
-                        return false;
+                    if (part.mode != NestPartType.Tunnel)
+                    {
+                        Vector3 distance = part.endPos - part.startPos;
+                        Vector3 chamberBottomPoint = part.startPos + Vector3.down * Mathf.Abs(distance.y / 2);
+                        if (DistancePointLine(chamberBottomPoint, startPos, endPos) < radius + 1)
+                            return false;
+                    }
                 }
-            }
             return true;
         }
     }

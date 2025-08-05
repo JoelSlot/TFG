@@ -25,6 +25,18 @@ public class Nest : MonoBehaviour
 
     }
 
+    public static void Show()
+    {
+        for (int i = 0; i < NestParts.Count; i++)
+            NestParts[i].Show();
+    }
+
+    public static void Hide()
+    {
+        for (int i = 0; i < NestParts.Count; i++)
+            NestParts[i].Hide();
+    }
+
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, ref Task objective)
     {
         if (GetNestDigTask(antSurface, ref objective))
