@@ -44,6 +44,7 @@ public class chunk
         meshFilter = chunkObject.AddComponent<MeshFilter>();
         meshCollider = chunkObject.AddComponent<MeshCollider>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
+        meshRenderer.enabled = false;
         //set mesh material
         meshRenderer.material = dad.terrainMaterial;
         //not sure if relevant
@@ -59,6 +60,16 @@ public class chunk
     void Update()
     {   
 
+    }
+
+    public void show()
+    {
+        meshRenderer.enabled = true;
+    }
+
+    public void hide()
+    {
+        meshRenderer.enabled = false;
     }
 
     

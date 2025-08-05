@@ -121,6 +121,11 @@ public class WorldGen : MonoBehaviour
             }
         }
 
+        foreach ((var pos, var chunk) in chunks)
+        {
+            chunk.show();
+        }
+
         Debug.Log(string.Format("{0} by {1} by {2} world generated", num_chunks_x, num_chunks_y, num_chunks_z));
 
     }

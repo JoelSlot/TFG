@@ -35,8 +35,6 @@ public class Ant : MonoBehaviour
     IBehaviourTreeNode tree;
     
 
-
-
     //Datos que hay que guardar y cargar
     public int id;
     public int age = 0;

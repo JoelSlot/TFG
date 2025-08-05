@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor.Overlays;
 using UnityEngine;
 
 public class NestPart : MonoBehaviour
@@ -12,6 +13,7 @@ public class NestPart : MonoBehaviour
     public GameObject endSphere;
     public Material normalMaterial;
     public Material errorMaterial;
+    public Material unDugMaterial;
     public Rigidbody rigidBody;
 
     public enum NestPartType { Tunnel, FoodChamber, Outside }
@@ -54,6 +56,10 @@ public class NestPart : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        //Set the material render order
+        errorMaterial.renderQueue = 3001;
+        normalMaterial.renderQueue = 3002;
+        unDugMaterial.renderQueue = 3003;
     }
 
     // Update is called once per frame
@@ -64,6 +70,11 @@ public class NestPart : MonoBehaviour
                 setMaterial(normalMaterial);
             else
                 setMaterial(errorMaterial);
+        else if (HasBeenDug())
+            setMaterial(normalMaterial);
+        else
+            setMaterial(unDugMaterial);
+
     }
 
     public void setMode(NestPartType newMode)
@@ -161,6 +172,7 @@ public class NestPart : MonoBehaviour
         foreach (var renderer in childRenders)
         {
             renderer.material = material;
+            //renderer.material.renderQueue = Overlay;
         }
     }
 
