@@ -3,10 +3,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using System.Linq;
-using UnityEditor.Search;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.ComponentModel.Design;
-using Unity.VisualScripting;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -519,50 +515,27 @@ public class FlyCamera : MonoBehaviour
                 Nest.NestParts.Last().setKinematic(true);
             }
         }
-        else if (clickObject(nestLayer, out RaycastHit hit))
+        else
         {
-            if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
-                if (!placingDigZone)
-                {
-                    placingDigZone = true;
-                    digStartPoint = hit.point;
-                    digEndPoint = hit.point;
-                    NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
-                    if (objectMode == obj.digTunnel)
-                    {
-                        nestPartScript.setMode(NestPart.NestPartType.Tunnel);
-                        nestPartScript.SetPos(digStartPoint, digEndPoint);
-                    }
-                    else
-                    {
-                        nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
-                        nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
-                        nestPartScript.setKinematic(false);
-                    }
-
-                }
-        }
-        else if (clickObject(terrainLayer, out hit))
-        {
-            switch (objectMode)
+            if (clickObject(nestLayer, out RaycastHit hit))
             {
-                case obj.Ant:
-                    if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                    SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
-                    break;
-                case obj.AntQueen:
-                    WorldGen.InstantiateQueen(hit.point, Quaternion.Euler(hit.normal));
-                    break;
-                case obj.Corn:
-                    WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
-                    break;
-                case obj.digTunnel:
-                case obj.digChamber:
-                    if (!placingDigZone && Nest.NestParts.Count == 0)
+                if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
+                    if (!placingDigZone)
                     {
+
+                        NestPart script = hit.transform.gameObject.GetComponent<NestPart>();
+                        if (script.mode == NestPart.NestPartType.Tunnel && objectMode == obj.digTunnel) //get center of tunnel when placing on tunnel
+                        {
+                            digStartPoint = NestPart.ProjectPointLine(hit.point, script.getStartPos(), script.getEndPos());
+                            digEndPoint = hit.point;
+                        }
+                        else
+                        {
+                            digStartPoint = hit.point;
+                            digEndPoint = hit.point + Vector3.up;
+                        }
+
                         placingDigZone = true;
-                        digStartPoint = hit.point;
-                        digEndPoint = hit.point;
                         NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
                         if (objectMode == obj.digTunnel)
                         {
@@ -575,52 +548,89 @@ public class FlyCamera : MonoBehaviour
                             nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                             nestPartScript.setKinematic(false);
                         }
+
                     }
-                    break;
+            }
+            if (clickObject(terrainLayer, out hit))
+            {
+                switch (objectMode)
+                {
+                    case obj.Ant:
+                        if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                        SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
+                        break;
+                    case obj.AntQueen:
+                        WorldGen.InstantiateQueen(hit.point, Quaternion.Euler(hit.normal));
+                        break;
+                    case obj.Corn:
+                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
+                        break;
+                    case obj.digTunnel:
+                    case obj.digChamber:
+                        if (!placingDigZone && Nest.NestParts.Count == 0)
+                        {
+                            placingDigZone = true;
+                            digStartPoint = hit.point;
+                            digEndPoint = hit.point;
+                            NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
+                            if (objectMode == obj.digTunnel)
+                            {
+                                nestPartScript.setMode(NestPart.NestPartType.Tunnel);
+                                nestPartScript.SetPos(digStartPoint, digEndPoint);
+                            }
+                            else
+                            {
+                                nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
+                                nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                                nestPartScript.setKinematic(false);
+                            }
+                        }
+                        break;
 
-                case obj.test:
-                    Vector3Int cube = Vector3Int.FloorToInt(hit.point);
+                    case obj.test:
+                        Vector3Int cube = Vector3Int.FloorToInt(hit.point);
 
-                    /*if (SelectedAnt != null)
-                    {
-                        //CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
-                        //SelectedAnt.path = path;
-                        //SelectedAnt.objective = new(hit.point); 
-                        //SelectedAnt.state = Ant.AIState.FollowingPath;
-                    }*/
+                        /*if (SelectedAnt != null)
+                        {
+                            //CubePaths.GetPathToPoint(SelectedAnt.lastSurface, cube, 100, out var path);
+                            //SelectedAnt.path = path;
+                            //SelectedAnt.objective = new(hit.point); 
+                            //SelectedAnt.state = Ant.AIState.FollowingPath;
+                        }*/
 
-                    CubePaths.CubeSurface clickedSurface = new(cube, hit.normal);
+                        CubePaths.CubeSurface clickedSurface = new(cube, hit.normal);
 
-                    CubePaths.GetKnownPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
+                        CubePaths.GetKnownPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
 
-                    CubePaths.DrawCube(cube, Color.red, 20);
+                        CubePaths.DrawCube(cube, Color.red, 20);
 
-                    /*
-                    bool[] cornerValues = CubePaths.CubeCornerValues(cube);
+                        /*
+                        bool[] cornerValues = CubePaths.CubeCornerValues(cube);
 
-                    Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
-                    
-                    bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
+                        Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
+                        
+                        bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
 
-                    CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
-                    List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
-                    foreach (var adyacentCube in adyacentCubes)
-                    {
-                        CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
-                    }*/
-                    /*
-                    Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
-                    CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
+                        CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
+                        List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
+                        foreach (var adyacentCube in adyacentCubes)
+                        {
+                            CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
+                        }*/
+                        /*
+                        Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
+                        CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
 
-                    List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
+                        List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
 
-                    if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
-                    else Debug.Log("Pheromones found");
-                    */
-                    break;
-                default:
-                    Debug.Log("No valid object mode when clicked");
-                    break;
+                        if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
+                        else Debug.Log("Pheromones found");
+                        */
+                        break;
+                    default:
+                        Debug.Log("No valid object mode when clicked");
+                        break;
+                }
             }
         }
         
