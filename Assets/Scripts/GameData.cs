@@ -33,6 +33,7 @@ public class GameData
     public HashSet<AntInfo> antInfoDict { get; set; }
     public HashSet<CornInfo> cornInfoDict { get; set; }
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
+    public Dictionary<int, int> cornInNestDict { get; set; }
     public HashSet<CornCobInfo> cornCobInfoDict { get; set; }
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict { get; set; }
     public HashSet<serializableVector3Int> availableDigPointInfoDict { get; set; }
@@ -84,7 +85,7 @@ public class GameData
 
     now using serializableVector3Int it works!
      */
-    public void saveAnts()
+    public void SaveAnts()
     {
         antInfoDict = new();
         foreach (var (id, ant) in Ant.antDictionary)
@@ -94,7 +95,7 @@ public class GameData
         Debug.Log("Num ants: " + antInfoDict.Count);
     }
 
-    public void saveQueens()
+    public void SaveQueens()
     {
         queenInfoDict = new();
         foreach (var queen in AntQueen.antQueenSet)
@@ -105,7 +106,7 @@ public class GameData
     }
 
     //Save all corn to the dictionary, and add links between held coins and the ants holding them
-    public void saveCorn()
+    public void SaveCorn()
     {
         cornInfoDict = new();
         cornHeldAntDict = new();
@@ -120,7 +121,7 @@ public class GameData
         }
     }
 
-    public void saveCornCobs()
+    public void SaveCornCobs()
     {
         cornCobInfoDict = new();
         foreach (var (id, cornCob) in CornCob.cornCobDictionary)
@@ -129,7 +130,7 @@ public class GameData
         }
     }
 
-    public void saveDigPoints()
+    public void SaveDigPoints()
     {
         digPointDict = DigPoint.digPointDict;
 
@@ -149,7 +150,7 @@ public class GameData
         }
     }
 
-    public void saveNestParts()
+    public void SaveNestParts()
     {
         knownCornCobs = Nest.KnownCornCobs;
         nestPartInfoDict = new();
@@ -158,9 +159,10 @@ public class GameData
             nestPartInfoDict.Add(NestPartInfo.ToData(nestPart));
         }
         Debug.Log("Num nestParts: " + nestPartInfoDict.Count);
+        cornInNestDict = Nest.CollectedCornPips;
     }
 
-    public void savePhermones()
+    public void SavePhermones()
     {
         pheromones = CubePaths.cubePheromones;
     }
@@ -237,6 +239,7 @@ public class GameData
     public class CornInfo
     {
         public int id { get; set; }
+        public int antId { get; set; }
         public serializableVector3 pos { get; set; }
         public serializableQuaternion orientation { get; set; }
 
@@ -250,6 +253,7 @@ public class GameData
         {
             CornInfo info = new();
             info.id = corn.id;
+            info.antId = corn.antId;
             info.pos = new(corn.transform.position);
             info.orientation = new(corn.transform.rotation);
             return info;
@@ -461,19 +465,19 @@ public class GameData
         data.terrainMapStream = data.EnCode(WorldGen.terrainMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
         data.terrainMemoryStream = data.EnCode(WorldGen.memoryMap, data.x_dim, data.y_dim, data.z_dim).ToArray();
 
-        data.saveQueens();
+        data.SaveQueens();
 
-        data.saveAnts();
+        data.SaveAnts();
 
-        data.saveCorn();
+        data.SaveCorn();
 
-        data.saveCornCobs();
+        data.SaveCornCobs();
 
-        data.saveDigPoints();
+        data.SaveDigPoints();
 
-        data.saveNestParts();
+        data.SaveNestParts();
 
-        data.savePhermones();
+        data.SavePhermones();
 
         return data;
     }
@@ -548,6 +552,8 @@ public class GameData
         {
             WorldGen.InstantiateNestPart(info);
         }
+
+        Nest.CollectedCornPips = cornInNestDict;
 
         CubePaths.cubePheromones = pheromones;
 

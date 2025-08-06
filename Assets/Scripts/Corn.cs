@@ -11,6 +11,8 @@ public class Corn : MonoBehaviour
 
     public int id;
 
+    public int antId = -1; //Id of the ant going to pick it up
+
 
     void OnDestroy()
     {

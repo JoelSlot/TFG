@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentBehaviourTree;
+using Polenter.Serialization.Core;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,7 +11,9 @@ public class Nest : MonoBehaviour
 {
     public static List<NestPart> NestParts = new();
     public static HashSet<int> KnownCornCobs = new();
+    public static Dictionary<int, int> CollectedCornPips = new(); //key is corn id, value is room index
     private static int lastIndex = 0;
+    public int foodCount = 0;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -22,7 +25,7 @@ public class Nest : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        foodCount = CollectedCornPips.Count;
     }
 
     public static void Show()
@@ -37,23 +40,44 @@ public class Nest : MonoBehaviour
             NestParts[i].Hide();
     }
 
-    public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        if (GetNestDigTask(antSurface, ref objective))
+        List<string> checkOrder = new List<string> {"dig", "corn", "cob"};
+        Shuffle(checkOrder);
+
+        foreach (var function in checkOrder)
         {
-            Debug.Log("Got a dig task");
-            return BehaviourTreeStatus.Success;
+            switch (function)
+            {
+                case "dig":
+                    if (GetNestDigTask(antSurface, antId, ref objective))
+                    {
+                        Debug.Log("Got a dig task");
+                        return BehaviourTreeStatus.Success;
+                    }
+                    break;
+                case "corn":
+                    if (GetNestRelocateTask(antSurface, antId, ref objective))
+                    {
+                        Debug.Log("Got a relocate task");
+                        return BehaviourTreeStatus.Success;
+                    }
+                    break;
+                case "cob":
+                    if (GetNestCollectTask(antSurface, ref objective))
+                    {
+                        Debug.Log("Got a collect task");
+                        return BehaviourTreeStatus.Success;
+                    }
+                    break;
+            }
         }
-        if (GetNestCollectTask(antSurface, ref objective))
-        {
-            Debug.Log("Got a collect task");
-            return BehaviourTreeStatus.Success;
-        }
+
         Debug.Log("Did not get a requested task");
         return BehaviourTreeStatus.Failure;
     }
 
-    public static bool GetNestDigTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    public static bool GetNestDigTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
         objective = Task.NoTask();
 
@@ -76,21 +100,16 @@ public class Nest : MonoBehaviour
                     continue;
                 }
 
-                int antId = DigPoint.digPointDict[pos].antId;
-                //Si ya lo tiene otra hormiga ignorarlo
-                if (antId != -1)
-                {
-                    if (Ant.antDictionary.TryGetValue(antId, out Ant digPointsAnt))
-                    {
-                        if (digPointsAnt.objective.isTaskType(TaskType.Dig))
-                            if (digPointsAnt.objective.digPointId == pos)
-                                continue;
-                    }
-                }
+                //If already being dug, go to next
+                if (Task.IsDigPointBeingDug(pos)) continue;
 
                 //find path to it. If no path, remove from available
                 if (CubePaths.GetKnownPathToPoint(antSurface, pos, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                {
                     objective = Task.DigTask(pos, newPath);
+                    //Mark that digpoints new ant
+                    DigPoint.digPointDict[pos].antId = antId;
+                }
                 else DigPoint.availableDigPoints.Remove(pos);
             }
             Debug.Log("Number of available digpoints post check: " + DigPoint.availableDigPoints.Count);
@@ -139,6 +158,31 @@ public class Nest : MonoBehaviour
         else return false;
     }
 
+    public static bool GetNestRelocateTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
+    {
+        foreach ((int cornId, int partId) in CollectedCornPips)
+        {
+            bool relocatable = false;
+            if (partId == -1) relocatable = true;
+            else if (NestParts[partId].mode != NestPart.NestPartType.FoodChamber) relocatable = true;
+
+            if (relocatable)
+            {
+                //if already being relocated go to next
+                if (Task.IsCornBeingPickedUp(cornId)) continue;
+
+                if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                {
+                    objective = Task.GetCornTask(cornId, antId, newPath);
+                    return true;
+                }
+
+            }
+
+        }
+        return false;
+    }
+
     public static bool PointInNest(Vector3 point)
     {
         int checkedParts = 0;
@@ -146,7 +190,7 @@ public class Nest : MonoBehaviour
         {
             i %= NestParts.Count;
             float marchingValue = NestParts[i].getMarchingValue(point);
-            if (marchingValue < WorldGen.isolevel * 1.05)
+            if (marchingValue < WorldGen.isolevel)
             {
                 lastIndex = i;
                 return true;
@@ -203,7 +247,7 @@ public class Nest : MonoBehaviour
         //This is what caused the ant to be stuck going outside on a cube that is partially inside and
         //outside.
         if (type == NestPart.NestPartType.Outside) return !SurfaceInNest(surface);
-        
+
         for (int i = 0; i < 8; i++)
         {
             if (surface.surfaceGroup[i])
@@ -211,6 +255,41 @@ public class Nest : MonoBehaviour
                     return true;
         }
         return false;
+    }
+
+    public static int GetCubeNestPart(Vector3Int cubePos, NestPart.NestPartType mode)
+    {
+        for (int i = 0; i < NestParts.Count; i++)
+        {
+            if (NestParts[i].mode == mode && NestParts[i].HasBeenDug())
+            {
+                for (int cornerId = 0; cornerId < 8; cornerId++)
+                {
+                    float marchingValue = NestParts[i].getMarchingValue(cubePos + chunk.cornerIdToPos[cornerId]);
+                    if (marchingValue < WorldGen.isolevel)
+                    {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+
+    //for shuffleing lists, used to randomly select nest task
+    private static System.Random rng = new System.Random(); 
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 
 }

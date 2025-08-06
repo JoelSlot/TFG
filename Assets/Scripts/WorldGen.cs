@@ -671,6 +671,7 @@ public class WorldGen : MonoBehaviour
         Corn newCornScript = newCorn.GetComponent<Corn>();
 
         newCornScript.id = cornInfo.id;
+        newCornScript.antId = cornInfo.id;
         newCorn.name = "Corn " + cornInfo.id;
 
         Corn.cornDictionary.Add(cornInfo.id, newCornScript);

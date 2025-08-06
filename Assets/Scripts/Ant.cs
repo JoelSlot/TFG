@@ -152,7 +152,7 @@ public class Ant : MonoBehaviour
                     .End()
 
                     .Do("Sense nearby task", t => SenseTask())
-                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
+                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, id, ref objective))
 
                     .Sequence("Go outside")
                         .Condition("Am inside of nest?", t => Nest.SurfaceInNest(antSurface))
@@ -481,17 +481,9 @@ public class Ant : MonoBehaviour
                 if (objLayer == 9) //9 is digpoint layer
                 {
                     Vector3Int pos = Vector3Int.RoundToInt(sensedItem.transform.position);
-                    int digPointsAntId = DigPoint.digPointDict[pos].antId;
-                    //Mirar si ya lo va a excavar otra hormiga
-                    if (digPointsAntId != -1)
-                    {
-                        if (antDictionary.TryGetValue(digPointsAntId, out Ant digPointsAnt))
-                        {
-                            if (digPointsAnt.objective.isTaskType(TaskType.Dig))
-                                if (digPointsAnt.objective.digPointId == pos)
-                                    continue;
-                        }
-                    }
+
+                    //Si ya una hormiga lo va a excavar saltarlo
+                    if (Task.IsDigPointBeingDug(pos)) continue;
 
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
                     if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
@@ -504,7 +496,7 @@ public class Ant : MonoBehaviour
                     if (newScore > minDigPointScore)
                     {
                         newTask = new Task(sensedItem, TaskType.Dig, newPath);
-                        DigPoint.digPointDict[pos].antId = this.id; //Marcamos el id
+                        DigPoint.digPointDict[pos].antId = id; //Marcamos el id de la hormiga
                         minDigPointScore = newScore;
                         minLength = newPath.Count;
                     }
@@ -521,7 +513,17 @@ public class Ant : MonoBehaviour
                 }
                 else if (objLayer == 10) //10 is corn layer
                 {
-                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
+                    if (newPath.Count < minLength)
+                    {
+                        if (!sensedItem.TryGetComponent<Corn>(out var cornScript)) continue;
+
+                        //Si ya una hormiga lo va a recoger
+                        if (Task.IsCornBeingPickedUp(cornScript)) continue;
+
+                        newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
+                        cornScript.antId = id;
+
+                    }
                 }
                 else if (objLayer == 11) //11 is cornCobLayer
                 {
@@ -620,6 +622,7 @@ public class Ant : MonoBehaviour
             Debug.Log("Valid");
             GameObject food = objective.GetFood();
             SetToHold(food);
+            Nest.CollectedCornPips.Remove(objective.foodId); //remove pip from nest if in it
             UpdateHolding();
         }
         //gets the cornCob, then a random corn pip from the cob that becomes held.
@@ -649,6 +652,7 @@ public class Ant : MonoBehaviour
         bool rayCastHits = Physics.Raycast(rayCastOrig, direction, out RaycastHit hitInfo, direction.magnitude, 1 << 6);
         //Debug.DrawLine(mouthPos, rayCastOrig, Color.cyan, 100);
 
+        
 
         //carriedObject.
         foreach (Transform child in carriedObject.transform)
@@ -658,6 +662,17 @@ public class Ant : MonoBehaviour
             if (rayCastHits)
             {
                 child.position = hitInfo.point - direction * 0.6f; //move the item over the terrain hit
+            }
+            //Si es de tipo corn se añadirá al nido si se encuentra dentro
+            Corn cornScript = child.GetComponent<Corn>();
+            if (cornScript != null)
+            {
+                if (Nest.PointInNest(transform.position))
+                {
+                    //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
+                    int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
+                    Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
+                }
             }
         }
         carriedObject.transform.DetachChildren();

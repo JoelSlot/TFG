@@ -62,6 +62,21 @@ public class Task
         return newTask;
     }
 
+    public static Task GetCornTask(int cornId, int antId, List<CubePaths.CubeSurface> newPath)
+    {
+        if (!Corn.cornDictionary.ContainsKey(cornId)) return Task.NoTask();
+
+        Corn.cornDictionary[cornId].antId = antId;
+
+        Task newTask = new();
+        newTask.type = TaskType.GetCorn;
+        newTask.foodId = cornId;
+        newTask.pos = Corn.cornDictionary[cornId].transform.position;
+        newTask.path = newPath;
+
+        return newTask;
+    }
+
     public static Task GoOutsideTask(CubePaths.CubeSurface antSurface)
     {
         Task GOtask = new()
@@ -192,6 +207,43 @@ public class Task
                 return DigPoint.digPointDict[digPointId].digPoint;
 
         return null;
+    }
+
+    public static bool IsCornBeingPickedUp(Corn cornScript)
+    {
+        //Mirar si ya lo va a recoger otra hormiga
+        if (cornScript.antId != -1)
+        {
+            if (Ant.antDictionary.TryGetValue(cornScript.antId, out Ant cornAnt))
+            {
+                if (cornAnt.objective.isTaskType(TaskType.GetCorn))
+                    if (cornAnt.objective.foodId == cornScript.id)
+                        return true;
+            }
+        }
+        return false;
+    }
+    public static bool IsCornBeingPickedUp(int cornId)
+    {
+        if (!Corn.cornDictionary.TryGetValue(cornId, out Corn cornScript)) return true;
+
+        return IsCornBeingPickedUp(cornScript);
+    }
+
+    public static bool IsDigPointBeingDug(Vector3Int digPointPos)
+    {
+        int digPointsAntId = DigPoint.digPointDict[digPointPos].antId;
+        //Mirar si ya lo va a excavar otra hormiga
+        if (digPointsAntId != -1)
+        {
+            if (Ant.antDictionary.TryGetValue(digPointsAntId, out Ant digPointsAnt))
+            {
+                if (digPointsAnt.objective.isTaskType(TaskType.Dig))
+                    if (digPointsAnt.objective.digPointId == digPointPos)
+                        return true;
+            }
+        }
+        return false;
     }
 
 

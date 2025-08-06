@@ -96,7 +96,7 @@ public class AntQueen : MonoBehaviour
                     .End()
 
                     .Do("Sense nearby task", t => SenseTask())
-                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, ref objective))
+                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, -1, ref objective))
 
                     .Selector("Go outside")
                         .Condition("Am outside of nest?", t => !Nest.SurfaceInNest(antSurface))
@@ -369,10 +369,13 @@ public class AntQueen : MonoBehaviour
                 int objLayer = sensedItem.gameObject.layer;
                 if (objLayer == 9) //9 is digpoint layer
                 {
+                    Vector3Int pos = Vector3Int.RoundToInt(sensedItem.transform.position);
+                    if (Task.IsDigPointBeingDug(pos)) continue;
+
                     //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
                     if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
 
-                    int newScore = DigPoint.ReachableScore(Vector3Int.RoundToInt(sensedItem.transform.position));
+                    int newScore = DigPoint.ReachableScore(pos);
 
                     //Thanks to this sistem, priorities are:
                     //1. Having a high reachable score
@@ -396,7 +399,17 @@ public class AntQueen : MonoBehaviour
                 }
                 else if (objLayer == 10) //10 is corn layer
                 {
-                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
+                    if (newPath.Count < minLength)
+                    {
+                        if (!sensedItem.TryGetComponent<Corn>(out var cornScript)) continue;
+
+                        //Si ya una hormiga lo va a recoger
+                        if (Task.IsCornBeingPickedUp(cornScript)) continue;
+
+                        newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
+                        cornScript.antId = -1;
+
+                    }
                 }
                 else if (objLayer == 11) //11 is cornCobLayer
                 {
@@ -493,6 +506,7 @@ public class AntQueen : MonoBehaviour
             Debug.Log("Valid");
             GameObject food = objective.GetFood();
             SetToHold(food);
+            Nest.CollectedCornPips.Remove(objective.foodId);
             UpdateHolding();
         }
         //gets the cornCob, then a random corn pip from the cob that becomes held.
@@ -516,10 +530,22 @@ public class AntQueen : MonoBehaviour
     public void PutDownAction()
     {
         //carriedObject.
-        foreach(Transform child in carriedObject.transform)
+        foreach (Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
             child.GetComponent<BoxCollider>().enabled = true;
+            
+            //Si es de tipo corn se añadirá al nido si se encuentra dentro
+            Corn cornScript = child.GetComponent<Corn>();
+            if (cornScript != null)
+            {
+                if (Nest.PointInNest(transform.position))
+                {
+                    //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
+                    int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
+                    Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
+                }
+            }
         }
         carriedObject.transform.DetachChildren();
         Animator.SetBool("Put down", false);
