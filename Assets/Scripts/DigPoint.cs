@@ -19,6 +19,11 @@ public class DigPoint : MonoBehaviour
         public DigPoint digPoint = null;
         public int antId { get; set; } //Id of the ant that is getting the digpoint
 
+        private digPointData()
+        {
+
+        }
+
         public digPointData(int val)
         {
             value = val;

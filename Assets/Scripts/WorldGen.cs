@@ -27,7 +27,8 @@ public class WorldGen : MonoBehaviour
     int num_chunks_y;
     int num_chunks_z;
 
-    public static bool newCameraPosInfo = false;
+    public static bool updateCameraPos = false;
+    public static bool updateNestVisibility = false;
     public static GameData.serializableVector3 camera_pos = new(Vector3.zero);
     public static GameData.serializableVector3 camera_euler = new (Vector3.zero);    
 
@@ -62,7 +63,7 @@ public class WorldGen : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
         //Turn all non static members into static ones:
         originalAnt = origAnt;
         originalQueen = origQueen;
@@ -89,6 +90,8 @@ public class WorldGen : MonoBehaviour
             LoadGame(MainMenu.GameSettings.saveFile);
         }
         Physics.gravity = new Vector3(0, -15.0F, 0);
+
+        updateNestVisibility = true;
 
         
         
@@ -160,7 +163,7 @@ public class WorldGen : MonoBehaviour
         }
 
         camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
-        newCameraPosInfo = true;
+        updateCameraPos = true;
 
         Debug.Log(string.Format("Terrain generated"));
 
@@ -200,7 +203,7 @@ public class WorldGen : MonoBehaviour
         ApplyPastTerrainRedundancy();
 
         camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
-        newCameraPosInfo = true;
+        updateCameraPos = true;
 
         Debug.Log(string.Format("Terrain generated"));
 

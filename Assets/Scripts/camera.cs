@@ -15,8 +15,7 @@ public class FlyCamera : MonoBehaviour
     public Camera camera; // Objeto cámara que se usa ingame
 
     public static bool cameraUnderground = false;
-
-
+    public static bool cameraInNest = false;
 
     Vector3 velocity; // current velocity
 
@@ -61,11 +60,26 @@ public class FlyCamera : MonoBehaviour
 
     void Update()
     {
-        if (WorldGen.newCameraPosInfo)
+        if (WorldGen.updateCameraPos)
         {
             transform.position = WorldGen.camera_pos.ToVector3();
             transform.eulerAngles = WorldGen.camera_euler.ToVector3();
-            WorldGen.newCameraPosInfo = false;
+            WorldGen.updateCameraPos = false;
+        }
+
+        if (WorldGen.updateNestVisibility)
+        {
+            if (Nest.NestVisible)
+            {
+                ShowNest();
+                nestPartVisibilityPanel.SetActive(true);
+            }
+            else
+            {
+                HideNest();
+                nestPartVisibilityPanel.SetActive(false);
+            }
+            WorldGen.updateNestVisibility = false;
         }
 
         ReadInputs();
@@ -74,18 +88,26 @@ public class FlyCamera : MonoBehaviour
         {
             cameraUnderground = false;
             camera.backgroundColor = new Color(0, 191, 255);
-
-            if (!WorldGen.WasAboveSurface(transform.position) && !placingDigZone)
-                Nest.Hide();
-            else Nest.Show();
         }
         else
         {
             cameraUnderground = true;
             camera.backgroundColor = Color.black;
-            
-            Nest.Show();
         }
+
+        if (!WorldGen.WasAboveSurface(transform.position) && !cameraUnderground)
+        {
+            if (!cameraInNest && Nest.NestVisible)
+                HideNest();
+            cameraInNest = true;
+        }
+        else
+        {
+            if (cameraInNest && Nest.NestVisible)
+                ShowNest();
+            cameraInNest = false;
+        }
+
     }
 
     void FixedUpdate()
@@ -349,6 +371,13 @@ public class FlyCamera : MonoBehaviour
     }
 
 
+    public void GoToMenu()
+    {
+        rotateAllowed = false;
+        lockCursor(false);
+        SceneManager.LoadSceneAsync(0);
+    }
+
     private void ReadInputs()
     {
 
@@ -360,9 +389,7 @@ public class FlyCamera : MonoBehaviour
         //to return to main menu
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            rotateAllowed = false;
-            lockCursor(false);
-            SceneManager.LoadSceneAsync(0);
+            GoToMenu();
         }
         //Keys to load/save map
         /*if (Input.GetKeyDown(KeyCode.L))
@@ -633,10 +660,69 @@ public class FlyCamera : MonoBehaviour
                 }
             }
         }
-        
+
     }
 
 
+
+    //UI NEST VISIBILITY SECTION------------------------------------------------------------------------------
+
+    public GameObject nestPartVisibilityPanel;
+
+    public void ShowNest()
+    {
+        for (int i = 0; i < Nest.NestParts.Count; i++)
+            if (!Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(Nest.NestParts[i].mode)])
+                Nest.NestParts[i].Show();
+
+        Debug.Log("Showing nest");
+    }
+
+    public void HideNest()
+    {
+        for (int i = 0; i < Nest.NestParts.Count; i++)
+            Nest.NestParts[i].Hide();
+        Debug.Log("Hiding nest");
+    }
+
+    public void HideNest(NestPart.NestPartType type)
+    {
+        for (int i = 0; i < Nest.NestParts.Count; i++)
+            if (Nest.NestParts[i].mode == type)
+                Nest.NestParts[i].Hide();
+    }
+
+    public void toggleAllVisibility()
+    {
+        if (!Nest.NestVisible)
+        {
+            Nest.NestVisible = true;
+            nestPartVisibilityPanel.SetActive(true);
+            ShowNest();
+        }
+        else
+        {
+            Nest.NestVisible = false;
+            nestPartVisibilityPanel.SetActive(false);
+            HideNest();
+        }
+        Nest.WriteVisibleValues();
+    }
+
+    public void toggleNestPartVisibility(int i)
+    {
+        if (Nest.NestPartDisabled[i])
+        {
+            Nest.NestPartDisabled[i] = false;
+            ShowNest();
+        }
+        else
+        {
+            Nest.NestPartDisabled[i] = true;
+            HideNest(NestPart.IndexToNestPartType(i));
+        }
+        Nest.WriteVisibleValues();
+    }
 
 
 }

@@ -492,7 +492,7 @@ public class GameData
         WorldGen.chunk_y_dim = chunk_y_dim;
         WorldGen.chunk_z_dim = chunk_z_dim;
 
-        WorldGen.newCameraPosInfo = true;
+        WorldGen.updateCameraPos = true;
         WorldGen.camera_pos = camera_pos;
         WorldGen.camera_euler = camera_euler;
 
@@ -552,6 +552,8 @@ public class GameData
         {
             WorldGen.InstantiateNestPart(info);
         }
+
+        WorldGen.updateNestVisibility = true;
 
         Nest.CollectedCornPips = cornInNestDict;
 

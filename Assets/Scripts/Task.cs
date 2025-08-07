@@ -115,11 +115,11 @@ public class Task
             case NestPart.NestPartType.Outside:
                 GOtask.type = TaskType.GoOutside;
                 break;
-            case NestPart.NestPartType.FoodChamber:
-                GOtask.type = TaskType.GoToChamber;
-                break;
             case NestPart.NestPartType.Tunnel:
                 GOtask.type = TaskType.GoToTunnel;
+                break;
+            default:
+                GOtask.type = TaskType.GoToChamber;
                 break;
         }
 

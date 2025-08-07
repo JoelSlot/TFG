@@ -15,11 +15,19 @@ public class Nest : MonoBehaviour
     private static int lastIndex = 0;
     public int foodCount = 0;
 
+    public static bool NestVisible = false;
+    public static bool[] NestPartDisabled = { false, false, false, false };
+    public static void WriteVisibleValues()
+    {
+        Debug.Log("General visible " + NestVisible + "\nTunnel: " + NestPartDisabled[0] + "\nFood: " + NestPartDisabled[1] + "\nEgg: " + NestPartDisabled[2] + "\nQueen: " + NestPartDisabled[3]);
+    }
+
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        
     }
 
     // Update is called once per frame
@@ -28,21 +36,10 @@ public class Nest : MonoBehaviour
         foodCount = CollectedCornPips.Count;
     }
 
-    public static void Show()
-    {
-        for (int i = 0; i < NestParts.Count; i++)
-            NestParts[i].Show();
-    }
-
-    public static void Hide()
-    {
-        for (int i = 0; i < NestParts.Count; i++)
-            NestParts[i].Hide();
-    }
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> {"dig", "corn", "cob"};
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob" };
         Shuffle(checkOrder);
 
         foreach (var function in checkOrder)
@@ -276,10 +273,19 @@ public class Nest : MonoBehaviour
         return -1;
     }
 
+/*
+    public static bool GetPointInChamber(NestPart.NestPartType type, out Vector3 point)
+    {
+        foreach (var part in NestParts)
+        {
+            if (part.mode)
+        }
+    }*/
+
 
     //for shuffleing lists, used to randomly select nest task
     private static System.Random rng = new System.Random(); 
-    public static void Shuffle<T>(this IList<T> list)
+    public static void Shuffle<T>(IList<T> list)
     {
         int n = list.Count;
         while (n > 1)

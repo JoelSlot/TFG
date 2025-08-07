@@ -17,7 +17,7 @@ public class NestPart : MonoBehaviour
     public MeshRenderer startSphereRenderer;
     public MeshRenderer endSphereRenderer;
 
-    public enum NestPartType { Tunnel, FoodChamber, Outside }
+    public enum NestPartType { Tunnel, FoodChamber, EggChamber, QueenChamber, Outside }
 
     public static int NestPartTypeToIndex(NestPartType type)
     {
@@ -25,7 +25,9 @@ public class NestPart : MonoBehaviour
         {
             case NestPartType.Tunnel: return 0;
             case NestPartType.FoodChamber: return 1;
-            case NestPartType.Outside: return 2;
+            case NestPartType.EggChamber: return 2;
+            case NestPartType.QueenChamber: return 3;
+            case NestPartType.Outside: return 4;
         }
         return -1;
     }
@@ -36,7 +38,9 @@ public class NestPart : MonoBehaviour
         {
             case 0: return NestPartType.Tunnel;
             case 1: return NestPartType.FoodChamber;
-            case 3: return NestPartType.Outside;
+            case 2: return NestPartType.EggChamber;
+            case 3: return NestPartType.QueenChamber;
+            case 4: return NestPartType.Outside;
         }
         Debug.Log("ERROR");
         return NestPartType.Tunnel;
@@ -104,7 +108,7 @@ public class NestPart : MonoBehaviour
             transform.localRotation = Quaternion.Euler(dir);
             SetPos(transform.position, endPos);
         }
-        else if (newMode == NestPartType.FoodChamber)
+        else
         {
             startSphere.SetActive(true);
             endSphere.SetActive(false);
@@ -137,7 +141,7 @@ public class NestPart : MonoBehaviour
             transform.up = dir.normalized;
             rigidBody.MovePosition(startPos);
         }
-        else if (mode == NestPartType.FoodChamber)
+        else
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
             endPos.x = Mathf.Clamp(endPos.x, startPos.x + 5, startPos.x + 20);
@@ -247,7 +251,7 @@ public class NestPart : MonoBehaviour
                 transform.localRotation = Quaternion.Euler(dir);
                 SetPos(transform.position, endPos);
             }
-            else if (mode == NestPartType.FoodChamber)
+            else
             {
                 startSphere.SetActive(true);
                 endSphere.SetActive(false);
