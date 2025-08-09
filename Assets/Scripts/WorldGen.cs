@@ -552,6 +552,7 @@ public class WorldGen : MonoBehaviour
         NestPart nestPartScript = nestObj.GetComponent<NestPart>();
         nestPartScript.setRadius(1);
         nestPartScript.setActive(true);
+        nestPartScript.gotPoints = false;
         Nest.NestParts.Add(nestPartScript);
         return nestPartScript;
     }

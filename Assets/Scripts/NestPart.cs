@@ -8,7 +8,11 @@ public class NestPart : MonoBehaviour
     public GameObject cilinder;
     public GameObject startSphere;
     public GameObject endSphere;
-    public Material normalMaterial;
+    public Material TunnelMaterial;
+    public Material FoodChamberMaterial;
+    public Material EggChamberMaterial;
+    public Material QueenChamberMaterial;
+    public Material placingMaterial;
     public Material errorMaterial;
     public Material unDugMaterial;
     public Rigidbody rigidBody;
@@ -54,17 +58,21 @@ public class NestPart : MonoBehaviour
     private Vector3 endPos = Vector3.up;
     private float radius = 1;
     public float interval;
-    public bool gotPoints = false; //whether the points have been extracted yet.
+    public bool gotPoints = true; //whether the points have been extracted yet. Always set to false when creating one! This way when loaded no actions needed (its placed)
     public HashSet<Vector3Int> digPointsLeft = new();
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        /*
         //Set the material render order
-        errorMaterial.renderQueue = 3001;
-        normalMaterial.renderQueue = 3002;
-        unDugMaterial.renderQueue = 3003;
+        TunnelMaterial.renderQueue = 3003;
+        FoodChamberMaterial.renderQueue = 3002;
+        EggChamberMaterial.renderQueue = 3002;
+        QueenChamberMaterial.renderQueue = 3002;
+        unDugMaterial.renderQueue = 3001;
+        */
     }
 
     public void Show()
@@ -84,16 +92,7 @@ public class NestPart : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!gotPoints)
-            if (IsValidPosition())
-                setMaterial(normalMaterial);
-            else
-                setMaterial(errorMaterial);
-        else if (HasBeenDug())
-            setMaterial(normalMaterial);
-        else
-            setMaterial(unDugMaterial);
-
+        setMaterial(gotPoints, HasBeenDug());
     }
 
     public void setMode(NestPartType newMode)
@@ -184,14 +183,34 @@ public class NestPart : MonoBehaviour
         SetPos(startPos + add, endPos + add);
     }
 
-    public void setMaterial(Material material)
+    public void setMaterial(bool placed, bool dug)
     {
         Renderer[] childRenders = GetComponentsInChildren<Renderer>();
+
+
+        Material material;
+
+        if (!placed)
+        {
+            if (IsValidPosition()) material = placingMaterial;
+            else material = errorMaterial;
+        }
+        else if (!dug) material = unDugMaterial;
+        else
+        {
+            material = mode switch //compact switch statement. useful.
+            {
+                NestPartType.Tunnel => TunnelMaterial,
+                NestPartType.FoodChamber => FoodChamberMaterial,
+                NestPartType.EggChamber => EggChamberMaterial,
+                NestPartType.QueenChamber => QueenChamberMaterial,
+                _ => errorMaterial,
+            };
+        }
 
         foreach (var renderer in childRenders)
         {
             renderer.material = material;
-            //renderer.material.renderQueue = Overlay;
         }
     }
 
@@ -218,6 +237,8 @@ public class NestPart : MonoBehaviour
 
     public bool HasBeenDug()
     {
+        if (!gotPoints) return false;
+
         List<Vector3Int> positions = digPointsLeft.ToList();
         foreach (var pos in positions)
         {

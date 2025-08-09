@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: NestMaterial
+  m_Name: TunnelMaterial
   m_Shader: {fileID: 4800000, guid: e3cb5795c9ea52a4e8ba1b4bd310c052, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

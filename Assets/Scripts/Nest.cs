@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentBehaviourTree;
 using Polenter.Serialization.Core;
+using Unity.Collections;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -235,6 +237,25 @@ public class Nest : MonoBehaviour
         return false;
     }
 
+    public static bool PointInNestPart(Vector3 point, int nestPartIndex)
+    {
+        if (nestPartIndex >= NestParts.Count) { Debug.Log("out of range"); return false; }
+        if (!NestParts[nestPartIndex].gotPoints) { Debug.Log("not got points"); return false; }
+
+        float marchingValue = NestParts[nestPartIndex].getMarchingValue(point);
+        //Debug.Log("Type: " + NestPart.NestPartTypeToIndex(NestParts[nestPartIndex].mode));
+        //Debug.Log("value: " + marchingValue);
+        if (marchingValue < WorldGen.isolevel * 1.05f) // there was a * 1.05. Why???
+        {
+            //Debug.Log("Marching value cool");
+            //disregard undug chambers
+            if (NestParts[nestPartIndex].HasBeenDug())
+                return true;
+        }
+
+        return false;
+    }
+
     public static bool SurfaceInNestPart(CubePaths.CubeSurface surface, NestPart.NestPartType type)
     {
         //Added this line because this, used in GetPathToMapPart would give a positive of being outside with
@@ -273,18 +294,57 @@ public class Nest : MonoBehaviour
         return -1;
     }
 
-/*
+
+
+
+    //for shuffleing lists, used to randomly select nest task and points in chambers
+    private static System.Random rng = new System.Random();
+
+
     public static bool GetPointInChamber(NestPart.NestPartType type, out Vector3 point)
     {
-        foreach (var part in NestParts)
+        List<int> available = new();
+        for (int i = 0; i < NestParts.Count; i++)
         {
-            if (part.mode)
+            if (NestParts[i].mode == type)
+                if (NestParts[i].HasBeenDug() && NestParts[i].gotPoints)
+                    available.Add(i);
         }
-    }*/
+        point = Vector3.zero;
+        if (available.Count == 0) return false;
+
+        
+        int terrainLayer = (1 << 6); //terrain layer
+
+        for (int i = 0; i < 1000; i++) //Just in case it gets stuck, i guess.
+        {
+            int randIndex = rng.Next(available.Count);//get random chamber
+            Vector3 center = NestParts[available[randIndex]].getStartPos();
+            Vector3 dim = NestParts[available[randIndex]].getEndPos() - center;//Get dimensions of chamber
+
+            float x = rng.Next((int)(Mathf.Abs(dim.x) * 100)) / 100f - dim.x / 2;
+            float z = rng.Next((int)(Mathf.Abs(dim.z) * 100)) / 100f - dim.z / 2;
 
 
-    //for shuffleing lists, used to randomly select nest task
-    private static System.Random rng = new System.Random(); 
+            if (Physics.Raycast(new Vector3(x + center.x, center.y, z + center.z), Vector3.down * (Mathf.Abs(dim.y) + 0.3f), out RaycastHit hit, Mathf.Abs(dim.y) + 0.3f, terrainLayer))
+            {
+                point = hit.point + Vector3.up * 0.2f;
+                
+                Debug.DrawLine(new Vector3(x + center.x, center.y, z + center.z), point, Color.red, 100);
+                if (PointInNestPart(point, available[randIndex]))
+                {
+                    Debug.DrawLine(center, point, Color.black, 100);
+                    return true;
+                }
+            }
+
+
+        }
+
+        Debug.Log("NEVER FOUND ONE POINT FOR NESTPART");
+        return false;
+
+    }
     public static void Shuffle<T>(IList<T> list)
     {
         int n = list.Count;

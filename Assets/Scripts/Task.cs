@@ -123,7 +123,18 @@ public class Task
                 break;
         }
 
-        if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path)) return GOtask;
+        if (GOtask.type == TaskType.GoToChamber)
+        {
+            if (Nest.GetPointInChamber(type, out Vector3 point))
+                if (CubePaths.GetKnownPathToPoint(antSurface, point, 2, out GOtask.path))
+                {
+                    Debug.Log("Going to specific point boss");
+                    return GOtask;
+                }
+        }
+                else
+            if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path))
+                    return GOtask;
 
         Debug.Log("No valid path");
 

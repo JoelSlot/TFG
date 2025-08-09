@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using System.Linq;
+using TMPro;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -69,16 +71,7 @@ public class FlyCamera : MonoBehaviour
 
         if (WorldGen.updateNestVisibility)
         {
-            if (Nest.NestVisible)
-            {
-                ShowNest();
-                nestPartVisibilityPanel.SetActive(true);
-            }
-            else
-            {
-                HideNest();
-                nestPartVisibilityPanel.SetActive(false);
-            }
+            applyNestMode();
             WorldGen.updateNestVisibility = false;
         }
 
@@ -410,8 +403,8 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha1)) { objectMode = obj.Ant; Debug.Log("Modo ant"); } //cambiar modo a hormiga
             if (Input.GetKeyDown(KeyCode.Alpha2)) { objectMode = obj.AntQueen; Debug.Log("Modo antqueen"); } //cambiar modo a hormiga reina
             if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.Corn; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
-            if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
-            if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
+            //if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
+            //if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
             if (Input.GetKeyDown(KeyCode.Alpha6)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
@@ -499,7 +492,7 @@ public class FlyCamera : MonoBehaviour
                     placeDigObject.AddPos(movement);
                 }
                 break;
-            case NestPart.NestPartType.FoodChamber:
+            default:
                 if (Input.GetKey(KeyCode.LeftShift))
                     placeDigObject.AddPos(movement);
                 else
@@ -515,16 +508,7 @@ public class FlyCamera : MonoBehaviour
         int antLayer = (1 << 7); //capa de hormigas
         int terrainLayer = (1 << 6); //terrain layer
         int nestLayer = (1 << 12); //capa de las partes del nido
-        if (objectMode == obj.None)
-        {
-            if (clickObject(antLayer, out RaycastHit hit))
-            {
-                if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
-                Debug.Log("Selected an ant");
-            }
-        }
-        else if (placingDigZone)
+        if (placingDigZone)
         {
             //Si se esta pulsando tmbien shift, eliminar la parte que se está colocando.
             if (Input.GetKey(KeyCode.LeftShift))
@@ -540,16 +524,29 @@ public class FlyCamera : MonoBehaviour
                 toDigPoints();
                 placingDigZone = false;
                 Nest.NestParts.Last().setKinematic(true);
+                UpdateNestPartCountText();
+
+                //Make the placed nestpart invisible if it's type's visibility is disabled.
+                if (Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(Nest.NestParts.Last().mode)])
+                    Nest.NestParts.Last().Hide();
             }
         }
         else
         {
-            if (clickObject(nestLayer, out RaycastHit hit))
+            switch (objectMode)
             {
-                if (objectMode == obj.digTunnel || objectMode == obj.digChamber)
-                    if (!placingDigZone)
+                case obj.None:
+                    if (clickObject(antLayer, out RaycastHit hit))
                     {
-
+                        if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                        SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
+                        Debug.Log("Selected an ant");
+                    }
+                    break;
+                case obj.digTunnel:
+                case obj.digChamber:
+                    if (clickObject(nestLayer, out hit))
+                    {
                         NestPart script = hit.transform.gameObject.GetComponent<NestPart>();
                         if (script.mode == NestPart.NestPartType.Tunnel && objectMode == obj.digTunnel) //get center of tunnel when placing on tunnel
                         {
@@ -571,50 +568,48 @@ public class FlyCamera : MonoBehaviour
                         }
                         else
                         {
-                            nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
+                            nestPartScript.setMode(NestPart.IndexToNestPartType(placingTypeIndex));
                             nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
                             nestPartScript.setKinematic(false);
                         }
-
                     }
-            }
-            if (clickObject(terrainLayer, out hit))
-            {
-                switch (objectMode)
-                {
-                    case obj.Ant:
+                    else if (Nest.NestParts.Count == 0 && clickObject(terrainLayer, out hit))
+                    {
+                        placingDigZone = true;
+                        digStartPoint = hit.point;
+                        digEndPoint = hit.point;
+                        NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
+                        if (objectMode == obj.digTunnel)
+                        {
+                            nestPartScript.setMode(NestPart.NestPartType.Tunnel);
+                            nestPartScript.SetPos(digStartPoint, digEndPoint);
+                        }
+                        else
+                        {
+                            nestPartScript.setMode(NestPart.IndexToNestPartType(placingTypeIndex));
+                            nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
+                            nestPartScript.setKinematic(false);
+                        }
+                    }
+                    break;
+                case obj.Ant:
+                    if (clickObject(terrainLayer, out hit))
+                    {
                         if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
                         SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
-                        break;
-                    case obj.AntQueen:
+                    }
+                    break;
+                case obj.AntQueen:
+                    if (clickObject(terrainLayer, out hit))
                         WorldGen.InstantiateQueen(hit.point, Quaternion.Euler(hit.normal));
-                        break;
-                    case obj.Corn:
+                    break;
+                case obj.Corn:
+                    if (clickObject(terrainLayer, out hit))
                         WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
-                        break;
-                    case obj.digTunnel:
-                    case obj.digChamber:
-                        if (!placingDigZone && Nest.NestParts.Count == 0)
-                        {
-                            placingDigZone = true;
-                            digStartPoint = hit.point;
-                            digEndPoint = hit.point;
-                            NestPart nestPartScript = WorldGen.InstantiateNestPart(digStartPoint);
-                            if (objectMode == obj.digTunnel)
-                            {
-                                nestPartScript.setMode(NestPart.NestPartType.Tunnel);
-                                nestPartScript.SetPos(digStartPoint, digEndPoint);
-                            }
-                            else
-                            {
-                                nestPartScript.setMode(NestPart.NestPartType.FoodChamber);
-                                nestPartScript.SetPos(digStartPoint, digStartPoint + Vector3.one * 4 - Vector3.up);
-                                nestPartScript.setKinematic(false);
-                            }
-                        }
-                        break;
-
-                    case obj.test:
+                    break;
+                case obj.test:
+                    if (clickObject(terrainLayer, out hit))
+                    {
                         Vector3Int cube = Vector3Int.FloorToInt(hit.point);
 
                         /*if (SelectedAnt != null)
@@ -630,36 +625,38 @@ public class FlyCamera : MonoBehaviour
                         CubePaths.GetKnownPathToMapPart(clickedSurface, NestPart.NestPartType.FoodChamber, out List<CubePaths.CubeSurface> path);
 
                         CubePaths.DrawCube(cube, Color.red, 20);
-
-                        /*
-                        bool[] cornerValues = CubePaths.CubeCornerValues(cube);
-
-                        Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
-                        
-                        bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
-
-                        CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
-                        List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
-                        foreach (var adyacentCube in adyacentCubes)
-                        {
-                            CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
-                        }*/
-                        /*
-                        Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
-                        CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
-
-                        List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
-
-                        if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
-                        else Debug.Log("Pheromones found");
-                        */
-                        break;
-                    default:
-                        Debug.Log("No valid object mode when clicked");
-                        break;
-                }
+                    }
+                    break;
+                default:
+                    Debug.Log("no mode");
+                    break;
             }
+
         }
+
+
+        /*
+        bool[] cornerValues = CubePaths.CubeCornerValues(cube);
+
+        Vector3Int hitCorner = CubePaths.CornerFromNormal(hit.normal);
+        
+        bool[] groupCornerValues = CubePaths.GetGroup(hitCorner, cornerValues);
+
+        CubePaths.CubeSurface surface = new CubePaths.CubeSurface(cube, groupCornerValues);
+        List<CubePaths.CubeSurface> adyacentCubes = CubePaths.GetAdyacentCubes(surface, hit.normal);
+        foreach (var adyacentCube in adyacentCubes)
+        {
+            CubePaths.DrawCube(adyacentCube.pos, Color.red, 20);
+        }*/
+        /*
+        Vector3Int belowSurfaceCorner = CubePaths.CornerFromNormal(hit.normal);
+        CubePaths.cubeSurface cubeSurface = new CubePaths.cubeSurface(cube, belowSurfaceCorner);
+
+        List<CubePheromone> pheromoneList = CubePaths.GetPheromonesOnSurface(cubeSurface);
+
+        if (pheromoneList.Count == 0) Debug.Log("NO PHEROMONES");
+        else Debug.Log("Pheromones found");
+        */
 
     }
 
@@ -668,6 +665,7 @@ public class FlyCamera : MonoBehaviour
     //UI NEST VISIBILITY SECTION------------------------------------------------------------------------------
 
     public GameObject nestPartVisibilityPanel;
+
 
     public void ShowNest()
     {
@@ -692,21 +690,10 @@ public class FlyCamera : MonoBehaviour
                 Nest.NestParts[i].Hide();
     }
 
-    public void toggleAllVisibility()
+    public void NestModeButton()
     {
-        if (!Nest.NestVisible)
-        {
-            Nest.NestVisible = true;
-            nestPartVisibilityPanel.SetActive(true);
-            ShowNest();
-        }
-        else
-        {
-            Nest.NestVisible = false;
-            nestPartVisibilityPanel.SetActive(false);
-            HideNest();
-        }
-        Nest.WriteVisibleValues();
+        Nest.NestVisible = !Nest.NestVisible;
+        applyNestMode();
     }
 
     public void toggleNestPartVisibility(int i)
@@ -722,6 +709,140 @@ public class FlyCamera : MonoBehaviour
             HideNest(NestPart.IndexToNestPartType(i));
         }
         Nest.WriteVisibleValues();
+    }
+
+    //UI NEST PLACING CONTROLS
+
+    public int placingTypeIndex = -1; //-1 means none
+    public Button TunnelButton;
+    public TextMeshProUGUI TunnelText;
+    public Button FoodChamberButton;
+    public TextMeshProUGUI FoodChamberText;
+    public Button EggChamberButton;
+    public TextMeshProUGUI EggChamberText;
+    public Button QueenChamberButton;
+    public TextMeshProUGUI QueenChamberText;
+
+
+    //Function to call from ui, when pressing one of the placing nest part buttons.
+    public void togglePlacingButton(int TypeIndex)
+    {
+        if (placingTypeIndex == TypeIndex)
+        {
+            placingTypeIndex = -1;
+            objectMode = obj.None;
+        }
+        else
+        {
+            if (TypeIndex == 0) objectMode = obj.digTunnel; //tunnel index
+            else objectMode = obj.digChamber;
+
+            placingTypeIndex = TypeIndex;
+        }
+
+        ColorNestPlacingButtons();
+    }
+
+    //Sets the colors of the buttons used to add nest parts
+    public void ColorNestPlacingButtons()
+    {
+        if (placingTypeIndex == 0)
+        {
+            ColorBlock cb = TunnelButton.colors;
+            cb.normalColor = Color.gray;
+            cb.selectedColor = Color.gray;
+            TunnelButton.colors = cb;
+        }
+        else
+        {
+            ColorBlock cb = TunnelButton.colors;
+            cb.normalColor = Color.white;
+            cb.selectedColor = Color.white;
+            TunnelButton.colors = cb;
+        }
+
+        if (placingTypeIndex == 1)
+        {
+            ColorBlock cb = FoodChamberButton.colors;
+            cb.normalColor = Color.gray;
+            cb.selectedColor = Color.gray;
+            FoodChamberButton.colors = cb;
+        }
+        else
+        {
+            ColorBlock cb = FoodChamberButton.colors;
+            cb.normalColor = Color.white;
+            cb.selectedColor = Color.white;
+            FoodChamberButton.colors = cb;
+        }
+
+        if (placingTypeIndex == 2)
+        {
+            ColorBlock cb = EggChamberButton.colors;
+            cb.normalColor = Color.gray;
+            cb.selectedColor = Color.gray;
+            EggChamberButton.colors = cb;
+        }
+        else
+        {
+            ColorBlock cb = EggChamberButton.colors;
+            cb.normalColor = Color.white;
+            cb.selectedColor = Color.white;
+            EggChamberButton.colors = cb;
+        }
+
+        if (placingTypeIndex == 3)
+        {
+            ColorBlock cb = QueenChamberButton.colors;
+            cb.normalColor = Color.gray;
+            cb.selectedColor = Color.gray;
+            QueenChamberButton.colors = cb;
+        }
+        else
+        {
+            ColorBlock cb = QueenChamberButton.colors;
+            cb.normalColor = Color.white;
+            cb.selectedColor = Color.white;
+            QueenChamberButton.colors = cb;
+        }
+    }
+
+    //Updates the nest count values on the nest panel
+    public void UpdateNestPartCountText()
+    {
+        int[] count = new int[4] { 0, 0, 0, 0 };
+        foreach (var part in Nest.NestParts)
+            count[NestPart.NestPartTypeToIndex(part.mode)]++;
+
+        TunnelText.text = count[0].ToString();
+        FoodChamberText.text = count[1].ToString();
+        EggChamberText.text = count[2].ToString();
+        QueenChamberText.text = count[3].ToString();
+    }
+
+    //UI PANEL VISIBILITY TOGGLE
+    public void applyNestMode()
+    {
+        placingTypeIndex = -1;
+        if (Nest.NestVisible)
+        {
+            ShowNest();
+            nestPartVisibilityPanel.SetActive(true);
+            UpdateNestPartCountText();
+            ColorNestPlacingButtons();
+        }
+        else
+        {
+            HideNest();
+            nestPartVisibilityPanel.SetActive(false);
+        }
+    }
+
+    //UI SAVE BUTTON
+    public void SaveGameButton()
+    {
+        if (!placingDigZone)
+            WG.SaveGame();
     }
 
 
