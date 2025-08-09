@@ -3277,10 +3277,10 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_HighlightedColor: {r: 1, g: 0, b: 0, a: 1}
+    m_PressedColor: {r: 0, g: 0, b: 0, a: 1}
+    m_SelectedColor: {r: 0, g: 0.06948805, b: 1, a: 1}
+    m_DisabledColor: {r: 1, g: 0, b: 0.77369404, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -3943,6 +3943,7 @@ MonoBehaviour:
   FoodChamberMaterial: {fileID: 2100000, guid: af5cc7118f8ee264d96a50dc403f13ac, type: 2}
   EggChamberMaterial: {fileID: 2100000, guid: 47e6c4acec64c884b8f1e9640518ed13, type: 2}
   QueenChamberMaterial: {fileID: 2100000, guid: d4f03823d04faa649b7c55df9c20c714, type: 2}
+  placingMaterial: {fileID: 2100000, guid: e2ee19064283e9049a560cabb062b0b0, type: 2}
   errorMaterial: {fileID: 2100000, guid: c1a20c671406c294e96ec00ccfd27da1, type: 2}
   unDugMaterial: {fileID: 2100000, guid: 1901b0ceb5317df40b41d018a2600bdc, type: 2}
   rigidBody: {fileID: 856479752}
