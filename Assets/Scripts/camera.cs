@@ -214,7 +214,9 @@ public class FlyCamera : MonoBehaviour
             if (placingDigZone)
             {
                 lockCursor(true);
-                TakePlacingInputs();
+                
+                if (!Input.GetMouseButton(1)) //ignore inputs when rotating camera
+                    TakePlacingInputs();
             }
             else
             {
@@ -478,7 +480,6 @@ public class FlyCamera : MonoBehaviour
             movement.y -= 0.2f;
         //
 
-
         switch (placeDigObject.mode)
         {
             case NestPart.NestPartType.Tunnel:
@@ -499,7 +500,6 @@ public class FlyCamera : MonoBehaviour
                     placeDigObject.AddStartPos(movement);
                 break;
         }
-
 
     }
 
