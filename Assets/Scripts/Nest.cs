@@ -322,21 +322,22 @@ public class Nest : MonoBehaviour
             Vector3 center = NestParts[available[randIndex]].getStartPos();
             Vector3 dim = NestParts[available[randIndex]].getEndPos() - center;//Get dimensions of chamber
 
-            float x = rng.Next((int)(Mathf.Abs(dim.x) * 100)) / 100f - dim.x / 2;
-            float z = rng.Next((int)(Mathf.Abs(dim.z) * 100)) / 100f - dim.z / 2;
+            float x = (rng.Next((int)(Mathf.Abs(dim.x) * 100)) / 100f - dim.x / 2) * 0.6f;
+            float z = (rng.Next((int)(Mathf.Abs(dim.z) * 100)) / 100f - dim.z / 2) * 0.6f;
 
 
-            if (Physics.Raycast(new Vector3(x + center.x, center.y, z + center.z), Vector3.down * (Mathf.Abs(dim.y) + 0.3f), out RaycastHit hit, Mathf.Abs(dim.y) + 0.3f, terrainLayer))
-            {
-                point = hit.point + Vector3.up * 0.2f;
-                
-                Debug.DrawLine(new Vector3(x + center.x, center.y, z + center.z), point, Color.red, 100);
-                if (PointInNestPart(point, available[randIndex]))
+            if (NestParts[available[randIndex]].getMarchingValue(new(x + center.x, center.y, z + center.z)) < WorldGen.isolevel * 0.60f) //if in center of chamber
+                if (Physics.Raycast(new Vector3(x + center.x, center.y, z + center.z), Vector3.down * (Mathf.Abs(dim.y) + 0.3f), out RaycastHit hit, Mathf.Abs(dim.y) + 0.3f, terrainLayer))
                 {
-                    Debug.DrawLine(center, point, Color.black, 100);
-                    return true;
+                    point = hit.point + Vector3.up * 0.2f;
+
+                    Debug.DrawLine(new Vector3(x + center.x, center.y, z + center.z), point, Color.red, 100);
+                    if (PointInNestPart(point, available[randIndex]))
+                    {
+                        Debug.DrawLine(center, point, Color.black, 100);
+                        return true;
+                    }
                 }
-            }
 
 
         }
