@@ -250,7 +250,8 @@ public class CubePaths : MonoBehaviour
             return surface.pos + Vector3.one / 2 + dir * 400;
         }
 
-        //DrawCube(surface.pos + dir, Color.red);
+        DrawSurface(surface, Color.black, 1);
+        DrawCube(surface.pos + dir, Color.red, 1);
 
         Vector3 goal = surface.pos + Vector3.one * 0.5f; //poner gol en centro del cubo actual de la hormiga
 
@@ -292,8 +293,9 @@ public class CubePaths : MonoBehaviour
             return surface.pos + Vector3.one / 2 + dir1 * 400;
         }
 
-        //DrawCube(surface.pos + dir1, Color.red);
-        //DrawCube(surface.pos + dir1 + dir2, Color.green);
+        DrawSurface(surface, Color.black, 1);
+        DrawCube(surface.pos + dir1, Color.red, 1);
+        DrawCube(surface.pos + dir1 + dir2, Color.green, 1);
 
         Vector3 center = surface.pos + Vector3.one * 0.5f; //poner gol en centro del cubo actual de la hormiga
         Vector3 localCenter = Vector3.one * 0.5f;
@@ -377,55 +379,10 @@ public class CubePaths : MonoBehaviour
             }
         }
 
-        //DrawCube(surface.pos + dir1 + dir2, Color.blue);
+        DrawCube(surface.pos + dir1 + dir2, Color.blue, 1);
 
         //Debug.DrawRay(center, (medianDir + dir2) * 400, Color.yellow);
         return center + (medianDir + dir2) * 400;
-        /*
-        if (numDims != 1)
-        {
-            Debug.DrawLine(surface.pos + 0.5f * Vector3.one, goal1 + dir2 * 100, Color.yellow);
-            return goal1 + dir2 * 100;
-        }
-
-        int sharedEdge = 0;
-        int nonSharedEdge = 0;
-
-        DrawCube(surface.pos + dir1 + dir2, Color.red, 20);
-        DrawCube(surface.pos + dir1, Color.blue, 20);
-
-        Vector3 goal = Vector3.zero;
-        for (int i = 0; i < 4; i++)
-        {
-            int cornerIndex1 = chunk.faceIdToCornerId[faceIndex1, i];
-            if (surface.surfaceGroup[cornerIndex1]) //Si el punto se encuentra bajo la superficie
-            {
-                goal += new Vector3(0.5f, 0.5f, 0.5f) + chunk.cornerIdToPos[cornerIndex1];
-                num++;
-            }
-
-            //Mirar vértices de la segunda cara para problema de giro interno
-            int cornerIndex2 = chunk.faceIdToCornerId[faceIndex2, i];
-            if (surface.surfaceGroup[cornerIndex2])
-            {
-                bool sharedCorner = false;
-                for (int j = 0; j < 4; j++)
-                    if (chunk.faceIdToCornerId[faceIndex1, j] == cornerIndex2)
-                        sharedCorner = true;
-                if (sharedCorner) sharedEdge += 1;
-                else nonSharedEdge += 1;
-            }
-        }
-        goal = surface.pos + new Vector3(0.5f, 0.5f, 0.5f) + goal / num;
-
-        //THIS SOLVED THE INNER TURN PROBLEM
-        //shared edge are those commen between 2nd face and 1st face. nonSharedEdge are those of 2nd face not in common.
-        if (!(sharedEdge == 0 && nonSharedEdge == 2) && !(sharedEdge == 2 && nonSharedEdge == 0)) goal += chunk.faceIdToDirTable[faceIndex2] * 4;
-
-        goal += chunk.faceIdToDirTable[faceIndex1] * 4;
-
-        return goal;
-        */
     }
 
 

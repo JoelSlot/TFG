@@ -126,7 +126,7 @@ public class Task
         if (GOtask.type == TaskType.GoToChamber)
         {
             if (Nest.GetPointInChamber(type, out Vector3 point))
-                if (CubePaths.GetKnownPathToPoint(antSurface, point, 2, out GOtask.path))
+                if (CubePaths.GetKnownPathToPoint(antSurface, point, 1, out GOtask.path))
                 {
                     Debug.Log("Going to specific point boss");
                     return GOtask;

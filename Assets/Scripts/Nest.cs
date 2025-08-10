@@ -329,10 +329,10 @@ public class Nest : MonoBehaviour
             if (NestParts[available[randIndex]].getMarchingValue(new(x + center.x, center.y, z + center.z)) < WorldGen.isolevel * 0.60f) //if in center of chamber
                 if (Physics.Raycast(new Vector3(x + center.x, center.y, z + center.z), Vector3.down * (Mathf.Abs(dim.y) + 0.3f), out RaycastHit hit, Mathf.Abs(dim.y) + 0.3f, terrainLayer))
                 {
-                    point = hit.point + Vector3.up * 0.2f;
+                    point = hit.point;
 
                     Debug.DrawLine(new Vector3(x + center.x, center.y, z + center.z), point, Color.red, 100);
-                    if (PointInNestPart(point, available[randIndex]))
+                    if (PointInNestPart(point + Vector3.up * 0.1f, available[randIndex]))
                     {
                         Debug.DrawLine(center, point, Color.black, 100);
                         return true;
