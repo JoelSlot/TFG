@@ -195,6 +195,7 @@ public class NestPart : MonoBehaviour
             if (IsValidPosition()) material = placingMaterial;
             else material = errorMaterial;
         }
+        else if (FlyCamera.selectedNestPart == this) material = TunnelMaterial;
         else if (!dug) material = unDugMaterial;
         else
         {

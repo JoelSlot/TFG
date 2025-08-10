@@ -131,8 +131,8 @@ public class FlyCamera : MonoBehaviour
 
     void lockCursor(bool value)
     {
-        Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !value;
+        UnityEngine.Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
+        UnityEngine.Cursor.visible = !value;
     }
 
     void MapBuildingMode()
@@ -158,10 +158,10 @@ public class FlyCamera : MonoBehaviour
         //Locks/unlocks cursor when pressing escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (Cursor.lockState == CursorLockMode.Locked)
-                Cursor.lockState = CursorLockMode.None;
+            if (UnityEngine.Cursor.lockState == CursorLockMode.Locked)
+                UnityEngine.Cursor.lockState = CursorLockMode.None;
             else
-                Cursor.lockState = CursorLockMode.Locked;
+                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         }
 
         if (Input.GetKey(KeyCode.Q))
@@ -388,7 +388,7 @@ public class FlyCamera : MonoBehaviour
             else
                 PlayingMode();
         }
-        
+
         //to return to main menu
         if (Input.GetKeyDown(KeyCode.Z))
         {
@@ -524,19 +524,49 @@ public class FlyCamera : MonoBehaviour
             }
             placingDigZone = false;
             placingTypeIndex = -1;
+            objectMode = obj.None;
             ColorNestPlacingButtons();
-                
+
         }
         else
         {
             switch (objectMode)
             {
                 case obj.None:
-                    if (clickObject(antLayer, out RaycastHit hit))
+                    if (Nest.NestVisible && clickObject(nestLayer, out RaycastHit hit)) //si en modo vision de nido buscar nido
                     {
-                        if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                        SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
-                        Debug.Log("Selected an ant");
+                        NestPart hitPart = hit.transform.gameObject.GetComponent<NestPart>();
+                        if (hitPart.mode != NestPart.NestPartType.Tunnel && hitPart != selectedNestPart)
+                        {
+                            selectedNestPart = hitPart;
+                            dropDownMenuObj.SetActive(true);
+                            typeMenu.value = NestPart.NestPartTypeToIndex(hitPart.mode) - 1;
+                            hitPart.Show();
+                        }
+                        else
+                        {
+                            if (selectedNestPart != null)
+                                if (Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(selectedNestPart.mode)])
+                                    selectedNestPart.Hide();
+                            selectedNestPart = null;
+                            dropDownMenuObj.SetActive(false);
+                        }
+                        
+                    }
+                    else
+                    {
+                        if (selectedNestPart != null)
+                            if (Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(selectedNestPart.mode)])
+                                selectedNestPart.Hide();
+                        selectedNestPart = null;
+                        dropDownMenuObj.SetActive(false);
+
+                        if (clickObject(antLayer, out hit))
+                        {
+                            if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
+                            SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
+                            Debug.Log("Selected an ant");
+                        }
                     }
                     break;
                 case obj.digTunnel:
@@ -703,6 +733,8 @@ public class FlyCamera : MonoBehaviour
         {
             Nest.NestPartDisabled[i] = true;
             HideNest(NestPart.IndexToNestPartType(i));
+            if (selectedNestPart != null)
+                selectedNestPart.Show();
         }
         Nest.WriteVisibleValues();
     }
@@ -710,13 +742,13 @@ public class FlyCamera : MonoBehaviour
     //UI NEST PLACING CONTROLS
 
     public int placingTypeIndex = -1; //-1 means none
-    public Button TunnelButton;
+    public UnityEngine.UI.Button TunnelButton;
     public TextMeshProUGUI TunnelText;
-    public Button FoodChamberButton;
+    public UnityEngine.UI.Button FoodChamberButton;
     public TextMeshProUGUI FoodChamberText;
-    public Button EggChamberButton;
+    public UnityEngine.UI.Button EggChamberButton;
     public TextMeshProUGUI EggChamberText;
-    public Button QueenChamberButton;
+    public UnityEngine.UI.Button QueenChamberButton;
     public TextMeshProUGUI QueenChamberText;
 
 
@@ -734,6 +766,15 @@ public class FlyCamera : MonoBehaviour
             else objectMode = obj.digChamber;
 
             placingTypeIndex = TypeIndex;
+        }
+
+        //Deselect nestpart, and hide if necesary.
+        if (selectedNestPart != null)
+        {
+            if (Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(selectedNestPart.mode)])
+                selectedNestPart.Hide();
+            selectedNestPart = null;
+            dropDownMenuObj.SetActive(false);
         }
 
         ColorNestPlacingButtons();
@@ -820,6 +861,12 @@ public class FlyCamera : MonoBehaviour
     public void applyNestMode()
     {
         placingTypeIndex = -1;
+        selectedNestPart = null;
+        dropDownMenuObj.SetActive(false);
+        //Disable placing object mode
+        if (objectMode == obj.digTunnel || objectMode == obj.digChamber) objectMode = obj.None;
+
+        dropDownMenuObj.SetActive(false);
         if (Nest.NestVisible)
         {
             ShowNest();
@@ -839,6 +886,24 @@ public class FlyCamera : MonoBehaviour
     {
         if (!placingDigZone)
             WG.SaveGame();
+    }
+
+
+
+    //SELECTED NEST PART CONTROLS
+
+    public TMP_Dropdown typeMenu; //Value 0 is foodchamber, 1 is eggchamber and 2 is queenchamber
+    public GameObject dropDownMenuObj; //To disable the entire dropdown menu object.
+    public static NestPart selectedNestPart = null;
+
+
+    public void DropDownMenuSelect()
+    {
+        if (selectedNestPart == null) return; //this should not happen. But just in case.
+        if (selectedNestPart.mode == NestPart.NestPartType.Tunnel) return; //should not happen either.
+
+        selectedNestPart.mode = NestPart.IndexToNestPartType(typeMenu.value + 1);
+        UpdateNestPartCountText();
     }
 
 
