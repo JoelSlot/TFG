@@ -511,12 +511,10 @@ public class FlyCamera : MonoBehaviour
                 Nest.NestParts.Remove(ErasePart);
                 Destroy(ErasePart.gameObject);
                 Destroy(ErasePart);
-                placingDigZone = false;
             }
             else if (Nest.NestParts.Last().IsValidPosition())
             {
                 toDigPoints();
-                placingDigZone = false;
                 Nest.NestParts.Last().setKinematic(true);
                 UpdateNestPartCountText();
 
@@ -524,6 +522,10 @@ public class FlyCamera : MonoBehaviour
                 if (Nest.NestPartDisabled[NestPart.NestPartTypeToIndex(Nest.NestParts.Last().mode)])
                     Nest.NestParts.Last().Hide();
             }
+            placingDigZone = false;
+            placingTypeIndex = -1;
+            ColorNestPlacingButtons();
+                
         }
         else
         {
