@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -41,6 +42,7 @@ public class FlyCamera : MonoBehaviour
 
     public obj objectMode = obj.None;
     public Ant SelectedAnt;
+    public EventSystem eventSystem;
 
     static bool rotateAllowed = false;
 
@@ -214,7 +216,7 @@ public class FlyCamera : MonoBehaviour
             if (placingDigZone)
             {
                 lockCursor(true);
-                
+
                 if (!Input.GetMouseButton(1)) //ignore inputs when rotating camera
                     TakePlacingInputs();
             }
@@ -222,6 +224,7 @@ public class FlyCamera : MonoBehaviour
             {
                 lockCursor(false);
             }
+
             if (Input.GetMouseButtonDown(0))
             {
                 PlayingModeLeftClick();
@@ -376,11 +379,16 @@ public class FlyCamera : MonoBehaviour
     private void ReadInputs()
     {
 
-        //Mouse controls depending on game mode
-        if (MainMenu.GameSettings.gameMode == 0)
-            MapBuildingMode();
-        else
-            PlayingMode();
+        //Take mouse controls when not hovering over ui.
+        if (!eventSystem.IsPointerOverGameObject())
+        {
+            //Mouse controls depending on game mode
+            if (MainMenu.GameSettings.gameMode == 0)
+                MapBuildingMode();
+            else
+                PlayingMode();
+        }
+        
         //to return to main menu
         if (Input.GetKeyDown(KeyCode.Z))
         {
@@ -414,20 +422,6 @@ public class FlyCamera : MonoBehaviour
         {
             SelectedAnt.isControlled = !SelectedAnt.isControlled;
         }
-        /*if (Input.GetKeyDown(KeyCode.P) && SelectedAnt != null)
-        {
-            if (SelectedAnt.isControlled && !SelectedAnt.makingTrail)
-            {
-                SelectedAnt.makingTrail = true;
-                //SelectedAnt.placedPheromone = Pheromone.PlacePheromone(SelectedAnt.origPheromone, SelectedAnt.transform.position, SelectedAnt.transform.up, null);
-            }
-            else
-            {
-                SelectedAnt.makingTrail = false;
-                //SelectedAnt.placedPheromone = null;
-            }
-        }
-        */
     }
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
