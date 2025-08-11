@@ -1061,10 +1061,41 @@ public class CubePaths : MonoBehaviour
         }
     }
 
+    //For now only compares under the surface points. If the terrain changed by addition it will not be detected. Should never happen tho.
+    public static bool hasSurfaceChanged(CubeSurface original)
+    {
+        for (int cornerId = 0; cornerId < 8; cornerId++)
+        {
+            if (!original.surfaceGroup[cornerId])
+                if (WorldGen.IsAboveSurface(original.pos + chunk.cornerIdToPos[cornerId]))
+                    return true;
+        }
+
+        return false;
+    }
+
+    //returns true if same surface, changedSurface indicates whether it has changed.
+    public static bool CheckSurfaceSimilarity(CubeSurface detected, CubeSurface compared, out bool changedSurface)
+    {
+        changedSurface = false;
+        bool sameSurface = false;
+        if (detected.pos != compared.pos) return false;
+
+        for (int cornerId = 0; cornerId < 8; cornerId++)
+        {
+            if (!detected.surfaceGroup[cornerId] && !compared.surfaceGroup[cornerId]) //point is below boths surfaces. They are/used to be the same
+                sameSurface = true;
+            else if (detected.surfaceGroup[cornerId] != compared.surfaceGroup[cornerId]) //points differ
+                changedSurface = true;
+        }
+
+        return sameSurface;
+    }
+
     //Pone el 
     public static BehaviourTreeStatus SetGoalFromPath(CubeSurface antSurface, Vector3 antForward, ref Task objective, ref bool needNew, ref Vector3 goal)
     {
-        
+
         if (objective.path.Count == 0)
         {
             Debug.Log("Path completed");
@@ -1078,12 +1109,13 @@ public class CubePaths : MonoBehaviour
             return BehaviourTreeStatus.Running;
 
         needNew = false;
-        
+
 
         //Obtener indice de superficie de hormiga en la lista de pasos. Devuelve -1 si no encima de camino
         int antSurfacePathPos = objective.path.FindIndex(x => x.Equals(antSurface));
         if (antSurfacePathPos != -1)
         {
+
             if (antSurfacePathPos == objective.path.Count - 1)
             {
                 Debug.Log("Reached end of path");
@@ -1091,13 +1123,23 @@ public class CubePaths : MonoBehaviour
                 return BehaviourTreeStatus.Success;
             }//Para mirar si se ha llegado al final
 
+            else if (hasSurfaceChanged(objective.path[antSurfacePathPos + 1]))
+            {
+                if (Task.RecalculateTaskPath(antSurface, ref objective))
+                {
+                    needNew = true;
+                    return SetGoalFromPath(antSurface, antForward, ref objective, ref needNew, ref goal);
+                }
+                else return BehaviourTreeStatus.Failure;
+            } //check if next position in path has changed in real world.
+
             else if (antSurfacePathPos == objective.path.Count - 2)
             {
                 Debug.Log("Reached second to last surface of path");
                 Vector3Int dir = objective.path.Last().pos - antSurface.pos;
                 goal = GetMovementGoal(antSurface, dir);
                 return BehaviourTreeStatus.Running;
-            }
+            } //check if two away from path
 
             else
             {
@@ -1109,7 +1151,7 @@ public class CubePaths : MonoBehaviour
             }
 
         }
-        
+
         int range = 0;
         Dictionary<CubeSurface, CubeSurface> previousSurfaces = new();
         List<CubeSurface> sensedRange = GetNextSurfaceRange(antSurface, antForward, new(), ref previousSurfaces);

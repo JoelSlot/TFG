@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FluentBehaviourTree;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -31,7 +32,7 @@ public class Task
 
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
 
-
+    
     public Task(GameObject newGameObject, TaskType newType, List<CubePaths.CubeSurface> newPath)
     {
         type = newType;
@@ -361,6 +362,37 @@ public class Task
                 break;
         }
         return true;
+    }
+
+    //Calculates path again. To be used when a path has changed. If it can't find a path, returns failure and sets given task to none
+    public static bool RecalculateTaskPath(CubePaths.CubeSurface antSurface, ref Task objective)
+    {
+        switch (objective.type)
+        {
+            case TaskType.Dig:
+                if (CubePaths.GetKnownPathToPoint(antSurface, objective.pos, Ant.digPointDistance, out objective.path))
+                {
+                    return true;
+                }
+                else
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
+            case TaskType.CollectFromCob:
+                if (CubePaths.GetKnownPathToPoint(antSurface, objective.pos, Ant.cornCobDistance, out objective.path))
+                {
+                    return true;
+                }
+                else
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
+            default:
+                objective = Task.NoTask();
+                return false;
+        }
     }
 
 

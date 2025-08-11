@@ -50,6 +50,9 @@ public class Ant : MonoBehaviour
     public static float speed = 0;
     public static float tiltSpeed = 10;
     public static float sep = 0.35f;
+    //Distances to objectives to act
+    public static float cornCobDistance = 3;
+    public static float digPointDistance = 1.2f;
 
     //valor para gestionar cargar hormigas nacidas/no nacidas
     public bool born { get; set; }
@@ -359,39 +362,6 @@ public class Ant : MonoBehaviour
                 DontTurn();
                 SetWalking(false);
                 return status;
-            }
-
-            //Patch para intentar evitar la hormiga quedandose pillada.
-            //Si el ángulo es demasiado pequeño
-            float angle = Vector3.Angle(goal, transform.up);
-            if (angle < 10 || angle > 170)
-            {
-                //check de casi al final de camino
-                if (objective.path.Count > 1) //Por si acaso el camino no es demasiado pequeño
-                {
-                    CubePaths.CubeSurface secondLastSurface = objective.path[objective.path.Count - 2]; //La penultima superficie
-                    if (antSurface.Equals(secondLastSurface)) //Si la hormiga ha llegado al penúltimo
-                    {
-                        //Si la hormiga casi está en el último
-                        Vector3 pos = transform.position;
-                        if (
-                            pos.x < secondLastSurface.pos.x + 1.3f && pos.x > secondLastSurface.pos.x - 0.3f ||
-                            pos.y < secondLastSurface.pos.y + 1.3f && pos.y > secondLastSurface.pos.y - 0.3f ||
-                            pos.z < secondLastSurface.pos.z + 1.3f && pos.z > secondLastSurface.pos.z - 0.3f
-                            )
-                        {
-                            Debug.Log("Pretty much made it.");
-                            objective.path = new();
-                            return BehaviourTreeStatus.Success;
-                        }
-                    }
-                }
-
-                //Si no hemos llegado al casi final del camino, hacemos followGoal con márgen de caminar hacia delante muy grande
-                FollowGoal(normalMedian, goal, 100f);
-
-                return status;
-
             }
 
             FollowGoal(normalMedian, goal, 70f);
