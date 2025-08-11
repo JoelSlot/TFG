@@ -1092,6 +1092,48 @@ public class CubePaths : MonoBehaviour
         return sameSurface;
     }
 
+    public static bool IsSmallSingularTriangle(CubeSurface surface, out Vector3Int corner)
+    {
+        Vector3Int belowCorner = Vector3Int.zero;
+        Vector3Int aboveCorner = Vector3Int.zero;
+        int aboveCount = 0;
+        corner = Vector3Int.zero;
+
+        for (int cornerId = 0; cornerId < 8; cornerId++)
+        {
+            if (surface.surfaceGroup[cornerId])
+            {
+                aboveCount++;
+                aboveCorner = chunk.cornerIdToPos[cornerId];
+            }
+            else
+                belowCorner = chunk.cornerIdToPos[cornerId];
+        }
+
+        if (aboveCount == 7)
+        {
+            corner = belowCorner;
+        }
+        else if (aboveCount == 1)
+        {
+            corner = aboveCorner;
+        }
+        else return false;
+
+        List<Vector3Int> adyacentCorners = AdyacentCorners(corner);
+
+        corner = corner + surface.pos;
+        foreach (var ady in adyacentCorners)
+        {
+            //check if distances to isolevel make it closer to the corner. If not , the traingle isn't that small
+            if (Mathf.Abs(WorldGen.SampleTerrain(ady + surface.pos) - WorldGen.isolevel) <= Mathf.Abs(WorldGen.SampleTerrain(corner) - WorldGen.isolevel))
+                return false;
+        }
+
+
+        return true;
+    }
+
     //Pone el 
     public static BehaviourTreeStatus SetGoalFromPath(CubeSurface antSurface, Vector3 antForward, ref Task objective, ref bool needNew, ref Vector3 goal)
     {
@@ -1103,10 +1145,13 @@ public class CubePaths : MonoBehaviour
         }//Para evitar seguir camino nonexistente.
 
         if (antSurface.Equals(objective.path.Last()))
+        {
+            objective.path = new();
             return BehaviourTreeStatus.Success;
+        }
 
         if (!needNew)
-            return BehaviourTreeStatus.Running;
+                return BehaviourTreeStatus.Running;
 
         needNew = false;
 
@@ -1136,6 +1181,13 @@ public class CubePaths : MonoBehaviour
             else if (antSurfacePathPos == objective.path.Count - 2)
             {
                 Debug.Log("Reached second to last surface of path");
+
+                if (IsSmallSingularTriangle(objective.path.Last(), out Vector3Int corner))
+                {
+                    objective.path = new();
+                    return BehaviourTreeStatus.Success;
+                }//If last step is tiny triangle, just finish the damn path rather than get stuck
+
                 Vector3Int dir = objective.path.Last().pos - antSurface.pos;
                 goal = GetMovementGoal(antSurface, dir);
                 return BehaviourTreeStatus.Running;
@@ -1211,6 +1263,13 @@ public class CubePaths : MonoBehaviour
             {
                 Debug.Log("Next to last surface of path");
                 Vector3Int dir = objective.path.Last().pos - antSurface.pos;
+
+                if (IsSmallSingularTriangle(objective.path.Last(), out Vector3Int corner))
+                {
+                    objective.path = new();
+                    return BehaviourTreeStatus.Success;
+                }//If last step is tiny triangle, just finish the damn path rather than get stuck
+
                 goal = GetMovementGoal(antSurface, dir);
                 return BehaviourTreeStatus.Running;
             }
