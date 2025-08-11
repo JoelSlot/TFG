@@ -958,7 +958,7 @@ public class CubePaths : MonoBehaviour
         if (currentRange.Count == 0)
         {
             nextRange.Add(antSurface);
-            checkedSurfaces.Add(antSurface, antSurface);
+            checkedSurfaces.TryAdd(antSurface, antSurface);
             return nextRange;
         }
 

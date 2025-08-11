@@ -26,7 +26,18 @@ public class Corn : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //Puts the corn back into nest if falling to void.
+        if (transform.parent == null)
+        {
+            if (transform.position.y < 0)
+            {
+                if (Nest.CollectedCornPips.ContainsKey(id))
+                    if (Nest.GetPointInChamber(Nest.CollectedCornPips[id], out Vector3 point))
+                        transform.position = point + Vector3.up;
+            }
+            if (transform.position.y < 0) Debug.Log("Lost to the void...");
+        }
+
     }
 
     public static int getNextId()

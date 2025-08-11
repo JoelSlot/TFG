@@ -350,6 +350,7 @@ public class Ant : MonoBehaviour
             float dist = CubePaths.DistToPoint(transform.position, objective.getPos());
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+            if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
 
@@ -647,22 +648,12 @@ public class Ant : MonoBehaviour
     {
 
         Vector3 mouthPos = carriedObject.transform.position;
-        Vector3 rayCastOrig = mouthPos + transform.up - transform.forward * 0.2f;
-        Vector3 direction = rayCastOrig - mouthPos;
-        bool rayCastHits = Physics.Raycast(rayCastOrig, direction, out RaycastHit hitInfo, direction.magnitude, 1 << 6);
-        //Debug.DrawLine(mouthPos, rayCastOrig, Color.cyan, 100);
-
         
-
         //carriedObject.
         foreach (Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
             child.GetComponent<BoxCollider>().enabled = true;
-            if (rayCastHits)
-            {
-                child.position = hitInfo.point - direction * 0.6f; //move the item over the terrain hit
-            }
             //Si es de tipo corn se añadirá al nido si se encuentra dentro
             Corn cornScript = child.GetComponent<Corn>();
             if (cornScript != null)
@@ -672,7 +663,26 @@ public class Ant : MonoBehaviour
                     //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
                     int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
                     Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
+
+                    if (nestPartId != -1)
+                    {
+                        Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
+                        Vector3 dir = (chamberCenter - mouthPos).normalized;
+                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
+                        {
+                            child.transform.position += dir * 0.3f;
+                        }
+                    }
+                    else
+                    {
+                        Vector3 dir = (transform.up * 2 + transform.position - mouthPos).normalized;
+                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
+                        {
+                            child.transform.position += dir * 0.3f;
+                        }
+                    }
                 }
+
             }
         }
         carriedObject.transform.DetachChildren();
