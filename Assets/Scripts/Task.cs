@@ -244,7 +244,10 @@ public class Task
 
     public static bool IsDigPointBeingDug(Vector3Int digPointPos)
     {
-        int digPointsAntId = DigPoint.digPointDict[digPointPos].antId;
+        //i mean if it doens't exist it mught as well be dug right???
+        if (!DigPoint.digPointDict.TryGetValue(digPointPos, out DigPoint.digPointData digPoint)) return true;
+
+        int digPointsAntId = digPoint.antId;
         //Mirar si ya lo va a excavar otra hormiga
         if (digPointsAntId != -1)
         {

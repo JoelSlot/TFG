@@ -46,10 +46,11 @@ public class DigPoint : MonoBehaviour
                 if (!loaded) availableDigPoints.Add(Vector3Int.RoundToInt(digPoint.transform.position));
             }
         }
+
     }
 
     void OnDestroy()
-    {
+    {                            
         digPointDict.Remove(Vector3Int.RoundToInt(transform.position));
     }
 
@@ -72,6 +73,16 @@ public class DigPoint : MonoBehaviour
         int val = digPointDict[pos].value;
         List<Tuple<Vector3Int, int>> terrainEdit = new();
         if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, int>(pos, val));
+
+        //Eliminamos el task de la hormiga que lo está excavando (para casos de autoexcavación)
+        int antId = digPointDict[pos].antId;
+        if (antId != -1)
+            if (Ant.antDictionary.TryGetValue(antId, out Ant ant))
+                if (ant.objective.digPointId == pos)
+                    ant.objective = Task.NoTask();
+
+
+
 
         //Miramos todos los digPoints alrededores
         Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
@@ -136,6 +147,53 @@ public class DigPoint : MonoBehaviour
         }
 
         return true;
+    }
+
+
+    public static bool Separated(Vector3Int pos)
+    {
+        if (!digPointDict.ContainsKey(pos))
+            return true;
+
+        Queue<Vector3Int> frontier = new();
+        frontier.Enqueue(pos);
+        HashSet<Vector3Int> checkedPos = new();
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+
+        while (frontier.Count > 0)
+        {
+            Vector3Int currentPos = frontier.Dequeue();
+            checkedPos.Add(currentPos);
+            foreach (Vector3Int direction in directions)
+            {
+                Vector3Int son = currentPos + direction;
+
+                if (checkedPos.Contains(son)) continue;
+
+                if (digPointDict.ContainsKey(son)) frontier.Enqueue(son);
+                else if (!WorldGen.IsAboveSurface(son)) return false;
+            }
+
+        }
+        return true;
+    }
+
+    int counter = 0;
+
+    void FixedUpdate()
+    {
+        counter++;
+
+        if (counter > 100)
+        {
+            counter = 0;
+            Vector3Int pos = Vector3Int.RoundToInt(transform.position);
+            if (Separated(pos))
+            {
+                Dig();
+                Destroy(this.gameObject);
+            }
+        }
     }
 
 }
