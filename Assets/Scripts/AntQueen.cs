@@ -59,13 +59,13 @@ public class AntQueen : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
         Rigidbody = queenObj.GetComponent<Rigidbody>(); //El rigidbody se registra
         Rigidbody.centerOfMass = new(0, 0.05f, 0);
         Animator = queenObj.GetComponent<Animator>(); //El Animator se registra
         Animator.enabled = true; //Se habilita el animator
         Animator.SetBool("grounded", true); //El estado por defecto se encuentra en la tierra
-        
+
 
         UpdateHolding();
         SetWalking(false); //El estado por defecto no camina
@@ -76,37 +76,27 @@ public class AntQueen : MonoBehaviour
         var builder = new BehaviourTreeBuilder();
         this.tree = builder
             .Sequence("Main")
-                .Selector("Get task if none")
-                    .Condition("I have a task?", t => { return !objective.isTaskType(TaskType.None); })
+                .Selector("Chill if in queen chamber")
+                    .Condition("Exit if not in queen chamber", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.QueenChamber))
 
-                    //If im holding food, bring to nest.
-                    .Sequence("If carrying bring to food chamber") //To do: expand this into giving food to larva?
-                        .Condition("Carrying food check", t => IsHolding())
-                        .Selector("Check where ant is")
-                            .Sequence("If not in nest go to nest")
-                                .Condition("Am I out of nest?", t => !Nest.SurfaceInNest(antSurface))
-                                .Do("Set to go to nest", t => { objective = Task.GoInsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
-                            .End()
-                            .Sequence("If in nest go to food chamber")
-                                .Condition("Am i not in food chamber?", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
-                                .Do("Set to go to food chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber); Debug.Log("Task is go to food chamber"); return BehaviourTreeStatus.Success; })
-                            .End()
-                            .Do("If reached chamber put down", t => { Debug.Log("Putting down"); Animator.SetBool("Put down", true); return BehaviourTreeStatus.Success; })
-                        .End()
+                    .Do("Give birth if conditions are fullfilled", t => { return BehaviourTreeStatus.Failure; })
+
+                    .Condition("Exit if doing something", t => !objective.isTaskType(TaskType.None))
+
+                    .Do("Either walk, eat or chill", t => GetQueenChamberTask(antSurface, ref objective))
+
+                .End()
+                .Selector("If not in chamber, go there or do other stuff.")
+                    .Condition("Exit if doing something relevant", t => { return !objective.isTaskType(TaskType.None) && !objective.isTaskType(TaskType.Wait); })
+
+                    .Sequence("If there is a queen chamber")
+                        .Condition("Exit if there isn't a queen chamber", t => Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber))
+                        .Do("Set task to go to queen chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber); return BehaviourTreeStatus.Success; })
                     .End()
 
-                    .Do("Sense nearby task", t => SenseTask())
-                    .Do("Get requested task", t => Nest.GetNestTask(antSurface, -1, ref objective))
+                    .Do("Get nearby dig task", t => SenseDigTask())
+                    .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -1, ref objective))
 
-                    .Selector("Go outside")
-                        .Condition("Am outside of nest?", t => !Nest.SurfaceInNest(antSurface))
-                        .Do("Set to go outside", t => { objective = Task.GoOutsideTask(antSurface); Debug.Log("Task is go outside"); return BehaviourTreeStatus.Success; })
-                    .End()
-
-                    //.Sequence("If outside start exploring")
-                    //    .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
-                    .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
-                //.End()
                 .End()
 
                 .Selector("Do tasks")
@@ -131,16 +121,6 @@ public class AntQueen : MonoBehaviour
                         .End()
                     .End()
 
-                    /*
-                    .Sequence("Go outside")
-                        .Condition("Is my task going outside?", t => objective.isTaskType(TaskType.GoOutside))
-                        .Do("Follow objective path", t => FollowObjectivePath())
-                        .Selector("Complete objective if outside or finished path")
-                            .Condition("Im still inside and with complete path?", t => Nest.SurfaceInNest(antSurface) && objective.path.Count != 0)
-                            .Do("Complete objective", t => { objective = Task.NoTask(); return BehaviourTreeStatus.Success; })
-                        .End()
-                    .End()
-                    */
 
                     .Sequence("Just follow path")
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
@@ -157,6 +137,7 @@ public class AntQueen : MonoBehaviour
 
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
+                        .Condition("Make sure im ACTUALLY lost", t => AmIStillLost())
                         .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Check if in nest", t => CheckLostStatus())
                     .End()
@@ -165,18 +146,18 @@ public class AntQueen : MonoBehaviour
                         .Condition("Am i waiting?", t => objective.isTaskType(TaskType.Wait))
                         .Do("Decrease waiting counter", t => { Counter -= 1; return BehaviourTreeStatus.Success; })
                         .Selector("Terminar espera si contador es 0")
-                            .Condition("contador es mayor que 0?", t => Counter > 0)
+                            .Condition("Exit if counter is above 0", t => Counter > 0)
                             .Do("Terminar tarea de espera", t => { objective = Task.NoTask(); Counter = 0; return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
 
                 .End()
-                
+
             .End()
             .Build();
     }
 
-    
+
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -215,7 +196,7 @@ public class AntQueen : MonoBehaviour
                 //Shortenede anim but looked bad, so readjusted it
                 //then had to move the event again because adjusting anim length changes event time.
             }
-            else tree.Tick(new TimeData(Time.deltaTime));
+            else tree.Tick(new TimeData(Time.deltaTime), "");
 
 
 
@@ -236,9 +217,10 @@ public class AntQueen : MonoBehaviour
     {
         if (!objective.isTaskType(TaskType.None))
         {
-            float dist = CubePaths.DistToPoint(this.transform.position, objective.getPos());
+            float dist = CubePaths.DistToPoint(transform.position, objective.getPos());
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+            if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
 
@@ -247,39 +229,6 @@ public class AntQueen : MonoBehaviour
                 DontTurn();
                 SetWalking(false);
                 return status;
-            }
-
-            //Patch para intentar evitar la hormiga quedandose pillada.
-            //Si el ángulo es demasiado pequeño
-            float angle = Vector3.Angle(goal, transform.up);
-            if (angle < 10 || angle > 170)
-            {
-                //check de casi al final de camino
-                if (objective.path.Count > 1) //Por si acaso el camino no es demasiado pequeño
-                {
-                    CubePaths.CubeSurface secondLastSurface = objective.path[objective.path.Count - 2]; //La penultima superficie
-                    if (antSurface.Equals(secondLastSurface)) //Si la hormiga ha llegado al penúltimo
-                    {
-                        //Si la hormiga casi está en el último
-                        Vector3 pos = transform.position;
-                        if (
-                            pos.x < secondLastSurface.pos.x + 1.3f && pos.x > secondLastSurface.pos.x - 0.3f ||
-                            pos.y < secondLastSurface.pos.y + 1.3f && pos.y > secondLastSurface.pos.y - 0.3f ||
-                            pos.z < secondLastSurface.pos.z + 1.3f && pos.z > secondLastSurface.pos.z - 0.3f
-                            )
-                        {
-                            Debug.Log("Pretty much made it.");
-                            objective.path = new();
-                            return BehaviourTreeStatus.Success;
-                        }
-                    }
-                }
-
-                //Si no hemos llegado al casi final del camino, hacemos followGoal con márgen de caminar hacia delante muy grande
-                FollowGoal(normalMedian, goal, 100f);
-
-                return status;
-
             }
 
             FollowGoal(normalMedian, goal, 70f);
@@ -294,7 +243,7 @@ public class AntQueen : MonoBehaviour
     private BehaviourTreeStatus CheckExploreStatus()
     {
         //Si no se ha encontrado task cerca y por tanto task no ha cambiado
-        if (SenseTask() == BehaviourTreeStatus.Failure)
+        if (SenseDigTask() == BehaviourTreeStatus.Failure)
         {
             Counter--;
             //Si hemos explorado la distancia que queríamos, volvemos a casa.
@@ -313,14 +262,21 @@ public class AntQueen : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    private BehaviourTreeStatus CheckLostStatus()
+    private bool AmIStillLost()
     {
         //Si hemos llegado al nido ya no estamos perdidos.
         if (Nest.SurfaceInNest(antSurface))
         {
+            Debug.Log("In nest");
             Counter = 0;
             objective = Task.NoTask();
+            return false;
         }
+        return true;
+    }
+
+    private BehaviourTreeStatus CheckLostStatus()
+    {
 
         Counter++;
         //Si llevamos ya un rato perdidos, igual nos hemos topado con un camino de pheromonas que nos lleva a casa.
@@ -335,93 +291,50 @@ public class AntQueen : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    private BehaviourTreeStatus SenseTask()
+    private BehaviourTreeStatus SenseDigTask()
     {
         int digPointMask = 1 << 9;
-        int cornMask = 1 << 10;
-        int cornCobMask = 1 << 11;
 
-        //BUscamos colisiones con todos los objetos comida y punto de excavación alrededor de la hormiga
-        int layermask = digPointMask + cornMask + cornCobMask; //Capa de comida y digpoint
-        PriorityQueue<GameObject, float> sensedItems = new();
+        PriorityQueue<DigPoint, float> sensedItems = new();
         int maxColliders = 100;
         Collider[] hitColliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 7, hitColliders, layermask);
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 7, hitColliders, digPointMask);
         for (int i = 0; i < numColliders; i++)
         {
-            sensedItems.Enqueue(hitColliders[i].gameObject, Vector3.Distance(hitColliders[i].transform.position, transform.position));
+            sensedItems.Enqueue(hitColliders[i].gameObject.GetComponent<DigPoint>(), Vector3.Distance(hitColliders[i].transform.position, transform.position));
         }
 
         int minLength = int.MaxValue;
         int minDigPointScore = -1;
         Task newTask = Task.NoTask();
-        bool foundDigPoint = false;
         while (sensedItems.Count > 0)
         {
-            GameObject sensedItem = sensedItems.Dequeue();
-            //DigPoints tienen prioridad sobre comida. Si se mira un objeto no DigPoint habiendo detectado ya uno, se ignora el objeto actual
-            if (sensedItem.gameObject.layer != 9 && foundDigPoint) continue;
-            //Comida dentro de una cámara de comida no se recoge
-            if (sensedItem.gameObject.layer == 10 && Nest.PointInNestPart(sensedItem.transform.position, NestPart.NestPartType.FoodChamber)) continue;
+            DigPoint sensedPoint = sensedItems.Dequeue();
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
-            if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedItem.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
+            if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedPoint.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
-                int objLayer = sensedItem.gameObject.layer;
-                if (objLayer == 9) //9 is digpoint layer
+                Vector3Int pos = Vector3Int.RoundToInt(sensedPoint.transform.position);
+                if (Task.IsDigPointBeingDug(pos)) continue;
+
+                int newScore = DigPoint.ReachableScore(pos);
+
+                //Thanks to this sistem, priorities are:
+                //1. Having a high reachable score
+                //2. Being a short path
+                if (newScore > minDigPointScore)
                 {
-                    Vector3Int pos = Vector3Int.RoundToInt(sensedItem.transform.position);
-                    if (Task.IsDigPointBeingDug(pos)) continue;
-
-                    //Si es primera vez que encontramos digpoint, reseteamos el valor minimo de camino (Nos da igual que el del digpoint sea mayor que el menor de comidas encontrado)
-                    if (!foundDigPoint) { foundDigPoint = true; minLength = int.MaxValue; }
-
-                    int newScore = DigPoint.ReachableScore(pos);
-
-                    //Thanks to this sistem, priorities are:
-                    //1. Having a high reachable score
-                    //2. Being a short path
-                    if (newScore > minDigPointScore)
-                    {
-                        newTask = new Task(sensedItem, TaskType.Dig, newPath);
-                        minDigPointScore = newScore;
-                        minLength = newPath.Count;
-                    }
-                    else if (newScore == minDigPointScore)
-                    {
-                        if (newPath.Count < minLength)
-                        {
-                            newTask = new Task(sensedItem, TaskType.Dig, newPath);
-                            minLength = newPath.Count;
-                        }
-                    }
-
-
+                    newTask = Task.DigTask(pos, -1, newPath);
+                    minDigPointScore = newScore;
+                    minLength = newPath.Count;
                 }
-                else if (objLayer == 10) //10 is corn layer
+                else if (newScore == minDigPointScore)
                 {
                     if (newPath.Count < minLength)
                     {
-                        if (!sensedItem.TryGetComponent<Corn>(out var cornScript)) continue;
-
-                        //Si ya una hormiga lo va a recoger
-                        if (Task.IsCornBeingPickedUp(cornScript)) continue;
-
-                        newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
-                        cornScript.antId = -1;
-
+                        newTask = Task.DigTask(pos, -1, newPath);
+                        minLength = newPath.Count;
                     }
-                }
-                else if (objLayer == 11) //11 is cornCobLayer
-                {
-                    //Only count it if it has corn left
-                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) continue;
-                    //Set current pheromonePath to found corn!
-                    if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
 
-                }
-                else
-                {
-                    Debug.Log("Wrong layer: " + sensedItem.gameObject.layer + " vs dipoint " + digPointMask + " vs food " + cornMask);
                 }
             }
         }
@@ -438,7 +351,7 @@ public class AntQueen : MonoBehaviour
     {
         if (!objective.isTaskType(TaskType.None))
             if (objective.isValid(this)) return true;
-        
+
         return false;
     }
 
@@ -471,7 +384,7 @@ public class AntQueen : MonoBehaviour
         {
             Animator.SetBool("Pick up", true);
         }
-        if (objective.isTaskType(TaskType.Dig)) 
+        if (objective.isTaskType(TaskType.Dig))
         {
             Animator.SetBool("Dig", true);
         }
@@ -529,12 +442,14 @@ public class AntQueen : MonoBehaviour
 
     public void PutDownAction()
     {
+
+        Vector3 mouthPos = carriedObject.transform.position;
+        
         //carriedObject.
         foreach (Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
             child.GetComponent<BoxCollider>().enabled = true;
-            
             //Si es de tipo corn se añadirá al nido si se encuentra dentro
             Corn cornScript = child.GetComponent<Corn>();
             if (cornScript != null)
@@ -544,7 +459,26 @@ public class AntQueen : MonoBehaviour
                     //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
                     int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
                     Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
+
+                    if (nestPartId != -1)
+                    {
+                        Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
+                        Vector3 dir = (chamberCenter - mouthPos).normalized;
+                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
+                        {
+                            child.transform.position += dir * 0.3f;
+                        }
+                    }
+                    else
+                    {
+                        Vector3 dir = (transform.up * 2 + transform.position - mouthPos).normalized;
+                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
+                        {
+                            child.transform.position += dir * 0.3f;
+                        }
+                    }
                 }
+
             }
         }
         carriedObject.transform.DetachChildren();
@@ -574,7 +508,12 @@ public class AntQueen : MonoBehaviour
         {
             int key = -1;
             int cornId = obj.GetComponent<Corn>().id;
-            foreach(var (pos, id) in parentCob.cornCobCornDict) if (id == cornId) {key = pos; break;};
+            foreach (var (pos, id) in parentCob.cornCobCornDict)
+                if (id == cornId)
+                {
+                    key = pos;
+                    break;
+                }
             parentCob.cornCobCornDict.Remove(key);
         }
 
@@ -594,7 +533,7 @@ public class AntQueen : MonoBehaviour
         if (objective.isValid(this))
         {
             DigPoint thePoint = objective.GetDigPoint();
-            if(thePoint != null)
+            if (thePoint != null)
             {
                 thePoint.Dig();
                 DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(thePoint.transform.position));
@@ -604,7 +543,7 @@ public class AntQueen : MonoBehaviour
         }
         else objective = Task.NoTask();
     }
-  
+
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
     void FollowGoal(Vector3 hitNormal, Vector3 goal, float minAngle)
@@ -635,43 +574,8 @@ public class AntQueen : MonoBehaviour
         else SetWalking(false);
     }
 
-  /*  private CubePheromone ChoosePheromone(List<CubePheromone> sensedPhers)
-    {
-        CubePheromone chosenPher = null;
-        int pathVal = 0;
-        if (!followingForwards) pathVal = int.MaxValue;
 
-        bool isFurther(int value)
-        {
-            if (followingForwards) return pathVal < value;
-            else return pathVal > value;
-        }
-
-        for (int i = 0; i < sensedPhers.Count(); i++)
-        {
-            if (followingPheromone != -1)
-            {
-                if (sensedPhers[i].GetPathId() == followingPheromone)
-                    if (isFurther(sensedPhers[i].GetPathPos()))
-                    {
-                        chosenPher = sensedPhers[i];
-                        pathVal = sensedPhers[i].GetPathPos();
-                    }
-            }
-            else
-            {
-                if (isFurther(sensedPhers[i].GetPathPos()))
-                {
-                    chosenPher = sensedPhers[i];
-                    pathVal = sensedPhers[i].GetPathPos();
-                }
-            }
-        }
-        return chosenPher;
-    }
-    */
-
-    public void SetWalking(bool walk){
+    public void SetWalking(bool walk) {
         if (walk)
         {
             speed = speed_per_second * Time.fixedDeltaTime;
@@ -684,15 +588,15 @@ public class AntQueen : MonoBehaviour
         }
     }
 
-    public void TurnRight(){
+    public void TurnRight() {
         Animator.SetInteger("turning", 1);
     }
 
-    public void TurnLeft(){
+    public void TurnLeft() {
         Animator.SetInteger("turning", -1);
     }
 
-    public void DontTurn(){
+    public void DontTurn() {
         Animator.SetInteger("turning", 0);
     }
 
@@ -702,17 +606,17 @@ public class AntQueen : MonoBehaviour
         numHits = 0;
         normalMedian = Vector3.zero;
         //El orden de los raycasts es importante. Son atras derecha -> atras izquierda -> delante izquierda -> delante derecha -> centro
-        float[] xPos = {sep, -sep, -sep, sep, 0};
-        float[] zPos = {-sep, -sep, sep, sep, 0};
+        float[] xPos = { sep, -sep, -sep, sep, 0 };
+        float[] zPos = { -sep, -sep, sep, sep, 0 };
         float yPos = 0.5f;
-        rayCastHits = new bool[]{ false, false, false, false, false};
-        rayCastDist = new float[]{0f,0f,0f,0f,0f};
-        Vector3 hitNormal = new Vector3(0, 0, 0); 
-        Vector3Int hitCubePos = new Vector3Int(0,0,0);
+        rayCastHits = new bool[] { false, false, false, false, false };
+        rayCastDist = new float[] { 0f, 0f, 0f, 0f, 0f };
+        Vector3 hitNormal = new Vector3(0, 0, 0);
+        Vector3Int hitCubePos = new Vector3Int(0, 0, 0);
         int raycastLayer = (1 << 6); //layer del terreno
         for (int i = 0; i < xPos.Length; i++) {
             //HE ESTADO USANDO MAL ESTA FUNCIÓN. RAYCASTLAYER ESTABA FUNCIONANDO COMO MAXDISTANCE
-            if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, 0.8f, raycastLayer))
+            if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 0.8f, raycastLayer))
             {
                 hitColor = Color.red;
                 numHits++;
@@ -754,10 +658,10 @@ public class AntQueen : MonoBehaviour
         Rigidbody.angularVelocity = Vector3.zero;
 
         //APPLY LOCAL GRAVITY
-        Rigidbody.AddForce(-surfaceNormalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
+        Rigidbody.AddForce(-surfaceNormalMedian * 40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
 
         //ROTATE ANT
-        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime,0));
+        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0, Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime, 0));
         Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
         //MOVE ANT FORWARD
@@ -805,11 +709,34 @@ public class AntQueen : MonoBehaviour
         }
     }
 
- 
+
 
     public AnimatorStateInfo GetAnimatorStateInfo()
     {
         return Animator.GetCurrentAnimatorStateInfo(0);
     }
+
+    
+    private BehaviourTreeStatus GetQueenChamberTask(CubePaths.CubeSurface antSurface, ref Task objective)
+    {
+
+        /*if (GetEatCornTask(antSurface, ref objective))
+        {
+            Debug.Log("Got a relocate task");
+            return BehaviourTreeStatus.Success;
+        }*/
+
+        if (UnityEngine.Random.Range(0, 10) < 8)
+            objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
+        else
+            objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber);
+
+        if (objective.isTaskType(TaskType.Lost)) objective = Task.WaitTask(this, 5);
+        return BehaviourTreeStatus.Success;
+
+    }
+
+    
+
 
 }

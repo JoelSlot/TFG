@@ -1261,7 +1261,7 @@ public class CubePaths : MonoBehaviour
         {
             if (antSurfacePathPos == objective.path.Count - 1)
             {
-                Debug.Log("Next to last surface of path");
+                //Debug.Log("Next to last surface of path");
                 Vector3Int dir = objective.path.Last().pos - antSurface.pos;
 
                 if (IsSmallSingularTriangle(objective.path.Last(), out Vector3Int corner))
@@ -1276,7 +1276,7 @@ public class CubePaths : MonoBehaviour
 
             else
             {
-                Debug.Log("Next to a surface of the path");
+                //Debug.Log("Next to a surface of the path");
                 Vector3Int dir1 = objective.path[antSurfacePathPos].pos - antSurface.pos;
                 Vector3Int dir2 = objective.path[antSurfacePathPos + 1].pos - objective.path[antSurfacePathPos].pos;
                 goal = GetMovementGoal(antSurface, dir1, dir2);
@@ -1295,7 +1295,7 @@ public class CubePaths : MonoBehaviour
         }
 
         {
-            Debug.Log("Going to path");
+            //Debug.Log("Going to path");
             Vector3Int dir1 = nextSurface.pos - antSurface.pos;
             Vector3Int dir2 = nextNextSurface.pos - nextSurface.pos;
             goal = GetMovementGoal(antSurface, dir1, dir2);

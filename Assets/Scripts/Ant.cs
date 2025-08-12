@@ -216,6 +216,7 @@ public class Ant : MonoBehaviour
 
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
+                        .Condition("Make sure im ACTUALLY lost", t => AmIStillLost())
                         .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Check if in nest", t => CheckLostStatus())
                     .End()
@@ -395,14 +396,21 @@ public class Ant : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    private BehaviourTreeStatus CheckLostStatus()
+    private bool AmIStillLost()
     {
         //Si hemos llegado al nido ya no estamos perdidos.
         if (Nest.SurfaceInNest(antSurface))
         {
+            Debug.Log("In nest");
             Counter = 0;
             objective = Task.NoTask();
+            return false;
         }
+        return true;
+    }
+
+    private BehaviourTreeStatus CheckLostStatus()
+    {
 
         Counter++;
         //Si llevamos ya un rato perdidos, igual nos hemos topado con un camino de pheromonas que nos lleva a casa.
@@ -476,6 +484,7 @@ public class Ant : MonoBehaviour
                         if (newPath.Count < minLength)
                         {
                             newTask = new Task(sensedItem, TaskType.Dig, newPath);
+                            DigPoint.digPointDict[pos].antId = id; //Marcamos el id de la hormiga
                             minLength = newPath.Count;
                         }
                     }
@@ -755,42 +764,6 @@ public class Ant : MonoBehaviour
         else SetWalking(false);
     }
 
-  /*  private CubePheromone ChoosePheromone(List<CubePheromone> sensedPhers)
-    {
-        CubePheromone chosenPher = null;
-        int pathVal = 0;
-        if (!followingForwards) pathVal = int.MaxValue;
-
-        bool isFurther(int value)
-        {
-            if (followingForwards) return pathVal < value;
-            else return pathVal > value;
-        }
-
-        for (int i = 0; i < sensedPhers.Count(); i++)
-        {
-            if (followingPheromone != -1)
-            {
-                if (sensedPhers[i].GetPathId() == followingPheromone)
-                    if (isFurther(sensedPhers[i].GetPathPos()))
-                    {
-                        chosenPher = sensedPhers[i];
-                        pathVal = sensedPhers[i].GetPathPos();
-                    }
-            }
-            else
-            {
-                if (isFurther(sensedPhers[i].GetPathPos()))
-                {
-                    chosenPher = sensedPhers[i];
-                    pathVal = sensedPhers[i].GetPathPos();
-                }
-            }
-        }
-        return chosenPher;
-    }
-    */
-
     public void SetWalking(bool walk){
         if (walk)
         {
@@ -924,87 +897,6 @@ public class Ant : MonoBehaviour
             Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
         }
     }
-
-
-    
- 
-    //Devuelve true si ha encontrado una pheromona
-    /*private bool SensePheromones(CubePaths.CubeSurface antSurface, out Vector3 goal) 
-    {
-        goal = Vector3.zero;
-        List<CubePaths.CubeSurface> sensedRange = new();
-        Dictionary<CubePaths.CubeSurface, CubePaths.CubeSurface> checkedSurfaces = new();
-        bool foundGoal = false;
-        int range = -1;
-
-        CubePheromone objectivePher = null;
-        CubePaths.CubeSurface firstStep = new();
-
-        Color[] colors = {Color.blue, Color.magenta, Color.red, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue, Color.black, Color.blue};
-
-        while (!foundGoal && range < 5)
-        {
-            range++;
-            sensedRange = GetNextSurfaceRange(antSurface, sensedRange, ref checkedSurfaces);
-
-            //Put all pheromones on a list
-            List<CubePheromone> sensedPheromones = new();
-            foreach (var surface in sensedRange)
-            {
-                //CubePaths.DrawSurface(surface, colors[range], 2);
-                //CubePaths.DrawCube(surface.pos, colors[range], 2);
-                if (CubePaths.cubePherDict.TryGetValue(surface.pos, out List<CubePheromone> surfacePhers))
-                    sensedPheromones.AddRange(surfacePhers);
-            }
-            //
-
-            objectivePher = ChoosePheromone(sensedPheromones);
-            if (objectivePher != null)
-            {
-                foundGoal = true;
-                firstStep = objectivePher.surface;
-            }
-        }
-
-        //Si no se ha encontrado objetivo, devolvemos falso.
-        if (!foundGoal)
-        {
-            //("NO PHEROMONES FOUND/CHOSEN");
-            return false;
-        }
-
-        //Si la pheromona está en la superficie actual seguimos su camino
-        if (range == 0)
-        {
-            if (objectivePher.isLast(followingForwards))
-            {
-                followingForwards = !followingForwards;
-                //Debug.Log("Switched following");
-            }
-            if (objectivePher.isLast(followingForwards))
-            {
-                Debug.Log("SINGLE PHEROMONE PATH; IM FUCKING STUCKKKKK");
-                return false;
-            }
-
-            firstStep = objectivePher.GetNext(followingForwards).GetSurface();
-        }
-        else
-            while (!checkedSurfaces[firstStep].Equals(firstStep))
-            {
-                firstStep = checkedSurfaces[firstStep];
-            }
-        
-        Vector3Int dir = firstStep.pos - antSurface.pos;
-
-        goal = CubePaths.GetMovementGoal(antSurface, dir);
-
-        nextPosDraw = firstStep.pos;
-
-        return true;
-
-    }*/
-
 
     void AntInputs() {
         //if (SelectedAnt.state != Ant.AIState.Controlled) return;

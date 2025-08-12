@@ -32,7 +32,7 @@ public class Task
 
     public List<CubePaths.CubeSurface> path = new(); //Path the ant will follow if in followingPath mode
 
-    
+
     public Task(GameObject newGameObject, TaskType newType, List<CubePaths.CubeSurface> newPath)
     {
         type = newType;
@@ -49,7 +49,7 @@ public class Task
 
     }
 
-    public static Task DigTask(Vector3Int digPointId, List<CubePaths.CubeSurface> newPath)
+    public static Task DigTask(Vector3Int digPointId, int antId, List<CubePaths.CubeSurface> newPath)
     {
         if (!DigPoint.digPointDict.ContainsKey(digPointId)) return Task.NoTask();
         if (DigPoint.digPointDict[digPointId].digPoint == null) return Task.NoTask();
@@ -59,6 +59,8 @@ public class Task
         newTask.digPointId = digPointId;
         newTask.pos = digPointId;
         newTask.path = newPath;
+
+        DigPoint.digPointDict[digPointId].antId = antId;
 
         return newTask;
     }
@@ -133,9 +135,9 @@ public class Task
                     return GOtask;
                 }
         }
-                else
+        else
             if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path))
-                    return GOtask;
+            return GOtask;
 
         Debug.Log("No valid path");
 
@@ -173,6 +175,8 @@ public class Task
 
     public static Task LostTask(CubePaths.CubeSurface antSurface, Vector3 forward)
     {
+        Debug.Log("JUst got the lost task bro....");
+
         Task lostTask = new()
         {
             type = TaskType.Lost,
@@ -193,6 +197,20 @@ public class Task
         };
 
         ant.Counter = time;
+        return waitTask;
+    }
+
+    public static Task WaitTask(AntQueen antQueen, int time)
+    {
+
+        Debug.Log("Got a waiting task zzzz");
+        Task waitTask = new()
+        {
+            type = TaskType.Wait,
+            path = new()
+        };
+
+        antQueen.Counter = time;
         return waitTask;
     }
 
@@ -314,7 +332,7 @@ public class Task
         return true;
     }
 
-    
+
     public bool isValid(AntQueen ant)
     {
         switch (type)
@@ -399,6 +417,8 @@ public class Task
     }
 
 
+
+
     public Vector3 getPos() { return pos; }
 
     public string TaskToString()
@@ -464,7 +484,7 @@ public class Task
         foodId = info.foodId;
         pos = info.pos.ToVector3();
         type = IndexToType(info.typeIndex);
-        
+
         path = new();
         foreach (var surfaceInfo in info.path)
         {
@@ -472,5 +492,8 @@ public class Task
             CubePaths.DrawSurface(path.Last(), Color.yellow, 6);
         }
     }
+    
+
+
 
 }

@@ -255,6 +255,11 @@ public class NestPart : MonoBehaviour
         return true;
     }
 
+    public bool HasBeenPlaced()
+    {
+        return gotPoints;
+    }
+
     public void setActive(bool active)
     {
         if (active == false)

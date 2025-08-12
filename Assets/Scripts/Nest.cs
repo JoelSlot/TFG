@@ -38,6 +38,25 @@ public class Nest : MonoBehaviour
         foodCount = CollectedCornPips.Count;
     }
 
+    public static bool HasNestPart(NestPart.NestPartType type)
+    {
+        foreach (var part in NestParts)
+        {
+            if (part.mode == type) return true;
+        }
+        return false;
+    }
+
+    public static bool HasDugNestPart(NestPart.NestPartType type)
+    {
+        foreach (var part in NestParts)
+        {
+            if (part.mode == type)
+                if (part.HasBeenDug())
+                    return true;
+        }
+        return false;
+    }
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
@@ -105,7 +124,7 @@ public class Nest : MonoBehaviour
                 //find path to it. If no path, remove from available
                 if (CubePaths.GetKnownPathToPoint(antSurface, pos, 1.2f, out List<CubePaths.CubeSurface> newPath))
                 {
-                    objective = Task.DigTask(pos, newPath);
+                    objective = Task.DigTask(pos, antId, newPath);
                     //Mark that digpoints new ant
                     DigPoint.digPointDict[pos].antId = antId;
                 }
@@ -188,6 +207,7 @@ public class Nest : MonoBehaviour
         for (int i = lastIndex; checkedParts < NestParts.Count; checkedParts++, i++)
         {
             i %= NestParts.Count;
+            if (!NestParts[i].HasBeenPlaced()) continue;
             float marchingValue = NestParts[i].getMarchingValue(point);
             if (marchingValue < WorldGen.isolevel)
             {
@@ -218,6 +238,7 @@ public class Nest : MonoBehaviour
         for (int i = lastIndex; checkedParts < NestParts.Count; checkedParts++, i++)
         {
             i %= NestParts.Count;
+            if (!NestParts[i].HasBeenPlaced()) continue;
             //Solo miramos las partes del nido con el mismo tipo.
             if (NestParts[i].mode == type)
             {
