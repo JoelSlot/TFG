@@ -60,6 +60,9 @@ public class NestPart : MonoBehaviour
     public float interval;
     public bool gotPoints = true; //whether the points have been extracted yet. Always set to false when creating one! This way when loaded no actions needed (its placed)
     public HashSet<Vector3Int> digPointsLeft = new();
+    
+    public HashSet<int> CollectedCornPips = new(); //pips in the room
+    public HashSet<int> AntEggs = new(); //eggs in the room
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -90,9 +93,16 @@ public class NestPart : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         setMaterial(gotPoints, HasBeenDug());
+        if (!gotPoints)
+        {
+            if (HasBeenPlaced())
+            {
+                Debug.Log("WHAT THE FUCK_____________________________________HAVE NOT PLACED DIGPOINTS_______________");
+            }
+        }
     }
 
     public void setMode(NestPartType newMode)
@@ -217,8 +227,10 @@ public class NestPart : MonoBehaviour
 
     public void setRadius(float newRadius) //LIMITED TO AVOID UNREALISTIC TUNNELS
     {
-        if (newRadius < 1 || newRadius > 2 || mode != NestPartType.Tunnel) return; //Min and max radius or wrong mode
-        radius = newRadius;
+        if (mode != NestPartType.Tunnel) return;
+        if (newRadius < 1.8f) radius = 1.8f;
+        else if (newRadius > 2.8f) radius = 2.8f;
+        else radius = newRadius;
         startSphere.transform.localScale = 2 * radius * Vector3.one;
         endSphere.transform.localScale = 2 * radius * Vector3.one;
         cilinder.transform.localScale = new Vector3(radius * 2, dir.magnitude / 2, radius * 2);

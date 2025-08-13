@@ -5,6 +5,7 @@ using Utils;
 using FluentBehaviourTree;
 using Unity.VisualScripting;
 using System;
+using System.Net;
 
 
 public class AntQueen : MonoBehaviour
@@ -13,7 +14,8 @@ public class AntQueen : MonoBehaviour
     public Rigidbody Rigidbody;
     public CapsuleCollider terrainCapCollider;
     public CapsuleCollider antCapCollider;
-    public GameObject carriedObject = null; // the head bone
+    public GameObject carriedObject; // the head bone
+    public GameObject abdomenBone; //the abdomen bone
     public string taskName = "";
     //public GameObject staticEgg;
     //public GameObject eggAnim;
@@ -103,7 +105,7 @@ public class AntQueen : MonoBehaviour
 
                     .Sequence("Pick up corn routine")
                         .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
-                        .Condition("Is my task valid", t => objective.isValid(this))
+                        .Condition("Is my task valid", t => objective.isValid(ref objective))
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowTaskPath())
                             .Do("Align with food", t => Align(objective.getPos()))
@@ -113,7 +115,7 @@ public class AntQueen : MonoBehaviour
 
                     .Sequence("Dig routine")
                         .Condition("My task is digging?", t => objective.isTaskType(TaskType.Dig))
-                        .Condition("Is my task valid", t => objective.isValid(this))
+                        .Condition("Is my task valid", t => objective.isValid(ref objective))
                         .Sequence("Dig sequence")
                             .Do("Go to digPoint", t => FollowTaskPath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
@@ -205,7 +207,12 @@ public class AntQueen : MonoBehaviour
             //CubePaths.DrawCube(nextPosDraw, Color.blue);
             //CubePaths.DrawCube(antSurface.pos, Color.black);
         }
-        else Rigidbody.useGravity = true;
+        else
+        {
+            Rigidbody.useGravity = true;
+            Ant.CatchOutOfBounds(this.gameObject);
+        }
+
 
         if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
 
@@ -221,6 +228,7 @@ public class AntQueen : MonoBehaviour
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
             if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
+            if (dist < 2f && objective.isTaskType(TaskType.Dig)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
 
@@ -347,14 +355,6 @@ public class AntQueen : MonoBehaviour
         return BehaviourTreeStatus.Failure;
     }
 
-    private bool CheckTaskValidity()
-    {
-        if (!objective.isTaskType(TaskType.None))
-            if (objective.isValid(this)) return true;
-
-        return false;
-    }
-
     //If there is a requested task, it is selected. Otherwise return failure.
     private BehaviourTreeStatus RequestTask()
     {
@@ -402,8 +402,7 @@ public class AntQueen : MonoBehaviour
     }
 
     public void PickupEvent() //function called by the animation
-    {
-
+    {        
         Animator.SetBool("Pick up", false);
 
         Debug.Log("I GOT TO PICK UP");
@@ -414,21 +413,29 @@ public class AntQueen : MonoBehaviour
             return;
         }
 
-        if (objective.isValid(this) && objective.isTaskType(TaskType.GetCorn))
+        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetCorn))
         {
             Debug.Log("Valid");
-            GameObject food = objective.GetFood();
+            GameObject food = objective.GetItem();
             SetToHold(food);
-            Nest.CollectedCornPips.Remove(objective.foodId);
+            Nest.RemovePip(objective.itemId); //remove pip from nest if in it
             UpdateHolding();
         }
         //gets the cornCob, then a random corn pip from the cob that becomes held.
-        else if (objective.isValid(this) && objective.isTaskType(TaskType.CollectFromCob))
+        else if (objective.isValid(ref objective) && objective.isTaskType(TaskType.CollectFromCob))
         {
             Debug.Log("Cob valid");
-            GameObject cob = objective.GetFood();
+            GameObject cob = objective.GetItem();
             GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
             SetToHold(food); //CornPip is removed from cornCob here
+            UpdateHolding();
+        }
+        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetEgg))
+        {
+            Debug.Log("Valid");
+            GameObject egg = objective.GetItem();
+            SetToHold(egg);
+            Nest.RemoveEgg(objective.itemId); //remove pip from nest if in it
             UpdateHolding();
         }
         else
@@ -440,16 +447,52 @@ public class AntQueen : MonoBehaviour
         objective = Task.NoTask();
     }
 
+    public void GiveBirth()
+    {
+
+        Vector3 eggPos = abdomenBone.transform.position;
+
+        Ant newBorn = WorldGen.InstantiateAnt(eggPos, transform.rotation, false);
+
+        if (Nest.PointInNest(transform.position))
+        {
+            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.QueenChamber);
+
+            Nest.AddEgg(newBorn.id, nestPartId);
+            if (nestPartId != -1)
+            {
+                Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
+                Vector3 dir = (chamberCenter - eggPos).normalized;
+                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f))
+                {
+                    newBorn.transform.position += dir * 0.3f;
+                }
+            }
+            else
+            {
+                Vector3 dir = (transform.up * 2 + transform.position - eggPos).normalized;
+                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f))
+                {
+                    newBorn.transform.position += dir * 0.3f;
+                }
+            }
+        }
+    }
+
     public void PutDownAction()
     {
 
         Vector3 mouthPos = carriedObject.transform.position;
-        
+
         //carriedObject.
         foreach (Transform child in carriedObject.transform)
         {
             child.gameObject.AddComponent<Rigidbody>();
-            child.GetComponent<BoxCollider>().enabled = true;
+            BoxCollider box = child.GetComponent<BoxCollider>();
+            if (box != null) box.enabled = true;
+            foreach (var collider in child.GetComponents<CapsuleCollider>())
+                collider.enabled = true;
+
             //Si es de tipo corn se añadirá al nido si se encuentra dentro
             Corn cornScript = child.GetComponent<Corn>();
             if (cornScript != null)
@@ -458,7 +501,7 @@ public class AntQueen : MonoBehaviour
                 {
                     //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
                     int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
-                    Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
+                    Nest.AddPip(cornScript.id, nestPartId);
 
                     if (nestPartId != -1)
                     {
@@ -528,9 +571,8 @@ public class AntQueen : MonoBehaviour
         Animator.SetBool("Dig", false);
 
         if (objective.isTaskType(TaskType.None)) return;
-        //if (!objective.isTaskType(TaskType.DigPoint)) return;
 
-        if (objective.isValid(this))
+        if (objective.isValid(ref objective))
         {
             DigPoint thePoint = objective.GetDigPoint();
             if (thePoint != null)

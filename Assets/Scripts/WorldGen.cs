@@ -566,6 +566,8 @@ public class WorldGen : MonoBehaviour
         nestPartScript.SetPos(info.startPos.ToVector3(), info.endPos.ToVector3());
         nestPartScript.setRadius(info.radius);
         nestPartScript.setActive(true);
+        nestPartScript.CollectedCornPips = info.cornPips;
+        nestPartScript.AntEggs = info.antEggs;
 
         foreach (var serPos in info.digPointsLeft)
             nestPartScript.digPointsLeft.Add(serPos.ToVector3Int());
@@ -588,7 +590,10 @@ public class WorldGen : MonoBehaviour
         Ant.registerAnt(newAntScript);
         newAntScript.born = born;
         if (!born)
+        {
             newAntScript.age = 0;
+            newAntScript.staticEgg.SetActive(true);
+        }
         else
             newAntScript.age = 100;
 
@@ -597,17 +602,18 @@ public class WorldGen : MonoBehaviour
         return newAntScript;
     }
 
-    public static void InstantiateAnt(GameData.AntInfo antInfo)
+    public static Ant InstantiateAnt(GameData.AntInfo antInfo)
     {
         Vector3 pos = antInfo.pos.ToVector3();
         Quaternion orientation = antInfo.orientation.ToQuaternion();
 
-        GameObject newAnt = Instantiate(originalAnt, pos, orientation); 
+        GameObject newAnt = Instantiate(originalAnt, pos, orientation);
         newAnt.layer = 7;
         newAnt.SetActive(true);
         Ant newAntScript = newAnt.GetComponent<Ant>();
 
         newAntScript.id = antInfo.id;
+        newAntScript.antId = antInfo.antId;
         newAntScript.age = antInfo.age;
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
@@ -621,6 +627,8 @@ public class WorldGen : MonoBehaviour
         newAnt.name = "Ant " + antInfo.id;
 
         Ant.antDictionary.Add(antInfo.id, newAntScript);
+
+        return newAntScript;
     }
     
     public static AntQueen InstantiateQueen(Vector3 pos, Quaternion orientation)

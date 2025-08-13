@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using NUnit.Framework.Constraints;
 using Unity.Multiplayer.Center.Common;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -24,18 +26,15 @@ public class Corn : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         //Puts the corn back into nest if falling to void.
         if (transform.parent == null)
         {
             if (transform.position.y < 0)
-            {
-                if (Nest.CollectedCornPips.ContainsKey(id))
-                    if (Nest.GetPointInChamber(Nest.CollectedCornPips[id], out Vector3 point))
+                if (Nest.IsPipInNest(id, out int partIndex))
+                    if (Nest.GetPointInChamber(partIndex, out Vector3 point))
                         transform.position = point + Vector3.up;
-            }
-            if (transform.position.y < 0) Debug.Log("Lost to the void...");
         }
 
     }
@@ -86,5 +85,38 @@ public class Corn : MonoBehaviour
         }
         if (parent != null) return parent.GetComponent<Ant>();
         return null;
+    }
+
+    public static void PlaceCorn(GameObject cornObj, Ant ant, bool inNest)
+    {
+        Corn corn = cornObj.GetComponent<Corn>();
+        if (corn == null)
+        {
+            Debug.Log("WRONG_______-----------------------------------------------------------------------");
+            return;
+        }
+
+        cornObj.AddComponent<Rigidbody>();
+        cornObj.GetComponent<BoxCollider>().enabled = true;
+        if (inNest)
+        {
+            //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
+            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(ant.transform.position), NestPart.NestPartType.FoodChamber);
+            Nest.AddPip(corn.id, nestPartId);
+            Vector3 dir; 
+            if (nestPartId != -1)
+            {
+                Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
+                dir = (chamberCenter - corn.transform.position).normalized;
+            }
+            else 
+                dir = (ant.transform.up * 2 + ant.transform.position - corn.transform.position).normalized;
+                
+            while (!WorldGen.IsAboveSurface(corn.transform.position - dir * 0.3f))
+            {
+                corn.transform.position += dir * 0.3f;
+            }
+        }
+
     }
 }

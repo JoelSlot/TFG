@@ -33,7 +33,9 @@ public class GameData
     public HashSet<AntInfo> antInfoDict { get; set; }
     public HashSet<CornInfo> cornInfoDict { get; set; }
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
-    public Dictionary<int, int> cornInNestDict { get; set; }
+    public Dictionary<int, int> eggHeldAntDict { get; set; } //Key is egg index, value is holder index
+    public HashSet<int> cornLostInNestDict { get; set; }
+    public HashSet<int> eggsLostInNestDict { get; set; }
     public HashSet<CornCobInfo> cornCobInfoDict { get; set; }
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict { get; set; }
     public HashSet<serializableVector3Int> availableDigPointInfoDict { get; set; }
@@ -88,9 +90,15 @@ public class GameData
     public void SaveAnts()
     {
         antInfoDict = new();
+        eggHeldAntDict = new();
         foreach (var (id, ant) in Ant.antDictionary)
         {
             antInfoDict.Add(AntInfo.ToData(ant));
+            int holderAntIndex = ant.holderAntIndex();
+            if (holderAntIndex != -1)
+            {
+                eggHeldAntDict.Add(id, holderAntIndex);
+            }
         }
         Debug.Log("Num ants: " + antInfoDict.Count);
     }
@@ -159,7 +167,8 @@ public class GameData
             nestPartInfoDict.Add(NestPartInfo.ToData(nestPart));
         }
         Debug.Log("Num nestParts: " + nestPartInfoDict.Count);
-        cornInNestDict = Nest.CollectedCornPips;
+        cornLostInNestDict = Nest.lostPips;
+        eggsLostInNestDict = Nest.lostEggs;
     }
 
     public void SavePhermones()
@@ -288,6 +297,7 @@ public class GameData
     public class AntInfo
     {
         public int id { get; set; }
+        public int antId { get; set; }
         public int age { get; set; }
         public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
         public bool isControlled { get; set; }
@@ -306,6 +316,7 @@ public class GameData
         {
             AntInfo info = new();
             info.id = ant.id;
+            info.antId = ant.antId;
             info.age = ant.age;
             info.objective = TaskInfo.ToData(ant.objective);
             info.isControlled = ant.isControlled;
@@ -370,7 +381,7 @@ public class GameData
         {
             TaskInfo info = new();
             info.digPointId = task.digPointId;
-            info.foodId = task.foodId;
+            info.foodId = task.itemId;
             info.pos = new(task.pos);
             info.typeIndex = Task.TypeToIndex(task.type);
 
@@ -393,6 +404,8 @@ public class GameData
         public float radius { get; set; }
         public int mode { get; set; }
         public HashSet<serializableVector3Int> digPointsLeft { get; set; }
+        public HashSet<int> cornPips { get; set; }
+        public HashSet<int> antEggs { get; set; }
 
         private NestPartInfo()
         {
@@ -407,12 +420,15 @@ public class GameData
                 startPos = new(nestPart.getStartPos()),
                 endPos = new(nestPart.getEndPos()),
                 radius = nestPart.getRadius(),
+                antEggs = nestPart.AntEggs,
+                cornPips = nestPart.CollectedCornPips,
 
                 digPointsLeft = new()
             };
 
             foreach (var pos in nestPart.digPointsLeft)
                 info.digPointsLeft.Add(new serializableVector3Int(pos));
+
 
             return info;
         }
@@ -510,7 +526,12 @@ public class GameData
 
         foreach (AntInfo info in antInfoDict)
         {
-            WorldGen.InstantiateAnt(info);
+            Ant ant = WorldGen.InstantiateAnt(info);
+            if (eggHeldAntDict.ContainsKey(ant.id))
+            {
+                Ant holderAnt = Ant.antDictionary[eggHeldAntDict[ant.id]];
+                holderAnt.SetToHold(ant.gameObject);
+            }
         }
 
         foreach (CornInfo info in cornInfoDict)
@@ -555,7 +576,8 @@ public class GameData
 
         WorldGen.updateNestVisibility = true;
 
-        Nest.CollectedCornPips = cornInNestDict;
+        Nest.lostPips = cornLostInNestDict;
+        Nest.lostEggs = eggsLostInNestDict;
 
         CubePaths.cubePheromones = pheromones;
 

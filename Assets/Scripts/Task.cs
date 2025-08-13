@@ -10,6 +10,7 @@ public enum TaskType
     Explore,
     Dig,
     GetCorn,
+    GetEgg,
     CollectFromCob,
     GoOutside,
     GoInside,
@@ -23,7 +24,7 @@ public enum TaskType
 public class Task
 {
     public Vector3Int digPointId { get; set; }
-    public int foodId { get; set; }
+    public int itemId { get; set; }
     public Vector3 pos { get; set; }
     public TaskType type;
 
@@ -37,8 +38,9 @@ public class Task
     {
         type = newType;
         if (type == TaskType.Dig) digPointId = Vector3Int.RoundToInt(newGameObject.transform.position);
-        else if (type == TaskType.GetCorn) foodId = newGameObject.GetComponent<Corn>().id;
-        else if (type == TaskType.CollectFromCob) foodId = newGameObject.GetComponent<CornCob>().id;
+        else if (type == TaskType.GetCorn) itemId = newGameObject.GetComponent<Corn>().id;
+        else if (type == TaskType.GetEgg) itemId = newGameObject.GetComponent<Ant>().id;
+        else if (type == TaskType.CollectFromCob) itemId = newGameObject.GetComponent<CornCob>().id;
         else Debug.Log("WRONG TASKTYPE");
         pos = newGameObject.transform.position;
         path = newPath;
@@ -73,8 +75,23 @@ public class Task
 
         Task newTask = new();
         newTask.type = TaskType.GetCorn;
-        newTask.foodId = cornId;
+        newTask.itemId = cornId;
         newTask.pos = Corn.cornDictionary[cornId].transform.position;
+        newTask.path = newPath;
+
+        return newTask;
+    }
+
+    public static Task GetEggTask(int eggAntId, int antId, List<CubePaths.CubeSurface> newPath)
+    {
+        if (!Ant.antDictionary.ContainsKey(eggAntId)) return Task.NoTask();
+
+        Ant.antDictionary[eggAntId].antId = antId;
+
+        Task newTask = new();
+        newTask.type = TaskType.GetCorn;
+        newTask.itemId = eggAntId;
+        newTask.pos = Ant.antDictionary[eggAntId].transform.position;
         newTask.path = newPath;
 
         return newTask;
@@ -215,21 +232,27 @@ public class Task
     }
 
     public bool isTaskType(TaskType checkType) { return checkType == type; }
-    public GameObject GetFood()
+    public GameObject GetItem()
     {
         if (isTaskType(TaskType.GetCorn))
         {
-            if (Corn.cornDictionary.TryGetValue(foodId, out Corn corn))
+            if (Corn.cornDictionary.TryGetValue(itemId, out Corn corn))
                 return corn.gameObject;
         }
         else if (isTaskType(TaskType.CollectFromCob))
         {
-            if (CornCob.cornCobDictionary.TryGetValue(foodId, out CornCob cob))
+            if (CornCob.cornCobDictionary.TryGetValue(itemId, out CornCob cob))
                 return cob.gameObject;
+        }
+        else if (isTaskType(TaskType.GetEgg))
+        {
+            if (Ant.antDictionary.TryGetValue(itemId, out Ant ant))
+                if (ant.age < 100)
+                    return ant.gameObject;
         }
         return null;
     }
-
+    
     public DigPoint GetDigPoint()
     {
         if (isTaskType(TaskType.Dig))
@@ -247,7 +270,7 @@ public class Task
             if (Ant.antDictionary.TryGetValue(cornScript.antId, out Ant cornAnt))
             {
                 if (cornAnt.objective.isTaskType(TaskType.GetCorn))
-                    if (cornAnt.objective.foodId == cornScript.id)
+                    if (cornAnt.objective.itemId == cornScript.id)
                         return true;
             }
         }
@@ -259,6 +282,28 @@ public class Task
 
         return IsCornBeingPickedUp(cornScript);
     }
+
+    public static bool IsEggBeingPickedUp(Ant antScript)
+    {
+        //Mirar si ya lo va a recoger otra hormiga
+        if (antScript.antId != -1)
+        {
+            if (Ant.antDictionary.TryGetValue(antScript.antId, out Ant otherAnt))
+            {
+                if (otherAnt.objective.isTaskType(TaskType.GetEgg))
+                    if (otherAnt.objective.itemId == antScript.id)
+                        return true;
+            }
+        }
+        return false;
+    }
+    public static bool IsEggBeingPickedUp(int eggId)
+    {
+        if (!Ant.antDictionary.TryGetValue(eggId, out Ant antScript)) return true;
+
+        return IsEggBeingPickedUp(antScript);
+    }
+
 
     public static bool IsDigPointBeingDug(Vector3Int digPointPos)
     {
@@ -280,7 +325,7 @@ public class Task
     }
 
 
-    public bool isValid(Ant ant)
+    public bool isValid(ref Task objective)
     {
         switch (type)
         {
@@ -288,16 +333,16 @@ public class Task
                 if (!DigPoint.digPointDict.ContainsKey(digPointId))
                 {
                     //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
                 break;
             case TaskType.GetCorn:
-                GameObject foodObj = GetFood();
+                GameObject foodObj = GetItem();
                 //if the food item no longer exists
                 if (foodObj == null)
                 {
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
                 //To check if held by ant, just see if held, it is not by corncob.
@@ -306,80 +351,59 @@ public class Task
                     if (foodObj.transform.parent.GetComponent<CornCob>() == null)
                         heldByAnt = true;
                 // if it has moved somehow or has been picked up
-                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || heldByAnt)
+                if (Vector3.Distance(GetItem().transform.position, pos) > 0.5f || heldByAnt)
                 {
                     //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
                 break;
             case TaskType.CollectFromCob:
                 //if the cornCob no longer exists:
-                if (GetFood() == null)
+                if (GetItem() == null)
                 {
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
                 // if it has moved somehow or has no more corn.
-                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || !GetFood().GetComponent<CornCob>().hasCorn())
+                if (Vector3.Distance(GetItem().transform.position, pos) > 0.5f || !GetItem().GetComponent<CornCob>().hasCorn())
                 {
                     //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
                 break;
-        }
-        return true;
-    }
+            case TaskType.GetEgg:
+                GameObject antObj = GetItem(); //returns null if the ant age isn't lower than 100
+                if (antObj == null)
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
 
+                Ant script = antObj.GetComponent<Ant>();//Check if actually an ant
 
-    public bool isValid(AntQueen ant)
-    {
-        switch (type)
-        {
-            case TaskType.Dig:
-                if (!DigPoint.digPointDict.ContainsKey(digPointId))
+                if (script == null)
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
+                
+                if (script.IsBeingHeld())  //Check if being held
+                if (script == null)
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
+                
+                
+                if (Vector3.Distance(GetItem().transform.position, pos) > 0.5f)// if it has moved somehow
                 {
                     //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
+                    objective = Task.NoTask();
                     return false;
                 }
-                break;
-            case TaskType.GetCorn:
-                GameObject foodObj = GetFood();
-                //if the food item no longer exists
-                if (foodObj == null)
-                {
-                    ant.objective = Task.NoTask();
-                    return false;
-                }
-                //To check if held by ant, just see if held, it is not by corncob.
-                bool heldByAnt = false;
-                if (foodObj.transform.parent != null)
-                    if (foodObj.transform.parent.GetComponent<CornCob>() == null)
-                        heldByAnt = true;
-                // if it has moved somehow or has been picked up
-                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || heldByAnt)
-                {
-                    //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
-                    return false;
-                }
-                break;
-            case TaskType.CollectFromCob:
-                //if the cornCob no longer exists:
-                if (GetFood() == null)
-                {
-                    ant.objective = Task.NoTask();
-                    return false;
-                }
-                // if it has moved somehow or has no more corn.
-                if (Vector3.Distance(GetFood().transform.position, pos) > 0.5f || !GetFood().GetComponent<CornCob>().hasCorn())
-                {
-                    //If the objective is not valid, the ant loses it.
-                    ant.objective = Task.NoTask();
-                    return false;
-                }
+
                 break;
         }
         return true;
@@ -428,6 +452,7 @@ public class Task
             case TaskType.Explore: return "Go to pos";
             case TaskType.Dig: return "Dig point";
             case TaskType.GetCorn: return "Get food";
+            case TaskType.GetEgg: return "Get egg";
             case TaskType.GoOutside: return "Go outside";
             case TaskType.GoInside: return "Go inside";
             case TaskType.GoToChamber: return "Go to chamber";
@@ -447,14 +472,15 @@ public class Task
             case TaskType.Explore: return 0;
             case TaskType.Dig: return 1;
             case TaskType.GetCorn: return 2;
-            case TaskType.GoOutside: return 3;
-            case TaskType.GoInside: return 4;
-            case TaskType.GoToChamber: return 5;
-            case TaskType.GoToTunnel: return 6;
-            case TaskType.Lost: return 7;
-            case TaskType.Wait: return 8;
-            case TaskType.None: return 9;
-            case TaskType.CollectFromCob: return 10;
+            case TaskType.GetEgg: return 3;
+            case TaskType.GoOutside: return 4;
+            case TaskType.GoInside: return 5;
+            case TaskType.GoToChamber: return 6;
+            case TaskType.GoToTunnel: return 7;
+            case TaskType.Lost: return 8;
+            case TaskType.Wait: return 9;
+            case TaskType.None: return 10;
+            case TaskType.CollectFromCob: return 11;
         }
         return -1;
     }
@@ -466,14 +492,15 @@ public class Task
             case 0: return TaskType.Explore;
             case 1: return TaskType.Dig;
             case 2: return TaskType.GetCorn;
-            case 3: return TaskType.GoOutside;
-            case 4: return TaskType.GoInside;
-            case 5: return TaskType.GoToChamber;
-            case 6: return TaskType.GoToTunnel;
-            case 7: return TaskType.Lost;
-            case 8: return TaskType.Wait;
-            case 9: return TaskType.None;
-            case 10: return TaskType.CollectFromCob;
+            case 3: return TaskType.GetEgg;
+            case 4: return TaskType.GoOutside;
+            case 5: return TaskType.GoInside;
+            case 6: return TaskType.GoToChamber;
+            case 7: return TaskType.GoToTunnel;
+            case 8: return TaskType.Lost;
+            case 9: return TaskType.Wait;
+            case 10: return TaskType.None;
+            case 11: return TaskType.CollectFromCob;
         }
         return TaskType.None;
     }
@@ -481,7 +508,7 @@ public class Task
     public Task(GameData.TaskInfo info)
     {
         digPointId = info.digPointId;
-        foodId = info.foodId;
+        itemId = info.foodId;
         pos = info.pos.ToVector3();
         type = IndexToType(info.typeIndex);
 

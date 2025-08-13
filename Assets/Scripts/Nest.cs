@@ -13,9 +13,8 @@ public class Nest : MonoBehaviour
 {
     public static List<NestPart> NestParts = new();
     public static HashSet<int> KnownCornCobs = new();
-    public static Dictionary<int, int> CollectedCornPips = new(); //key is corn id, value is room index
     private static int lastIndex = 0;
-    public int foodCount = 0;
+    public static int foodCount = 0;
 
     public static bool NestVisible = false;
     public static bool[] NestPartDisabled = { false, false, false, false };
@@ -23,6 +22,10 @@ public class Nest : MonoBehaviour
     {
         Debug.Log("General visible " + NestVisible + "\nTunnel: " + NestPartDisabled[0] + "\nFood: " + NestPartDisabled[1] + "\nEgg: " + NestPartDisabled[2] + "\nQueen: " + NestPartDisabled[3]);
     }
+
+    //All items placed in nest with wrong nestid go here.
+    public static HashSet<int> lostPips = new();
+    public static HashSet<int> lostEggs = new();
 
 
 
@@ -35,8 +38,109 @@ public class Nest : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        foodCount = CollectedCornPips.Count;
+        
     }
+
+
+    public static void UpdateFoodCount()
+    {
+        foodCount = 0;
+        foreach (var part in NestParts)
+        {
+            foodCount += part.CollectedCornPips.Count;
+        }
+    }
+    
+    public static List<int> GetDisplacedPips()
+    {
+        List<int> pips = lostPips.ToList();
+        foreach (var part in NestParts)
+        {
+            if (part.mode != NestPart.NestPartType.FoodChamber)
+                foreach (int id in part.CollectedCornPips)
+                    pips.Add(id);
+        }
+
+        return pips;
+    }
+
+    public static List<int> GetDisplacedEggs()
+    {
+        List<int> eggs = lostEggs.ToList();
+        foreach (var part in NestParts)
+        {
+            if (part.mode != NestPart.NestPartType.EggChamber)
+                foreach (int id in part.AntEggs)
+                    eggs.Add(id);
+        }
+
+        return eggs;
+    }
+
+    public static void RemovePip(int pipId)
+    {
+        foreach (var part in NestParts)
+            if (part.CollectedCornPips.Remove(pipId))
+                foodCount--;
+
+        if (lostPips.Remove(pipId))
+            foodCount--;
+    }
+    public static void AddPip(int pipId, int nestPartIndex)
+    {
+        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0)
+            if (lostPips.Add(pipId))
+                foodCount++;
+        else
+            if (NestParts[nestPartIndex].CollectedCornPips.Add(pipId))
+                foodCount++;
+    }
+
+    
+    public static void RemoveEgg(int antId)
+    {
+        foreach (var part in NestParts)
+            part.AntEggs.Remove(antId);
+
+        lostEggs.Remove(antId);
+    }
+    public static void AddEgg(int eggId, int nestPartIndex)
+    {
+        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0)
+            lostEggs.Add(eggId);
+        else
+            NestParts[nestPartIndex].AntEggs.Add(eggId);
+    }
+
+    public static bool IsPipInNest(int pipId, out int nestPartIndex) //index is -1 if not in 
+    {
+        nestPartIndex = -1;
+        if (lostPips.Contains(pipId))
+            return true;
+
+        nestPartIndex = 0;
+        for (; nestPartIndex < NestParts.Count; nestPartIndex++)
+            if (NestParts[nestPartIndex].CollectedCornPips.Contains(pipId))
+                return true;
+
+        return false;
+    }
+
+    public static bool IsEggInNest(int eggId, out int nestPartIndex) //index is -1 if not in 
+    {
+        nestPartIndex = -1;
+        if (lostEggs.Contains(eggId))
+            return true;
+
+        nestPartIndex = 0;
+        for (; nestPartIndex < NestParts.Count; nestPartIndex++)
+            if (NestParts[nestPartIndex].AntEggs.Contains(eggId))
+                return true;
+
+        return false;
+    }
+
+
 
     public static bool HasNestPart(NestPart.NestPartType type)
     {
@@ -176,28 +280,44 @@ public class Nest : MonoBehaviour
         else return false;
     }
 
+    public static bool GetNestRelocatePipTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
+    {
+        List<int> displacedPips = GetDisplacedPips();
+        foreach (int id in displacedPips)
+        {
+            //if already being relocated go to next
+            if (Task.IsCornBeingPickedUp(id)) continue;
+
+            if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[id].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+            {
+                objective = Task.GetCornTask(id, antId, newPath);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static bool GetNestRelocateEggTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
+    {
+        List<int> displacedEggs = GetDisplacedEggs();
+        foreach (int id in displacedEggs)
+        {
+            //if already being relocated go to next
+            if (Task.IsEggBeingPickedUp(id)) continue;
+
+            if (CubePaths.GetKnownPathToPoint(antSurface, Ant.antDictionary[id].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+            {
+                objective = Task.GetEggTask(id, antId, newPath);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static bool GetNestRelocateTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        foreach ((int cornId, int partId) in CollectedCornPips)
-        {
-            bool relocatable = false;
-            if (partId == -1) relocatable = true;
-            else if (NestParts[partId].mode != NestPart.NestPartType.FoodChamber) relocatable = true;
-
-            if (relocatable)
-            {
-                //if already being relocated go to next
-                if (Task.IsCornBeingPickedUp(cornId)) continue;
-
-                if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
-                {
-                    objective = Task.GetCornTask(cornId, antId, newPath);
-                    return true;
-                }
-
-            }
-
-        }
+        if (GetNestRelocateEggTask(antSurface, antId, ref objective)) return true;
+        if (GetNestRelocatePipTask(antSurface, antId, ref objective)) return true;
         return false;
     }
 
@@ -322,12 +442,12 @@ public class Nest : MonoBehaviour
     private static System.Random rng = new System.Random();
 
 
-    public static bool GetPointInChamber(NestPart.NestPartType type, out Vector3 point)
+    public static bool GetPointInAnyChamber(out Vector3 point)
     {
         List<int> available = new();
         for (int i = 0; i < NestParts.Count; i++)
         {
-            if (NestParts[i].mode == type)
+            if (NestParts[i].mode != NestPart.NestPartType.Tunnel)
                 if (NestParts[i].HasBeenDug() && NestParts[i].gotPoints)
                     available.Add(i);
         }
@@ -340,11 +460,31 @@ public class Nest : MonoBehaviour
 
     }
 
+    public static bool GetPointInChamber(NestPart.NestPartType type, out Vector3 point)
+    {
+        List<int> available = new();
+        for (int i = 0; i < NestParts.Count; i++)
+        {
+            if (NestParts[i].mode == type)
+                if (NestParts[i].HasBeenDug() && NestParts[i].gotPoints)
+                    available.Add(i);
+        }
+        point = Vector3.zero;
+        if (available.Count == 0) return false;
+
+        int randIndex = rng.Next(available.Count);//get random chamber
+
+        return GetPointInChamber(available[randIndex], out point);
+
+    }
+
     public static bool GetPointInChamber(int index, out Vector3 point)
     {
         point = Vector3.zero;
-        if (index >= NestParts.Count) return false;
+        if (index >= NestParts.Count || index < 0) return false;
         if (NestParts[index].mode == NestPart.NestPartType.Tunnel) return false;
+        if (!NestParts[index].HasBeenPlaced()) return false;
+        if (!NestParts[index].HasBeenDug()) return false;
 
         int terrainLayer = (1 << 6); //terrain layer
         for (int i = 0; i < 1000; i++) //Just in case it gets stuck, i guess.

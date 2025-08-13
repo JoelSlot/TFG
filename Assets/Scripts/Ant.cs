@@ -33,15 +33,17 @@ public class Ant : MonoBehaviour
     CubePaths.CubeSurface antSurface; // Updated at start of every frame, no need to save.
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
     IBehaviourTreeNode tree;
-    
+
 
     //Datos que hay que guardar y cargar
     public int id;
+    public int antId = -1; //Id of the ant that is picking it up if it is still an egg
     public int age = 0;
     public Task objective = Task.NoTask();
     public bool isControlled = false;
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
     public HashSet<int> discoveredCobs = new(); //Cobs discovered outside of nest.
+
 
 
     //Static values
@@ -96,12 +98,13 @@ public class Ant : MonoBehaviour
     {
         Debug.Log("Destroyed me");
         antDictionary.Remove(id);
+        Nest.RemoveEgg(id);
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        
+
         Rigidbody = antObj.GetComponent<Rigidbody>(); //El rigidbody se registra
         Rigidbody.centerOfMass = new Vector3(0, 0.05f, 0); //aplicamos centro de masa
         Animator = antObj.GetComponent<Animator>(); //El Animator se registra
@@ -125,8 +128,8 @@ public class Ant : MonoBehaviour
         SetWalking(false); //El estado por defecto no camina
 
         //Modificador del tamaño de la hormiga según su edad
-        transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter/100f) / 200f));
-        
+        transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter / 100f) / 200f));
+
 
         lastCube = Vector3Int.FloorToInt(transform.position);
         lastTaskType = TaskType.None;
@@ -172,7 +175,7 @@ public class Ant : MonoBehaviour
 
                     .Sequence("Pick up corn routine")
                         .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
-                        .Condition("Is my task valid", t => objective.isValid(this))
+                        .Condition("Is my task valid", t => objective.isValid(ref objective))
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowTaskPath())
                             .Do("Align with food", t => Align(objective.getPos()))
@@ -182,7 +185,7 @@ public class Ant : MonoBehaviour
 
                     .Sequence("Dig routine")
                         .Condition("My task is digging?", t => objective.isTaskType(TaskType.Dig))
-                        .Condition("Is my task valid", t => objective.isValid(this))
+                        .Condition("Is my task valid", t => objective.isValid(ref objective))
                         .Sequence("Dig sequence")
                             .Do("Go to digPoint", t => FollowTaskPath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
@@ -231,12 +234,12 @@ public class Ant : MonoBehaviour
                     .End()
 
                 .End()
-                
+
             .End()
             .Build();
     }
 
-    
+
     Vector3Int nextPosDraw = Vector3Int.zero;
     int ageUpdateCounter = 0;
     // Update is called once per frame
@@ -251,12 +254,15 @@ public class Ant : MonoBehaviour
 
         Debug.DrawLine(transform.position, goal, Color.yellow);
 
-        //Sistema de edad
-        ageUpdateCounter += 1;
-        if (ageUpdateCounter > 100)
+        if (!IsBeingHeld()) //Do not age when being held
         {
-            age++;
-            ageUpdateCounter = 0;
+            //Sistema de edad
+            ageUpdateCounter += 1;
+            if (ageUpdateCounter > 100)
+            {
+                age++;
+                ageUpdateCounter = 0;
+            }
         }
 
 
@@ -266,7 +272,7 @@ public class Ant : MonoBehaviour
         if (Animator.speed == 0) //Cuando la hormiga no ha nacido aún:
         {
             Rigidbody.useGravity = true;
-            transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter/100f) / 200f));
+            transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter / 100f) / 200f));
             if (age > 100)
             {
                 transform.localScale = Vector3.one;
@@ -279,6 +285,8 @@ public class Ant : MonoBehaviour
                 //Instead of recording its pos and updating it so it doesn't move with the ant, 
                 //which has proven to be not ... , just remove it from heirarchy.
                 eggAnim.transform.SetParent(null);
+
+                Nest.RemoveEgg(id); //Remove from egg dictionnary
             }
 
         }
@@ -330,13 +338,17 @@ public class Ant : MonoBehaviour
 
             }
 
-            
+
             ApplyMovement(normalMedian, rayCastHits, rayCastDist);
 
             //CubePaths.DrawCube(nextPosDraw, Color.blue);
             //CubePaths.DrawCube(antSurface.pos, Color.black);
         }
-        else Rigidbody.useGravity = true;
+        else
+        {
+            Rigidbody.useGravity = true;
+            Ant.CatchOutOfBounds(this.gameObject);
+        }
 
         if (!objective.isTaskType(TaskType.None)) Debug.DrawLine(transform.position, objective.getPos(), Color.black);
 
@@ -513,7 +525,7 @@ public class Ant : MonoBehaviour
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
 
                     //añadimos el cob a descubiertos por hormiga.
-                    discoveredCobs.Add(newTask.foodId);
+                    discoveredCobs.Add(newTask.itemId);
                 }
                 else
                 {
@@ -528,14 +540,6 @@ public class Ant : MonoBehaviour
             return BehaviourTreeStatus.Success;
         }
         return BehaviourTreeStatus.Failure;
-    }
-
-    private bool CheckTaskValidity()
-    {
-        if (!objective.isTaskType(TaskType.None))
-            if (objective.isValid(this)) return true;
-        
-        return false;
     }
 
     //If there is a requested task, it is selected. Otherwise return failure.
@@ -567,7 +571,7 @@ public class Ant : MonoBehaviour
         {
             Animator.SetBool("Pick up", true);
         }
-        if (objective.isTaskType(TaskType.Dig)) 
+        if (objective.isTaskType(TaskType.Dig))
         {
             Animator.SetBool("Dig", true);
         }
@@ -597,21 +601,29 @@ public class Ant : MonoBehaviour
             return;
         }
 
-        if (objective.isValid(this) && objective.isTaskType(TaskType.GetCorn))
+        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetCorn))
         {
             Debug.Log("Valid");
-            GameObject food = objective.GetFood();
+            GameObject food = objective.GetItem();
             SetToHold(food);
-            Nest.CollectedCornPips.Remove(objective.foodId); //remove pip from nest if in it
+            Nest.RemovePip(objective.itemId); //remove pip from nest if in it
             UpdateHolding();
         }
         //gets the cornCob, then a random corn pip from the cob that becomes held.
-        else if (objective.isValid(this) && objective.isTaskType(TaskType.CollectFromCob))
+        else if (objective.isValid(ref objective) && objective.isTaskType(TaskType.CollectFromCob))
         {
             Debug.Log("Cob valid");
-            GameObject cob = objective.GetFood();
+            GameObject cob = objective.GetItem();
             GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
             SetToHold(food); //CornPip is removed from cornCob here
+            UpdateHolding();
+        }
+        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetEgg))
+        {
+            Debug.Log("Valid");
+            GameObject egg = objective.GetItem();
+            SetToHold(egg);
+            Nest.RemoveEgg(objective.itemId); //remove pip from nest if in it
             UpdateHolding();
         }
         else
@@ -627,46 +639,55 @@ public class Ant : MonoBehaviour
     {
 
         Vector3 mouthPos = carriedObject.transform.position;
-        
+
+        bool inNest = Nest.PointInNest(transform.position);
+
         //carriedObject.
         foreach (Transform child in carriedObject.transform)
         {
-            child.gameObject.AddComponent<Rigidbody>();
-            child.GetComponent<BoxCollider>().enabled = true;
-            //Si es de tipo corn se añadirá al nido si se encuentra dentro
-            Corn cornScript = child.GetComponent<Corn>();
-            if (cornScript != null)
-            {
-                if (Nest.PointInNest(transform.position))
-                {
-                    //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
-                    int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
-                    Nest.CollectedCornPips.Add(cornScript.id, nestPartId);
 
-                    if (nestPartId != -1)
-                    {
-                        Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
-                        Vector3 dir = (chamberCenter - mouthPos).normalized;
-                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
-                        {
-                            child.transform.position += dir * 0.3f;
-                        }
-                    }
-                    else
-                    {
-                        Vector3 dir = (transform.up * 2 + transform.position - mouthPos).normalized;
-                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
-                        {
-                            child.transform.position += dir * 0.3f;
-                        }
-                    }
-                }
+            Corn corn = child.gameObject.GetComponent<Corn>();
+            Ant antEgg = child.gameObject.GetComponent<Ant>();
+            if (corn != null) Corn.PlaceCorn(child.gameObject, this, inNest);
+            else if (antEgg != null) Ant.PlaceAntEgg(child.gameObject, this, inNest);
 
-            }
         }
         carriedObject.transform.DetachChildren();
         Animator.SetBool("Put down", false);
         UpdateHolding();
+    }
+
+    private static void PlaceAntEgg(GameObject eggObj, Ant ant, bool inNest)
+    {
+        Ant egg = eggObj.GetComponent<Ant>();
+        if (egg == null)
+        {
+            Debug.Log("WRONG_______-----------------------------------------------------------------------");
+            return;
+        }
+
+        eggObj.AddComponent<Rigidbody>();
+        foreach (var collider in eggObj.GetComponents<CapsuleCollider>())
+            collider.enabled = true;
+        if (inNest)
+        {
+            //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
+            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(ant.transform.position), NestPart.NestPartType.EggChamber);
+            Nest.AddEgg(egg.id, nestPartId);
+            Vector3 dir;
+            if (nestPartId != -1)
+            {
+                Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
+                dir = (chamberCenter - egg.transform.position).normalized;
+            }
+            else
+                dir = (ant.transform.up * 2 + ant.transform.position - egg.transform.position).normalized;
+
+            while (!WorldGen.IsAboveSurface(egg.transform.position - dir * 0.3f))
+            {
+                egg.transform.position += dir * 0.3f;
+            }
+        }
     }
 
     public void UpdateHolding()
@@ -701,9 +722,12 @@ public class Ant : MonoBehaviour
         }
 
         obj.transform.SetParent(carriedObject.transform);
-        Destroy(obj.GetComponent<Rigidbody>());
+        Destroy(obj.GetComponent<Rigidbody>()); //check if ant rigidbody has special settings
         obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        obj.GetComponent<BoxCollider>().enabled = false;
+        BoxCollider box = obj.GetComponent<BoxCollider>();
+        if (box != null) box.enabled = false; //this won't work for
+        foreach (var capsule in obj.GetComponents<CapsuleCollider>()) //ant capsulecolliders
+            capsule.enabled = false;
     }
 
     public void DigEvent()
@@ -713,10 +737,10 @@ public class Ant : MonoBehaviour
         if (objective.isTaskType(TaskType.None)) return;
         //if (!objective.isTaskType(TaskType.DigPoint)) return;
 
-        if (objective.isValid(this))
+        if (objective.isValid(ref objective))
         {
             DigPoint thePoint = objective.GetDigPoint();
-            if(thePoint != null)
+            if (thePoint != null)
             {
                 thePoint.Dig();
                 DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(thePoint.transform.position));
@@ -726,7 +750,7 @@ public class Ant : MonoBehaviour
         }
         else objective = Task.NoTask();
     }
-  
+
     void RandomMovement()
     {
         speed = speed_per_second * Time.fixedDeltaTime;
@@ -750,7 +774,7 @@ public class Ant : MonoBehaviour
         float horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
 
         //Debug.DrawLine(transform.position, goal, Color.red, 0.35f);
-    
+
         //Decidir si girar
         if (horAngle > 5)
         {
@@ -764,7 +788,8 @@ public class Ant : MonoBehaviour
         else SetWalking(false);
     }
 
-    public void SetWalking(bool walk){
+    public void SetWalking(bool walk)
+    {
         if (walk)
         {
             speed = speed_per_second * Time.fixedDeltaTime;
@@ -777,15 +802,18 @@ public class Ant : MonoBehaviour
         }
     }
 
-    public void TurnRight(){
+    public void TurnRight()
+    {
         Animator.SetInteger("turning", 1);
     }
 
-    public void TurnLeft(){
+    public void TurnLeft()
+    {
         Animator.SetInteger("turning", -1);
     }
 
-    public void DontTurn(){
+    public void DontTurn()
+    {
         Animator.SetInteger("turning", 0);
     }
 
@@ -795,17 +823,18 @@ public class Ant : MonoBehaviour
         numHits = 0;
         normalMedian = Vector3.zero;
         //El orden de los raycasts es importante. Son atras derecha -> atras izquierda -> delante izquierda -> delante derecha -> centro
-        float[] xPos = {sep, -sep, -sep, sep, 0};
-        float[] zPos = {-sep, -sep, sep, sep, 0};
+        float[] xPos = { sep, -sep, -sep, sep, 0 };
+        float[] zPos = { -sep, -sep, sep, sep, 0 };
         float yPos = 0.5f;
-        rayCastHits = new bool[]{ false, false, false, false, false};
-        rayCastDist = new float[]{0f,0f,0f,0f,0f};
-        Vector3 hitNormal = new Vector3(0, 0, 0); 
-        Vector3Int hitCubePos = new Vector3Int(0,0,0);
+        rayCastHits = new bool[] { false, false, false, false, false };
+        rayCastDist = new float[] { 0f, 0f, 0f, 0f, 0f };
+        Vector3 hitNormal = new Vector3(0, 0, 0);
+        Vector3Int hitCubePos = new Vector3Int(0, 0, 0);
         int raycastLayer = (1 << 6); //layer del terreno
-        for (int i = 0; i < xPos.Length; i++) {
+        for (int i = 0; i < xPos.Length; i++)
+        {
             //HE ESTADO USANDO MAL ESTA FUNCIÓN. RAYCASTLAYER ESTABA FUNCIONANDO COMO MAXDISTANCE
-            if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0),  out RaycastHit hit, 0.8f, raycastLayer))
+            if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 0.8f, raycastLayer))
             {
                 hitColor = Color.red;
                 numHits++;
@@ -847,10 +876,10 @@ public class Ant : MonoBehaviour
         Rigidbody.angularVelocity = Vector3.zero;
 
         //APPLY LOCAL GRAVITY
-        Rigidbody.AddForce(-surfaceNormalMedian*40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
+        Rigidbody.AddForce(-surfaceNormalMedian * 40); //USES ADDFORCE INSTEAD OF GRAVITY TO AVOID SLOW EFFECT
 
         //ROTATE ANT
-        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0,Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime,0));
+        Quaternion deltaRotation = Quaternion.Euler(new Vector3(0, Animator.GetInteger("turning") * degrees_per_second * Time.fixedDeltaTime, 0));
         Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation); //Rotate ant
 
         //MOVE ANT FORWARD
@@ -898,13 +927,14 @@ public class Ant : MonoBehaviour
         }
     }
 
-    void AntInputs() {
+    void AntInputs()
+    {
         //if (SelectedAnt.state != Ant.AIState.Controlled) return;
-        if (Input.GetKey(KeyCode.UpArrow))          SetWalking(true);
-        else                                        SetWalking(false);
-        if (Input.GetKey(KeyCode.LeftArrow))        TurnLeft();
-        else if (Input.GetKey(KeyCode.RightArrow))  TurnRight();
-        else                                        DontTurn();
+        if (Input.GetKey(KeyCode.UpArrow)) SetWalking(true);
+        else SetWalking(false);
+        if (Input.GetKey(KeyCode.LeftArrow)) TurnLeft();
+        else if (Input.GetKey(KeyCode.RightArrow)) TurnRight();
+        else DontTurn();
         //if(Input.GetKey(KeyCode.Comma))             LetGo();
 
         //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
@@ -924,5 +954,59 @@ public class Ant : MonoBehaviour
             else Debug.Log("NO ANIMATOR");
     }
     */
+
+    public bool IsBeingHeld()
+    {
+        if (transform.parent != null) return true;
+        else return false;
+    }
+
+    public int holderAntIndex()
+    {
+        Ant holder = GetHolder();
+        if (holder != null)
+        {
+            return holder.id;
+        }
+        return -1;
+    }
+
+    public Ant GetHolder()
+    {
+        Transform parent = transform.parent;
+        if (parent == null) return null;
+        while (parent.parent != null)
+        {
+            parent = parent.parent;
+        }
+        if (parent != null) return parent.GetComponent<Ant>();
+        return null;
+    }
+
+    public static void CatchOutOfBounds(GameObject ant)
+    {
+        if (!WorldGen.IsAboveSurface(ant.transform.position) || ant.transform.position.y < 0) //Si ha atravesado el suelo o está fuera del mapa
+            {
+                float minDist = float.MaxValue;
+                Vector3 telePos = Vector3.back; //player cant place things at this coord.
+                foreach (var part in Nest.NestParts)
+                {
+                    if (part.HasBeenDug() && part.HasBeenPlaced())
+                    {
+                        float distance = Vector3.Distance(part.getStartPos(), ant.transform.position);
+                        if (distance < minDist)
+                        {
+                            minDist = distance;
+                            telePos = part.getStartPos();
+                        }
+                    }
+                }
+                if (!telePos.Equals(Vector3.back)) ant.transform.position = telePos;
+                else
+                {
+                    ant.transform.position = new(WorldGen.x_dim / 2, WorldGen.y_dim, WorldGen.z_dim / 2); //Set it to above enclosure
+                }
+            }
+    }
 
 }

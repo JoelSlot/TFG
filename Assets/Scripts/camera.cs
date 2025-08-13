@@ -416,6 +416,7 @@ public class FlyCamera : MonoBehaviour
             //if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
             //if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
             if (Input.GetKeyDown(KeyCode.Alpha6)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
+            if (Input.GetKeyDown(KeyCode.Alpha4)) { AntQueen.antQueenSet.First().GiveBirth(); }
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
         if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
