@@ -127,6 +127,25 @@ public class Task
         return LostTask(antSurface, Vector3.forward);
     }
 
+    public static Task GoToAnyChamber(CubePaths.CubeSurface antSurface)
+    {
+        Task GOtask = new();
+        
+        if (Nest.GetPointInAnyChamber(out Vector3 point))
+        {
+            if (CubePaths.GetKnownPathToPoint(antSurface, point, 1, out GOtask.path))
+            {
+                //Debug.Log("Going to specific point boss");
+                return GOtask;
+            }
+        }
+
+        Debug.Log("No chambers");
+
+        return LostTask(antSurface, Vector3.up);
+    }
+
+
     public static Task GoToNestPartTask(CubePaths.CubeSurface antSurface, NestPart.NestPartType type)
     {
         Task GOtask = new();
@@ -146,11 +165,14 @@ public class Task
         if (GOtask.type == TaskType.GoToChamber)
         {
             if (Nest.GetPointInChamber(type, out Vector3 point))
+            {
                 if (CubePaths.GetKnownPathToPoint(antSurface, point, 1, out GOtask.path))
                 {
-                    Debug.Log("Going to specific point boss");
+                    //Debug.Log("Going to specific point boss");
                     return GOtask;
                 }
+            }
+
         }
         else
             if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path))

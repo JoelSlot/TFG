@@ -1,10 +1,8 @@
 using UnityEngine;
-using System.Linq;
 using System.Collections.Generic;
 using Utils;
 using FluentBehaviourTree;
 using Unity.VisualScripting;
-using System;
 
 
 public class Ant : MonoBehaviour
@@ -130,7 +128,6 @@ public class Ant : MonoBehaviour
         //Modificador del tamaño de la hormiga según su edad
         transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter / 100f) / 200f));
 
-
         lastCube = Vector3Int.FloorToInt(transform.position);
         lastTaskType = TaskType.None;
 
@@ -149,11 +146,19 @@ public class Ant : MonoBehaviour
                                 .Condition("Am I out of nest?", t => !Nest.SurfaceInNest(antSurface))
                                 .Do("Set to go to nest", t => { objective = Task.GoInsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
                             .End()
-                            .Sequence("If in nest go to food chamber")
-                                .Condition("Am i not in food chamber?", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
+                            .Sequence("If nest has food chamber")
+                                .Condition("Exit if nest has no food chamber", t => Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber))
+                                .Selector("If in food chamber put down")
+                                    .Condition("Exit if not in food chamber", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
+                                    .Do("Put down", t => PutDown())
+                                .End()
                                 .Do("Set to go to food chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber); Debug.Log("Task is go to food chamber"); return BehaviourTreeStatus.Success; })
                             .End()
-                            .Do("If reached chamber put down", t => { Debug.Log("Putting down"); Animator.SetBool("Put down", true); return BehaviourTreeStatus.Success; })
+                            .Sequence("If nest does not have food chamber")
+                                .Condition("Exit if in tunnel", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel))
+                                .Do("In chamber, put down food", t => PutDown())
+                            .End()
+                            .Do("Go to random chamber", t=> { objective = Task.GoToAnyChamber(antSurface); return BehaviourTreeStatus.Success; })
                         .End()
                     .End()
 
@@ -193,17 +198,6 @@ public class Ant : MonoBehaviour
                         .End()
                     .End()
 
-                    /*
-                    .Sequence("Go outside")
-                        .Condition("Is my task going outside?", t => objective.isTaskType(TaskType.GoOutside))
-                        .Do("Follow objective path", t => FollowObjectivePath())
-                        .Selector("Complete objective if outside or finished path")
-                            .Condition("Im still inside and with complete path?", t => Nest.SurfaceInNest(antSurface) && objective.path.Count != 0)
-                            .Do("Complete objective", t => { objective = Task.NoTask(); return BehaviourTreeStatus.Success; })
-                        .End()
-                    .End()
-                    */
-
                     .Sequence("Just follow path")
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
                         //.Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
@@ -237,6 +231,13 @@ public class Ant : MonoBehaviour
 
             .End()
             .Build();
+    }
+
+    private BehaviourTreeStatus PutDown()
+    {
+        Debug.Log("Putting down");
+        Animator.SetBool("Put down", true);
+        return BehaviourTreeStatus.Success;
     }
 
 
@@ -334,7 +335,7 @@ public class Ant : MonoBehaviour
                     //Shortenede anim but looked bad, so readjusted it
                     //then had to move the event again because adjusting anim length changes event time.
                 }
-                else tree.Tick(new TimeData(Time.deltaTime));
+                else tree.Tick(new TimeData(Time.deltaTime), "");
 
             }
 
@@ -511,6 +512,7 @@ public class Ant : MonoBehaviour
 
                         //Si ya una hormiga lo va a recoger
                         if (Task.IsCornBeingPickedUp(cornScript)) continue;
+                        if (Nest.CornInAcceptableNestPart(cornScript.id)) continue;
 
                         newTask = new Task(sensedItem, TaskType.GetCorn, newPath);
                         cornScript.antId = id;

@@ -32,13 +32,13 @@ public class Nest : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
 
@@ -50,7 +50,7 @@ public class Nest : MonoBehaviour
             foodCount += part.CollectedCornPips.Count;
         }
     }
-    
+
     public static List<int> GetDisplacedPips()
     {
         List<int> pips = lostPips.ToList();
@@ -91,12 +91,12 @@ public class Nest : MonoBehaviour
         if (nestPartIndex >= NestParts.Count || nestPartIndex < 0)
             if (lostPips.Add(pipId))
                 foodCount++;
-        else
+            else
             if (NestParts[nestPartIndex].CollectedCornPips.Add(pipId))
                 foodCount++;
     }
 
-    
+
     public static void RemoveEgg(int antId)
     {
         foreach (var part in NestParts)
@@ -282,6 +282,8 @@ public class Nest : MonoBehaviour
 
     public static bool GetNestRelocatePipTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
+        if (!Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber)) return false;
+
         List<int> displacedPips = GetDisplacedPips();
         foreach (int id in displacedPips)
         {
@@ -296,9 +298,11 @@ public class Nest : MonoBehaviour
         }
         return false;
     }
-    
+
     public static bool GetNestRelocateEggTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
+        if (!Nest.HasDugNestPart(NestPart.NestPartType.EggChamber)) return false;
+
         List<int> displacedEggs = GetDisplacedEggs();
         foreach (int id in displacedEggs)
         {
@@ -359,18 +363,14 @@ public class Nest : MonoBehaviour
         {
             i %= NestParts.Count;
             if (!NestParts[i].HasBeenPlaced()) continue;
-            //Solo miramos las partes del nido con el mismo tipo.
-            if (NestParts[i].mode == type)
+            //Solo miramos las partes del nido con el mismo tipo que hayan sido excavados (si no son túneles)
+            if (NestParts[i].mode == type && (type == NestPart.NestPartType.Tunnel || NestParts[i].HasBeenDug()))
             {
                 float marchingValue = NestParts[i].getMarchingValue(point);
                 if (marchingValue < WorldGen.isolevel) // there was a * 1.05. Why???
                 {
-                    //disregard undug chambers
-                    if (type == NestPart.NestPartType.Tunnel || NestParts[i].HasBeenDug())
-                    {
-                        lastIndex = i;
-                        return true;
-                    }
+                    lastIndex = i;
+                    return true;
                 }
             }
         }
@@ -453,7 +453,7 @@ public class Nest : MonoBehaviour
         }
         point = Vector3.zero;
         if (available.Count == 0) return false;
-        
+
         int randIndex = rng.Next(available.Count);//get random chamber
 
         return GetPointInChamber(available[randIndex], out point);
@@ -525,4 +525,25 @@ public class Nest : MonoBehaviour
         }
     }
 
+    public static bool CornInAcceptableNestPart(int id)
+    {
+        if (!IsPipInNest(id, out int partIndex)) return false; //not in nest? unacceptable
+
+        if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return true; //in nest, but no foodchamber around? acceptable
+
+        if (NestParts[partIndex].mode == NestPart.NestPartType.FoodChamber) return true; //In foodchamber? good
+
+        return false; //theres a foodchamber and it is not in it...
+    }
+    
+    public static bool EggInAcceptableNestPart(int id)
+    {
+        if (!IsEggInNest(id, out int partIndex)) return false; //not in nest? unacceptable
+
+        if (!HasDugNestPart(NestPart.NestPartType.EggChamber)) return true; //in nest, but no eggchamber around? acceptable
+
+        if (NestParts[partIndex].mode == NestPart.NestPartType.EggChamber) return true; //In eggchamber? good
+
+        return false; //theres a eggchamber and it is not in it...
+    }
 }
