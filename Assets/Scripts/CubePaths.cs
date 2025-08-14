@@ -746,7 +746,10 @@ public class CubePaths : MonoBehaviour
         {
             (CubeSurface current, int range) = frontera.Dequeue();
 
-            if (Nest.SurfaceInNestPart(current, type))
+            if (Nest.SurfaceInNest(current) || cubePheromones.ContainsKey(current.pos)) //Si es dentro del nido o feromonas rango es 0
+                range = 0;
+
+            if (Nest.SurfaceInNestPart(current, type) && (type != NestPart.NestPartType.Outside || range > 0))
             {
                 reachedMapPart = current;
                 pathExists = true;
@@ -755,8 +758,6 @@ public class CubePaths : MonoBehaviour
 
             HashSet<CubeSurface> identifiableSurfaces = new();
 
-            if (Nest.SurfaceInNest(current) || cubePheromones.ContainsKey(current.pos)) //Si es dentro del nido o feromonas rango es 0
-                range = 0;
 
             if (range < 2)
             {
