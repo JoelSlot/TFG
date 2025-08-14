@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Utils;
 using FluentBehaviourTree;
 using Unity.VisualScripting;
+using System;
 
 
 public class Ant : MonoBehaviour
@@ -111,6 +112,7 @@ public class Ant : MonoBehaviour
         if (!born)
         {
             Animator.speed = 0; //To pause it the speed is set to 0.
+            antCapCollider.enabled = false;
         }
         else
         {
@@ -118,6 +120,7 @@ public class Ant : MonoBehaviour
             staticEgg.SetActive(false);
             Animator.SetBool("Born", true);
             Animator.speed = 1;
+            antCapCollider.enabled = true;
         }
 
         eggAnimator = eggAnim.GetComponent<Animator>();
@@ -139,27 +142,14 @@ public class Ant : MonoBehaviour
                     .Condition("I have a task?", t => { return !objective.isTaskType(TaskType.None); })
 
                     //If im holding food, bring to nest.
-                    .Sequence("If carrying bring to food chamber") //To do: expand this into giving food to larva?
-                        .Condition("Carrying food check", t => IsHolding())
-                        .Selector("Check where ant is")
-                            .Sequence("If not in nest go to nest")
-                                .Condition("Am I out of nest?", t => !Nest.SurfaceInNest(antSurface))
-                                .Do("Set to go to nest", t => { objective = Task.GoInsideTask(antSurface); Debug.Log("Task is go inside"); return BehaviourTreeStatus.Success; })
-                            .End()
-                            .Sequence("If nest has food chamber")
-                                .Condition("Exit if nest has no food chamber", t => Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber))
-                                .Selector("If in food chamber put down")
-                                    .Condition("Exit if not in food chamber", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
-                                    .Do("Put down", t => PutDown())
-                                .End()
-                                .Do("Set to go to food chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber); Debug.Log("Task is go to food chamber"); return BehaviourTreeStatus.Success; })
-                            .End()
-                            .Sequence("If nest does not have food chamber")
-                                .Condition("Exit if in tunnel", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel))
-                                .Do("In chamber, put down food", t => PutDown())
-                            .End()
-                            .Do("Go to random chamber", t=> { objective = Task.GoToAnyChamber(antSurface); return BehaviourTreeStatus.Success; })
-                        .End()
+                    .Sequence("If carrying food bring to food chamber") //To do: expand this into giving food to larva?
+                        .Condition("Carrying food check", t => IsHoldingFood())
+                        .Do("Get task for carrying food", t => CarryFood())
+                    .End()
+
+                    .Sequence("If carrying egg bring to egg chamber") //To do: expand this into giving food to larva?
+                        .Condition("Carrying food check", t => IsHoldingEgg())
+                        .Do("Get task for carrying food", t => CarryEgg())
                     .End()
 
                     .Do("Sense nearby task", t => SenseTask())
@@ -171,22 +161,23 @@ public class Ant : MonoBehaviour
                     .End()
 
                     .Sequence("If outside start exploring")
-                        .Condition("Am i outside of nest?", t => !Nest.SurfaceInNest(antSurface))
+                        .Condition("Exit if in nest?", t => Nest.SurfaceInNest(antSurface))
                         .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
                     .End()
                 .End()
 
                 .Selector("Do tasks")
 
-                    .Sequence("Pick up corn routine")
-                        .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
+                    .Sequence("Pick up item routine")
+                        .Condition("My task is picking up item?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob) || objective.isTaskType(TaskType.GetEgg))
                         .Condition("Is my task valid", t => objective.isValid(ref objective))
                         .Sequence("Pick up sequence")
-                            .Do("Go to food", t => FollowTaskPath())
-                            .Do("Align with food", t => Align(objective.getPos()))
+                            .Do("Go to item", t => FollowTaskPath())
+                            .Do("Align with item", t => Align(objective.getPos()))
                             .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
+
 
                     .Sequence("Dig routine")
                         .Condition("My task is digging?", t => objective.isTaskType(TaskType.Dig))
@@ -233,6 +224,93 @@ public class Ant : MonoBehaviour
             .Build();
     }
 
+
+    private BehaviourTreeStatus CarryFood()
+    {
+        if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
+        {
+            
+            Debug.Log("1");
+            objective = Task.GoInsideTask(antSurface);
+            Debug.Log("Task is go inside");
+            return BehaviourTreeStatus.Success;
+        }
+
+        if (Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber)) //if in food chamber
+        {
+            if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
+            {
+            Debug.Log("2");
+                return PutDown();
+            }
+            else
+            {
+            Debug.Log("3");
+                objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber);
+                Debug.Log("Task is go to food chamber");
+                return BehaviourTreeStatus.Success;
+            }
+        }
+        else if (!Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel)) //if not in tunnel
+        {
+            Debug.Log("4");
+            return PutDown();
+        }
+        else
+        {
+            Debug.Log("5");
+            objective = Task.GoToAnyChamber(antSurface);
+            return BehaviourTreeStatus.Success;
+        }
+    }
+
+    private BehaviourTreeStatus CarryEgg()
+    {
+        if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
+        {
+            objective = Task.GoInsideTask(antSurface);
+            Debug.Log("Task is go inside");
+            return BehaviourTreeStatus.Success;
+        }
+
+        if (Nest.HasDugNestPart(NestPart.NestPartType.EggChamber)) //if nest has egg chamber
+        {
+            if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.EggChamber))
+            {
+                return PutDown();
+            }
+            else
+            {
+                objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.EggChamber);
+                Debug.Log("Task is go to food chamber");
+                return BehaviourTreeStatus.Success;
+            }
+        }
+        else if (Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber)) //if nest has queen chamber
+        {
+            if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.QueenChamber))
+            {
+                return PutDown();
+            }
+            else
+            {
+                objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber);
+                Debug.Log("Task is go to food chamber");
+                return BehaviourTreeStatus.Success;
+            }
+
+        }
+        else if (!Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel)) //if not in tunnel
+        {
+            return PutDown();
+        }
+        else
+        {
+            objective = Task.GoToAnyChamber(antSurface);
+            return BehaviourTreeStatus.Success;
+        }
+    }
+        
     private BehaviourTreeStatus PutDown()
     {
         Debug.Log("Putting down");
@@ -281,6 +359,7 @@ public class Ant : MonoBehaviour
                 staticEgg.SetActive(false);
                 eggAnim.SetActive(true);
                 eggAnimator.enabled = true;
+                antCapCollider.enabled = true;
                 //eggPos = eggAnim.transform.position;
                 //eggDir = eggAnim.transform.eulerAngles;
                 //Instead of recording its pos and updating it so it doesn't move with the ant, 
@@ -328,6 +407,8 @@ public class Ant : MonoBehaviour
                 var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
                 if (stateInfo.IsTag("noMove"))
                 {
+                    SetWalking(false);
+                    DontTurn();
                     //DigEvent
                     //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
                     //To copy the pickup anim into a dig anim again. whoops.
@@ -335,7 +416,7 @@ public class Ant : MonoBehaviour
                     //Shortenede anim but looked bad, so readjusted it
                     //then had to move the event again because adjusting anim length changes event time.
                 }
-                else tree.Tick(new TimeData(Time.deltaTime), "");
+                else tree.Tick(new TimeData(Time.deltaTime));
 
             }
 
@@ -569,7 +650,7 @@ public class Ant : MonoBehaviour
         }
         DontTurn();
 
-        if (objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
+        if (objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob) || objective.isTaskType(TaskType.GetEgg))
         {
             Animator.SetBool("Pick up", true);
         }
@@ -668,9 +749,7 @@ public class Ant : MonoBehaviour
             return;
         }
 
-        eggObj.AddComponent<Rigidbody>();
-        foreach (var collider in eggObj.GetComponents<CapsuleCollider>())
-            collider.enabled = true;
+        egg.Rigidbody.isKinematic = false;
         if (inNest)
         {
             //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
@@ -701,21 +780,56 @@ public class Ant : MonoBehaviour
     //Manual put down function when controlling ant
     public void LetGo()
     {
-        if (IsHolding()) Animator.SetBool("Put down", true);
+        if (IsHolding()) Animator.SetTrigger("Put down");
+    }
+
+    public bool IsHoldingEgg()
+    {
+        
+        UpdateHolding();
+        if (IsHolding())
+            if (carriedObject.transform.GetComponentInChildren<Ant>() != null) return true;
+        return false;
+    }
+
+    public bool IsHoldingFood()
+    {
+        
+        UpdateHolding();
+        if (IsHolding())
+            if (carriedObject.transform.GetComponentInChildren<Corn>() != null) return true;
+        return false;
     }
 
 
     public void SetToHold(GameObject obj)
     {
+        Corn corn = obj.GetComponent<Corn>();
+        if (corn != null) SetToHoldCorn(corn);
+        Ant egg = obj.GetComponent<Ant>();
+        if (egg != null)
+            if (!egg.born) SetToHoldEgg(egg);
+        
+    }
+
+    private void SetToHoldEgg(Ant egg)
+    {
+        egg.transform.SetParent(carriedObject.transform);
+        egg.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        egg.Rigidbody.isKinematic = true;
+        egg.antCapCollider.enabled = false;
+    }
+
+    private void SetToHoldCorn(Corn corn)
+    {
         //If it is attached to a cornCob, remove it from said dictionary.
         CornCob parentCob = null;
-        if (obj.transform.parent != null) parentCob = obj.transform.parent.gameObject.GetComponent<CornCob>();
+        if (corn.transform.parent != null) parentCob = corn.transform.parent.gameObject.GetComponent<CornCob>();
         if (parentCob != null)
         {
             int key = -1;
-            int cornId = obj.GetComponent<Corn>().id;
             foreach (var (pos, id) in parentCob.cornCobCornDict)
-                if (id == cornId)
+                if (id == corn.id)
                 {
                     key = pos;
                     break;
@@ -723,13 +837,11 @@ public class Ant : MonoBehaviour
             parentCob.cornCobCornDict.Remove(key);
         }
 
-        obj.transform.SetParent(carriedObject.transform);
-        Destroy(obj.GetComponent<Rigidbody>()); //check if ant rigidbody has special settings
-        obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        BoxCollider box = obj.GetComponent<BoxCollider>();
-        if (box != null) box.enabled = false; //this won't work for
-        foreach (var capsule in obj.GetComponents<CapsuleCollider>()) //ant capsulecolliders
-            capsule.enabled = false;
+        corn.transform.SetParent(carriedObject.transform);
+        Destroy(corn.gameObject.GetComponent<Rigidbody>()); //check if ant rigidbody has special settings
+        corn.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        BoxCollider box = corn.gameObject.GetComponent<BoxCollider>();
+        if (box != null) box.enabled = false;
     }
 
     public void DigEvent()

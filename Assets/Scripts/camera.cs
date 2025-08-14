@@ -506,14 +506,14 @@ public class FlyCamera : MonoBehaviour
         if (placingDigZone)
         {
             //Si se esta pulsando tmbien shift, eliminar la parte que se está colocando.
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (Input.GetKey(KeyCode.LeftShift) || !Nest.NestParts.Last().IsValidPosition())
             {
                 NestPart ErasePart = Nest.NestParts.Last();
                 Nest.NestParts.Remove(ErasePart);
                 Destroy(ErasePart.gameObject);
                 Destroy(ErasePart);
             }
-            else if (Nest.NestParts.Last().IsValidPosition())
+            else
             {
                 toDigPoints();
                 Nest.NestParts.Last().setKinematic(true);

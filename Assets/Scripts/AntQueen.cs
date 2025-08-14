@@ -405,45 +405,6 @@ public class AntQueen : MonoBehaviour
     {        
         Animator.SetBool("Pick up", false);
 
-        Debug.Log("I GOT TO PICK UP");
-        if (objective.isTaskType(TaskType.None))
-        {
-            Debug.Log("Fail");
-            Animator.SetTrigger("Pick up fail");
-            return;
-        }
-
-        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetCorn))
-        {
-            Debug.Log("Valid");
-            GameObject food = objective.GetItem();
-            SetToHold(food);
-            Nest.RemovePip(objective.itemId); //remove pip from nest if in it
-            UpdateHolding();
-        }
-        //gets the cornCob, then a random corn pip from the cob that becomes held.
-        else if (objective.isValid(ref objective) && objective.isTaskType(TaskType.CollectFromCob))
-        {
-            Debug.Log("Cob valid");
-            GameObject cob = objective.GetItem();
-            GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
-            SetToHold(food); //CornPip is removed from cornCob here
-            UpdateHolding();
-        }
-        if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetEgg))
-        {
-            Debug.Log("Valid");
-            GameObject egg = objective.GetItem();
-            SetToHold(egg);
-            Nest.RemoveEgg(objective.itemId); //remove pip from nest if in it
-            UpdateHolding();
-        }
-        else
-        {
-            Debug.Log("Not valid or changed i guess???");
-            Animator.SetTrigger("Pick up fail");
-        }
-
         objective = Task.NoTask();
     }
 
@@ -481,52 +442,7 @@ public class AntQueen : MonoBehaviour
 
     public void PutDownAction()
     {
-
-        Vector3 mouthPos = carriedObject.transform.position;
-
-        //carriedObject.
-        foreach (Transform child in carriedObject.transform)
-        {
-            child.gameObject.AddComponent<Rigidbody>();
-            BoxCollider box = child.GetComponent<BoxCollider>();
-            if (box != null) box.enabled = true;
-            foreach (var collider in child.GetComponents<CapsuleCollider>())
-                collider.enabled = true;
-
-            //Si es de tipo corn se añadirá al nido si se encuentra dentro
-            Corn cornScript = child.GetComponent<Corn>();
-            if (cornScript != null)
-            {
-                if (Nest.PointInNest(transform.position))
-                {
-                    //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
-                    int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.FoodChamber);
-                    Nest.AddPip(cornScript.id, nestPartId);
-
-                    if (nestPartId != -1)
-                    {
-                        Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
-                        Vector3 dir = (chamberCenter - mouthPos).normalized;
-                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
-                        {
-                            child.transform.position += dir * 0.3f;
-                        }
-                    }
-                    else
-                    {
-                        Vector3 dir = (transform.up * 2 + transform.position - mouthPos).normalized;
-                        while (!WorldGen.IsAboveSurface(child.transform.position - dir * 0.3f))
-                        {
-                            child.transform.position += dir * 0.3f;
-                        }
-                    }
-                }
-
-            }
-        }
-        carriedObject.transform.DetachChildren();
         Animator.SetBool("Put down", false);
-        UpdateHolding();
     }
 
     public void UpdateHolding()

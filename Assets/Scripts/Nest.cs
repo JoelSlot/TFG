@@ -73,6 +73,7 @@ public class Nest : MonoBehaviour
                 foreach (int id in part.AntEggs)
                     eggs.Add(id);
         }
+        Debug.Log("Lost eggs size: " + eggs.Count);
 
         return eggs;
     }
@@ -95,8 +96,6 @@ public class Nest : MonoBehaviour
             if (NestParts[nestPartIndex].CollectedCornPips.Add(pipId))
                 foodCount++;
     }
-
-
     public static void RemoveEgg(int antId)
     {
         foreach (var part in NestParts)
@@ -282,9 +281,10 @@ public class Nest : MonoBehaviour
 
     public static bool GetNestRelocatePipTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        if (!Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber)) return false;
+        if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return false;
 
         List<int> displacedPips = GetDisplacedPips();
+        Debug.Log("Relocated cornpips: " + displacedPips.Count);
         foreach (int id in displacedPips)
         {
             //if already being relocated go to next
@@ -301,7 +301,7 @@ public class Nest : MonoBehaviour
 
     public static bool GetNestRelocateEggTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        if (!Nest.HasDugNestPart(NestPart.NestPartType.EggChamber)) return false;
+        if (!HasDugNestPart(NestPart.NestPartType.EggChamber)) return false;
 
         List<int> displacedEggs = GetDisplacedEggs();
         foreach (int id in displacedEggs)
@@ -530,6 +530,8 @@ public class Nest : MonoBehaviour
         if (!IsPipInNest(id, out int partIndex)) return false; //not in nest? unacceptable
 
         if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return true; //in nest, but no foodchamber around? acceptable
+
+        if (partIndex == -1) return false; //if default is lost, ignore.
 
         if (NestParts[partIndex].mode == NestPart.NestPartType.FoodChamber) return true; //In foodchamber? good
 

@@ -487,6 +487,7 @@ public class NestPart : MonoBehaviour
             {
                 //Debug.DrawLine(check[0], check[i], Color.red, 1);
                 if (WorldGen.IsAboveSurface(check[i])) return false;
+                if (Nest.PointInNestPart(check[i], NestPartType.Tunnel)) return false;
             }
 
             for (int i = 0; i < 8; i++)
@@ -498,6 +499,7 @@ public class NestPart : MonoBehaviour
             {
                 //Debug.DrawLine(check[0], check2[i], Color.red, 1);
                 if (WorldGen.IsAboveSurface(check2[i])) return false;
+                if (Nest.PointInNestPart(check2[i], NestPartType.Tunnel)) return false;
             }
 
             return true;

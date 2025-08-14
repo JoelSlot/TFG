@@ -37,7 +37,7 @@ public class Task
     public Task(GameObject newGameObject, TaskType newType, List<CubePaths.CubeSurface> newPath)
     {
         type = newType;
-        if (type == TaskType.Dig) digPointId = Vector3Int.RoundToInt(newGameObject.transform.position);
+        if (type == TaskType.Dig) { digPointId = Vector3Int.RoundToInt(newGameObject.transform.position); Debug.Log("Got digtask"); }
         else if (type == TaskType.GetCorn) itemId = newGameObject.GetComponent<Corn>().id;
         else if (type == TaskType.GetEgg) itemId = newGameObject.GetComponent<Ant>().id;
         else if (type == TaskType.CollectFromCob) itemId = newGameObject.GetComponent<CornCob>().id;
@@ -55,6 +55,8 @@ public class Task
     {
         if (!DigPoint.digPointDict.ContainsKey(digPointId)) return Task.NoTask();
         if (DigPoint.digPointDict[digPointId].digPoint == null) return Task.NoTask();
+
+        Debug.Log("Getting a dig task");
 
         Task newTask = new();
         newTask.type = TaskType.Dig;
@@ -89,7 +91,7 @@ public class Task
         Ant.antDictionary[eggAntId].antId = antId;
 
         Task newTask = new();
-        newTask.type = TaskType.GetCorn;
+        newTask.type = TaskType.GetEgg;
         newTask.itemId = eggAntId;
         newTask.pos = Ant.antDictionary[eggAntId].transform.position;
         newTask.path = newPath;
@@ -400,6 +402,7 @@ public class Task
                 if (antObj == null)
                 {
                     objective = Task.NoTask();
+                    Debug.Log("Not valid bro");
                     return false;
                 }
 
@@ -408,6 +411,7 @@ public class Task
                 if (script == null)
                 {
                     objective = Task.NoTask();
+                    Debug.Log("Not valid bro");
                     return false;
                 }
                 
@@ -415,14 +419,15 @@ public class Task
                 if (script == null)
                 {
                     objective = Task.NoTask();
+                    Debug.Log("Not valid bro");
                     return false;
                 }
-                
                 
                 if (Vector3.Distance(GetItem().transform.position, pos) > 0.5f)// if it has moved somehow
                 {
                     //If the objective is not valid, the ant loses it.
                     objective = Task.NoTask();
+                    Debug.Log("Not valid bro");
                     return false;
                 }
 

@@ -615,6 +615,14 @@ public class WorldGen : MonoBehaviour
         newAntScript.id = antInfo.id;
         newAntScript.antId = antInfo.antId;
         newAntScript.age = antInfo.age;
+        if (antInfo.age < 100)
+        {
+            newAntScript.staticEgg.SetActive(true);
+            newAntScript.antCapCollider.enabled = false;
+            newAntScript.born = false;
+        }
+        else newAntScript.born = true;
+        
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.isControlled = antInfo.isControlled;
         newAntScript.Counter = antInfo.Counter;
