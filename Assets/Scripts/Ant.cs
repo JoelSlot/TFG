@@ -325,6 +325,7 @@ public class Ant : MonoBehaviour
     void FixedUpdate()
     {
 
+
         if (lastTaskType != objective.type)
         {
             resetGoal = true;
@@ -342,6 +343,8 @@ public class Ant : MonoBehaviour
                 age++;
                 ageUpdateCounter = 0;
             }
+            
+            transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter / 100f) / 200f));
         }
 
 
@@ -351,10 +354,8 @@ public class Ant : MonoBehaviour
         if (Animator.speed == 0) //Cuando la hormiga no ha nacido aún:
         {
             Rigidbody.useGravity = true;
-            transform.localScale = Vector3.one * Mathf.Clamp01(0.25f + (0.75f * (age + ageUpdateCounter / 100f) / 200f));
             if (age > 100)
             {
-                transform.localScale = Vector3.one;
                 Animator.speed = 1;
                 staticEgg.SetActive(false);
                 eggAnim.SetActive(true);
