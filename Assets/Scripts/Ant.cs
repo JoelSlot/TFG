@@ -161,7 +161,7 @@ public class Ant : MonoBehaviour
                     .End()
 
                     .Sequence("If outside start exploring")
-                        .Condition("Exit if in nest?", t => Nest.SurfaceInNest(antSurface))
+                        .Condition("Exit if in nest", t => !Nest.SurfaceInNest(antSurface))
                         .Do("Set to explore", t => { objective = Task.ExploreTask(antSurface, transform.forward, out Counter); Debug.Log("Outside, gonna explore"); return BehaviourTreeStatus.Success; })
                     .End()
                 .End()
