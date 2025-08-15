@@ -95,7 +95,7 @@ public class AntQueen : MonoBehaviour
 
                     .Do("Get nearby dig task", t => SenseDigTask())
                     .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -2, ref objective))
-                    .Do("Did not find anything to do", t => { Debug.Log("Didnt find stuff to do as queen");  return BehaviourTreeStatus.Success; })
+                    .Do("Did not find anything to do", t => { Debug.Log("Didnt find stuff to do as queen"); return BehaviourTreeStatus.Success; })
 
                 .End()
                 .Selector("Do tasks")
@@ -119,7 +119,6 @@ public class AntQueen : MonoBehaviour
                             .Do("Wait for dig", t => BehaviourTreeStatus.Running)
                         .End()
                     .End()
-
 
                     .Sequence("Just follow path")
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
@@ -146,7 +145,7 @@ public class AntQueen : MonoBehaviour
                         .Do("Decrease waiting counter", t => { Counter -= 1; return BehaviourTreeStatus.Success; })
                         .Selector("Terminar espera si contador es 0")
                             .Condition("Exit if counter is above 0", t => Counter > 0)
-                            .Do("Terminar tarea de espera", t => { objective = Task.NoTask(); Counter = 0; return BehaviourTreeStatus.Success; })
+                            .Do("Eat if there's food, otherwise get noTask", t => GetEatFoodInChamberTask())
                         .End()
                     .End()
 
@@ -401,9 +400,9 @@ public class AntQueen : MonoBehaviour
     }
 
     public void EatEvent() //function called by the animation
-    {        
+    {
         Animator.SetBool("Eat", false);
-        
+
         //Debug.Log("I GOT TO PICK UP");
         if (!objective.isTaskType(TaskType.Eat))
         {
@@ -512,7 +511,7 @@ public class AntQueen : MonoBehaviour
         float horAngle = Vector3.Angle(proyectedGoal, proyectedForward);
 
         //Debug.DrawLine(transform.position, goal, Color.red, 0.35f);
-    
+
         //Decidir si girar
         if (horAngle > 5)
         {
@@ -527,7 +526,8 @@ public class AntQueen : MonoBehaviour
     }
 
 
-    public void SetWalking(bool walk) {
+    public void SetWalking(bool walk)
+    {
         if (walk)
         {
             speed = speed_per_second * Time.fixedDeltaTime;
@@ -540,15 +540,18 @@ public class AntQueen : MonoBehaviour
         }
     }
 
-    public void TurnRight() {
+    public void TurnRight()
+    {
         Animator.SetInteger("turning", 1);
     }
 
-    public void TurnLeft() {
+    public void TurnLeft()
+    {
         Animator.SetInteger("turning", -1);
     }
 
-    public void DontTurn() {
+    public void DontTurn()
+    {
         Animator.SetInteger("turning", 0);
     }
 
@@ -566,7 +569,8 @@ public class AntQueen : MonoBehaviour
         Vector3 hitNormal = new Vector3(0, 0, 0);
         Vector3Int hitCubePos = new Vector3Int(0, 0, 0);
         int raycastLayer = (1 << 6); //layer del terreno
-        for (int i = 0; i < xPos.Length; i++) {
+        for (int i = 0; i < xPos.Length; i++)
+        {
             //HE ESTADO USANDO MAL ESTA FUNCIÓN. RAYCASTLAYER ESTABA FUNCIONANDO COMO MAXDISTANCE
             if (Physics.Raycast(GetRelativePos(xPos[i], yPos, zPos[i]), Rigidbody.rotation * new Vector3(0, yPos - 0.8f, 0), out RaycastHit hit, 0.8f, raycastLayer))
             {
@@ -668,16 +672,9 @@ public class AntQueen : MonoBehaviour
         return Animator.GetCurrentAnimatorStateInfo(0);
     }
 
-    
+
     private BehaviourTreeStatus GetQueenChamberTask(CubePaths.CubeSurface antSurface, ref Task objective)
     {
-
-        /*if (GetEatCornTask(antSurface, ref objective))
-        {
-            Debug.Log("Got a relocate task");
-            return BehaviourTreeStatus.Success;
-        }*/
-
         //Just in case we somehow call this function when not in first dug queen chamber
         int nestPartId = Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
         if (nestPartId != -1)
@@ -687,24 +684,31 @@ public class AntQueen : MonoBehaviour
                 if (objective.isTaskType(TaskType.Lost)) objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
                 return BehaviourTreeStatus.Success;
             }
-            else //if not given birth, go eat something if food in chamber
-            {
-                foreach (int cornId in Nest.NestParts[nestPartId].CollectedCornPips) //for each pip in chamber
-                {
-                    //if already being picked up go to next
-                    if (Task.IsCornBeingPickedUp(cornId)) continue;
-                    if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
-                    {
-                        objective = Task.GetEatTask(cornId, -2, newPath);
-                        return BehaviourTreeStatus.Success;
-                    }
-                }
-            }
 
-        objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+        objective = Task.WaitTask(this, UnityEngine.Random.Range(2000, 4000));
 
         return BehaviourTreeStatus.Success;
 
+    }
+
+    private BehaviourTreeStatus GetEatFoodInChamberTask()
+    {
+        int firstQueenChamberIndex = Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
+        if (Nest.SurfaceInNestPart(antSurface, firstQueenChamberIndex))
+        {
+            foreach (int cornId in Nest.NestParts[firstQueenChamberIndex].CollectedCornPips) //for each pip in chamber
+            {
+                //if already being picked up go to next
+                if (Task.IsCornBeingPickedUp(cornId)) continue;
+                if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                {
+                    objective = Task.GetEatTask(cornId, -2, newPath);
+                    return BehaviourTreeStatus.Success;
+                }
+            }
+        }
+        objective = Task.NoTask();
+        return BehaviourTreeStatus.Success;
     }
 
     
