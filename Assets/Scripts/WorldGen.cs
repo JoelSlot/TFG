@@ -710,13 +710,14 @@ public class WorldGen : MonoBehaviour
         return newDigPointScript;
     }
 
-    public static CornCob InstantiateCornCob(Vector3 pos, Quaternion orientation)
+    public static CornCob InstantiateCornCob(Vector3 pos, Quaternion orientation, int numPips)
     {
         GameObject cornCobObj = Instantiate(originalCornCob, pos, orientation);
         cornCobObj.SetActive(true);
         CornCob cornCob = cornCobObj.GetComponent<CornCob>();
         CornCob.registerCorn(cornCob);
-        for (int i = 0; i < CornCob.numCornSpots; i++)
+        numPips = Math.Clamp(numPips, 0, CornCob.numCornSpots);
+        for (int i = 0; i < numPips; i++)
         {
             Corn newCorn = InstantiateCorn(cornCobObj.transform.position, Quaternion.identity);
             cornCob.cornCobCornDict.Add(i, newCorn.id);

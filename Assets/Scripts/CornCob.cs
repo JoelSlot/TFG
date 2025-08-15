@@ -86,7 +86,7 @@ public class CornCob : MonoBehaviour
 
     public bool hasCorn()
     {
-        return cornCobCornDict.Count != 0;
+        return cornCobCornDict.Count > 0;
     }
 
     public GameObject getRandomCornObject()
@@ -96,6 +96,18 @@ public class CornCob : MonoBehaviour
         var (key, id) = cornCobCornDict.ElementAt(Random.Range(0, cornCobCornDict.Count));
 
         return Corn.cornDictionary[id].gameObject;
+    }
+
+    public bool RemoveCorn(int cornId)
+    {
+        int key = -1;
+        foreach (var (pos, id) in cornCobCornDict)
+            if (id == cornId)
+            {
+                key = pos;
+                break;
+            }
+        return cornCobCornDict.Remove(key);
     }
 
     public static float[] cornInfo = new float[numCornSpots * 6]

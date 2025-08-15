@@ -632,7 +632,7 @@ public class FlyCamera : MonoBehaviour
                     break;
                 case obj.Corn:
                     if (clickObject(terrainLayer, out hit))
-                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
+                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), 2);
                     break;
                 case obj.test:
                     if (clickObject(terrainLayer, out hit))

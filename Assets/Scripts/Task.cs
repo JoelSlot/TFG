@@ -389,8 +389,16 @@ public class Task
                     objective = Task.NoTask();
                     return false;
                 }
+
+                CornCob cob = GetItem().GetComponent<CornCob>();
+                if (cob == null)
+                {
+                    objective = Task.NoTask();
+                    return false;
+                }
+
                 // if it has moved somehow or has no more corn.
-                if (Vector3.Distance(GetItem().transform.position, pos) > 0.5f || !GetItem().GetComponent<CornCob>().hasCorn())
+                if (Vector3.Distance(cob.transform.position, pos) > 0.5f || !cob.hasCorn())
                 {
                     //If the objective is not valid, the ant loses it.
                     objective = Task.NoTask();

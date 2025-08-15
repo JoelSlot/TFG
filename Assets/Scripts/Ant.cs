@@ -699,7 +699,8 @@ public class Ant : MonoBehaviour
             Debug.Log("Cob valid");
             GameObject cob = objective.GetItem();
             GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
-            SetToHold(food); //CornPip is removed from cornCob here
+            if (food != null)
+                SetToHold(food); //CornPip is removed from cornCob here
             UpdateHolding();
         }
         if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetEgg))
@@ -827,16 +828,8 @@ public class Ant : MonoBehaviour
         CornCob parentCob = null;
         if (corn.transform.parent != null) parentCob = corn.transform.parent.gameObject.GetComponent<CornCob>();
         if (parentCob != null)
-        {
-            int key = -1;
-            foreach (var (pos, id) in parentCob.cornCobCornDict)
-                if (id == corn.id)
-                {
-                    key = pos;
-                    break;
-                }
-            parentCob.cornCobCornDict.Remove(key);
-        }
+            if (!parentCob.RemoveCorn(corn.id)) Debug.Log("I DID NOT MANAGE TO REMOVE FROM CORNCOB");
+        
 
         corn.transform.SetParent(carriedObject.transform);
         Destroy(corn.gameObject.GetComponent<Rigidbody>()); //check if ant rigidbody has special settings

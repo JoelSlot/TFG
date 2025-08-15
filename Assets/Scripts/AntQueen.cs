@@ -457,31 +457,6 @@ public class AntQueen : MonoBehaviour
         if (IsHolding()) Animator.SetBool("Put down", true);
     }
 
-
-    public void SetToHold(GameObject obj)
-    {
-        //If it is attached to a cornCob, remove it from said dictionary.
-        CornCob parentCob = null;
-        if (obj.transform.parent != null) parentCob = obj.transform.parent.gameObject.GetComponent<CornCob>();
-        if (parentCob != null)
-        {
-            int key = -1;
-            int cornId = obj.GetComponent<Corn>().id;
-            foreach (var (pos, id) in parentCob.cornCobCornDict)
-                if (id == cornId)
-                {
-                    key = pos;
-                    break;
-                }
-            parentCob.cornCobCornDict.Remove(key);
-        }
-
-        obj.transform.SetParent(carriedObject.transform);
-        Destroy(obj.GetComponent<Rigidbody>());
-        obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        obj.GetComponent<BoxCollider>().enabled = false;
-    }
-
     public void DigEvent()
     {
         Animator.SetBool("Dig", false);

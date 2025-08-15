@@ -248,13 +248,22 @@ public class Nest : MonoBehaviour
     {
         objective = Task.NoTask();
 
-        if (KnownCornCobs.Count > 0 && SurfaceInNest(antSurface) && objective.isTaskType(TaskType.None))
+        if (!SurfaceInNest(antSurface)) return false;
+
+        List<int> shuffledIds = KnownCornCobs.ToList<int>();
+        Shuffle(shuffledIds);
+
+        foreach (int cobId in shuffledIds)
         {
             //Selecciona un indice de los conocidos aleatorio
-            int cornIndex = KnownCornCobs.ElementAt(UnityEngine.Random.Range(0, KnownCornCobs.Count));
-            if (CornCob.cornCobDictionary.TryGetValue(cornIndex, out CornCob cob))
+            if (CornCob.cornCobDictionary.TryGetValue(cobId, out CornCob cob))
             {
-                if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 3, out List<CubePaths.CubeSurface> path))
+                if (!cob.hasCorn())
+                {
+                    KnownCornCobs.Remove(cobId);
+                    continue;
+                }
+                else if (CubePaths.GetKnownPathToPoint(antSurface, cob.transform.position, 2.8f, out List<CubePaths.CubeSurface> path))
                 {
                     objective = new Task(cob.gameObject, TaskType.CollectFromCob, path);
                     return true;
@@ -262,21 +271,20 @@ public class Nest : MonoBehaviour
                 else
                 {
                     //Quitamos de la lista si desde el nido mismo no se puede llegar.
-                    KnownCornCobs.Remove(cornIndex);
-                    Debug.Log("Please dont loop");
-                    return GetNestCollectTask(antSurface, ref objective);
+                    KnownCornCobs.Remove(cobId);
+                    continue;
                 }
             }
             else
             {
                 //Quitamos de la lista si es no válido.
-                KnownCornCobs.Remove(cornIndex);
-                Debug.Log("Please dont loop");
-                return GetNestCollectTask(antSurface, ref objective);
+                KnownCornCobs.Remove(cobId);
+                continue;
             }
 
         }
-        else return false;
+
+        return false;
     }
 
     public static bool GetNestRelocatePipTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
