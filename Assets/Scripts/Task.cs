@@ -41,7 +41,7 @@ public class Task
         else if (type == TaskType.GetCorn) itemId = newGameObject.GetComponent<Corn>().id;
         else if (type == TaskType.GetEgg) itemId = newGameObject.GetComponent<Ant>().id;
         else if (type == TaskType.CollectFromCob) itemId = newGameObject.GetComponent<CornCob>().id;
-        else Debug.Log("WRONG TASKTYPE");
+        //else //Debug.Log("WRONG TASKTYPE");
         pos = newGameObject.transform.position;
         path = newPath;
     }
@@ -56,7 +56,7 @@ public class Task
         if (!DigPoint.digPointDict.ContainsKey(digPointId)) return Task.NoTask();
         if (DigPoint.digPointDict[digPointId].digPoint == null) return Task.NoTask();
 
-        Debug.Log("Getting a dig task");
+        //Debug.Log("Getting a dig task");
 
         Task newTask = new();
         newTask.type = TaskType.Dig;
@@ -109,7 +109,7 @@ public class Task
 
         if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.Outside, out GOtask.path)) return GOtask;
 
-        Debug.Log("No valid path, didnt create GoOutSideTask");
+        //Debug.Log("No valid path, didnt create GoOutSideTask");
 
         return LostTask(antSurface, Vector3.up);
     }
@@ -124,7 +124,7 @@ public class Task
         //Used foodchamber for now as default
         if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.FoodChamber, out GOtask.path)) return GOtask;
 
-        Debug.Log("No valid path");
+        //Debug.Log("No valid path");
 
         return LostTask(antSurface, Vector3.forward);
     }
@@ -142,7 +142,7 @@ public class Task
             }
         }
 
-        Debug.Log("No chambers");
+        //Debug.Log("No chambers");
 
         return LostTask(antSurface, Vector3.up);
     }
@@ -180,7 +180,7 @@ public class Task
             if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path))
             return GOtask;
 
-        Debug.Log("No valid path");
+        //Debug.Log("No valid path");
 
         return LostTask(antSurface, Vector3.up);
     }
@@ -216,7 +216,7 @@ public class Task
 
     public static Task LostTask(CubePaths.CubeSurface antSurface, Vector3 forward)
     {
-        Debug.Log("JUst got the lost task bro....");
+        //Debug.Log("JUst got the lost task bro....");
 
         Task lostTask = new()
         {
@@ -244,7 +244,7 @@ public class Task
     public static Task WaitTask(AntQueen antQueen, int time)
     {
 
-        Debug.Log("Got a waiting task zzzz");
+        //Debug.Log("Got a waiting task zzzz");
         Task waitTask = new()
         {
             type = TaskType.Wait,
@@ -410,7 +410,7 @@ public class Task
                 if (antObj == null)
                 {
                     objective = Task.NoTask();
-                    Debug.Log("Not valid bro");
+                    //Debug.Log("Not valid bro");
                     return false;
                 }
 
@@ -419,7 +419,7 @@ public class Task
                 if (script == null)
                 {
                     objective = Task.NoTask();
-                    Debug.Log("Not valid bro");
+                    //Debug.Log("Not valid bro");
                     return false;
                 }
                 
@@ -427,7 +427,7 @@ public class Task
                 if (script == null)
                 {
                     objective = Task.NoTask();
-                    Debug.Log("Not valid bro");
+                    //Debug.Log("Not valid bro");
                     return false;
                 }
                 
@@ -435,7 +435,7 @@ public class Task
                 {
                     //If the objective is not valid, the ant loses it.
                     objective = Task.NoTask();
-                    Debug.Log("Not valid bro");
+                    //Debug.Log("Not valid bro");
                     return false;
                 }
 

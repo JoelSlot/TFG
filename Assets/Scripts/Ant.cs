@@ -185,7 +185,7 @@ public class Ant : MonoBehaviour
                         .Sequence("Dig sequence")
                             .Do("Go to digPoint", t => FollowTaskPath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
-                            .Do("Wait for dig", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
+                            .Do("Wait for dig", t => BehaviourTreeStatus.Running)
                         .End()
                     .End()
 
@@ -193,7 +193,7 @@ public class Ant : MonoBehaviour
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
                         //.Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowTaskPath())
-                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
+                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); /*Debug.Log("REACHED OR FAILED");*/ return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Sequence("Explore")
@@ -230,9 +230,9 @@ public class Ant : MonoBehaviour
         if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
         {
             
-            Debug.Log("1");
+            //Debug.Log("1");
             objective = Task.GoInsideTask(antSurface);
-            Debug.Log("Task is go inside");
+            //Debug.Log("Task is go inside");
             return BehaviourTreeStatus.Success;
         }
 
@@ -240,25 +240,25 @@ public class Ant : MonoBehaviour
         {
             if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
             {
-            Debug.Log("2");
+                //Debug.Log("2");
                 return PutDown();
             }
             else
             {
-            Debug.Log("3");
+                //Debug.Log("3");
                 objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber);
-                Debug.Log("Task is go to food chamber");
+                //Debug.Log("Task is go to food chamber");
                 return BehaviourTreeStatus.Success;
             }
         }
         else if (!Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel)) //if not in tunnel
         {
-            Debug.Log("4");
+            //Debug.Log("4");
             return PutDown();
         }
         else
         {
-            Debug.Log("5");
+            //Debug.Log("5");
             objective = Task.GoToAnyChamber(antSurface);
             return BehaviourTreeStatus.Success;
         }
@@ -269,7 +269,7 @@ public class Ant : MonoBehaviour
         if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
         {
             objective = Task.GoInsideTask(antSurface);
-            Debug.Log("Task is go inside");
+            //Debug.Log("Task is go inside");
             return BehaviourTreeStatus.Success;
         }
 
@@ -282,7 +282,7 @@ public class Ant : MonoBehaviour
             else
             {
                 objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.EggChamber);
-                Debug.Log("Task is go to food chamber");
+                //Debug.Log("Task is go to food chamber");
                 return BehaviourTreeStatus.Success;
             }
         }
@@ -295,7 +295,7 @@ public class Ant : MonoBehaviour
             else
             {
                 objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber);
-                Debug.Log("Task is go to food chamber");
+                //Debug.Log("Task is go to food chamber");
                 return BehaviourTreeStatus.Success;
             }
 
@@ -313,7 +313,7 @@ public class Ant : MonoBehaviour
         
     private BehaviourTreeStatus PutDown()
     {
-        Debug.Log("Putting down");
+        //Debug.Log("Putting down");
         Animator.SetBool("Put down", true);
         return BehaviourTreeStatus.Success;
     }
@@ -496,7 +496,7 @@ public class Ant : MonoBehaviour
         //Si hemos llegado al nido ya no estamos perdidos.
         if (Nest.SurfaceInNest(antSurface))
         {
-            Debug.Log("In nest");
+            //Debug.Log("In nest");
             Counter = 0;
             objective = Task.NoTask();
             return false;
@@ -613,7 +613,7 @@ public class Ant : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("Wrong layer: " + sensedItem.gameObject.layer + " vs dipoint " + digPointMask + " vs food " + cornMask);
+                    //Debug.Log("Wrong layer: " + sensedItem.gameObject.layer + " vs dipoint " + digPointMask + " vs food " + cornMask);
                 }
             }
         }
@@ -677,17 +677,17 @@ public class Ant : MonoBehaviour
 
         Animator.SetBool("Pick up", false);
 
-        Debug.Log("I GOT TO PICK UP");
+        //Debug.Log("I GOT TO PICK UP");
         if (objective.isTaskType(TaskType.None))
         {
-            Debug.Log("Fail");
+            //Debug.Log("Fail");
             Animator.SetTrigger("Pick up fail");
             return;
         }
 
         if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetCorn))
         {
-            Debug.Log("Valid");
+            //Debug.Log("Valid");
             GameObject food = objective.GetItem();
             SetToHold(food);
             Nest.RemovePip(objective.itemId); //remove pip from nest if in it
@@ -696,7 +696,7 @@ public class Ant : MonoBehaviour
         //gets the cornCob, then a random corn pip from the cob that becomes held.
         else if (objective.isValid(ref objective) && objective.isTaskType(TaskType.CollectFromCob))
         {
-            Debug.Log("Cob valid");
+            //Debug.Log("Cob valid");
             GameObject cob = objective.GetItem();
             GameObject food = cob.GetComponent<CornCob>().getRandomCornObject();
             if (food != null)
@@ -705,7 +705,7 @@ public class Ant : MonoBehaviour
         }
         if (objective.isValid(ref objective) && objective.isTaskType(TaskType.GetEgg))
         {
-            Debug.Log("Valid");
+            //Debug.Log("Valid");
             GameObject egg = objective.GetItem();
             SetToHold(egg);
             Nest.RemoveEgg(objective.itemId); //remove pip from nest if in it
@@ -713,7 +713,7 @@ public class Ant : MonoBehaviour
         }
         else
         {
-            Debug.Log("Not valid or changed i guess???");
+            //Debug.Log("Not valid or changed i guess???");
             Animator.SetTrigger("Pick up fail");
         }
 

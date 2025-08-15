@@ -109,7 +109,7 @@ public class AntQueen : MonoBehaviour
                         .Sequence("Pick up sequence")
                             .Do("Go to food", t => FollowTaskPath())
                             .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
+                            .Do("Wait for pickup", t => BehaviourTreeStatus.Running)
                         .End()
                     .End()
 
@@ -119,7 +119,7 @@ public class AntQueen : MonoBehaviour
                         .Sequence("Dig sequence")
                             .Do("Go to digPoint", t => FollowTaskPath())
                             .Do("Align with digPoint", t => Align(objective.getPos()))
-                            .Do("Wait for dig", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
+                            .Do("Wait for dig", t => BehaviourTreeStatus.Running)
                         .End()
                     .End()
 
@@ -128,7 +128,7 @@ public class AntQueen : MonoBehaviour
                         .Condition("Is a path following task?", t => { return objective.isTaskType(TaskType.GoInside) || objective.isTaskType(TaskType.GoToChamber) || objective.isTaskType(TaskType.GoToTunnel) || objective.isTaskType(TaskType.GoOutside); })
                         //.Do(".", t => { Debug.Log("Hey i made it"); return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowTaskPath())
-                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); Debug.Log("REACHED OR FAILED"); return BehaviourTreeStatus.Success; })
+                        .Do("Objective complete or failed", t => { objective = Task.NoTask(); /*Debug.Log("REACHED OR FAILED");*/ return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Sequence("Explore")
@@ -275,7 +275,7 @@ public class AntQueen : MonoBehaviour
         //Si hemos llegado al nido ya no estamos perdidos.
         if (Nest.SurfaceInNest(antSurface))
         {
-            Debug.Log("In nest");
+            //Debug.Log("In nest");
             Counter = 0;
             objective = Task.NoTask();
             return false;
