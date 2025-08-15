@@ -15,6 +15,7 @@ public class Nest : MonoBehaviour
     public static HashSet<int> KnownCornCobs = new();
     private static int lastIndex = 0;
     public static int foodCount = 0;
+    public static int requieredFoodInQueenChamber = 5;
 
     public static bool NestVisible = false;
     public static bool[] NestPartDisabled = { false, false, false, false };
@@ -26,6 +27,7 @@ public class Nest : MonoBehaviour
     //All items placed in nest with wrong nestid go here.
     public static HashSet<int> lostPips = new();
     public static HashSet<int> lostEggs = new();
+    public static HashSet<int> antsBringingQueenFood = new();
 
 
 
@@ -51,12 +53,28 @@ public class Nest : MonoBehaviour
         }
     }
 
+    //all pips outside of foodchambers are displaced, except a few in queenchambers.
     public static List<int> GetDisplacedPips()
     {
         List<int> pips = lostPips.ToList();
+        bool firstQueenChamber = true;
         foreach (var part in NestParts)
         {
-            if (part.mode != NestPart.NestPartType.FoodChamber)
+            if (part.mode == NestPart.NestPartType.QueenChamber && firstQueenChamber && part.HasBeenDug()) //return all pips after requiered amount in first dug queen chamber.
+            {
+                firstQueenChamber = false;
+                int number = 0;
+                foreach (int id in part.CollectedCornPips)
+                {
+                    if (!Task.IsCornBeingPickedUp(id))
+                    {
+                        number++;
+                        if (number > requieredFoodInQueenChamber)
+                            pips.Add(id);
+                    }
+                }
+            }
+            else if (part.mode != NestPart.NestPartType.FoodChamber)
                 foreach (int id in part.CollectedCornPips)
                     pips.Add(id);
         }
@@ -90,11 +108,12 @@ public class Nest : MonoBehaviour
     public static void AddPip(int pipId, int nestPartIndex)
     {
         if (nestPartIndex >= NestParts.Count || nestPartIndex < 0)
+        {
             if (lostPips.Add(pipId))
                 foodCount++;
-            else
-            if (NestParts[nestPartIndex].CollectedCornPips.Add(pipId))
-                foodCount++;
+        }
+        else if (NestParts[nestPartIndex].CollectedCornPips.Add(pipId))
+            foodCount++;
     }
     public static void RemoveEgg(int antId)
     {
@@ -163,14 +182,17 @@ public class Nest : MonoBehaviour
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> { "dig", "corn", "cob" };
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig" };
         Shuffle(checkOrder);
 
-        foreach (var function in checkOrder)
+        while (checkOrder.Count > 0)
         {
+            string function = checkOrder[0];
+            checkOrder.RemoveAll(function.Equals);
             switch (function)
             {
                 case "dig":
+                    Debug.Log("Getting a dig task");
                     if (GetNestDigTask(antSurface, antId, ref objective))
                     {
                         Debug.Log("Got a dig task");
@@ -178,6 +200,8 @@ public class Nest : MonoBehaviour
                     }
                     break;
                 case "corn":
+                
+                    Debug.Log("Getting a relocate task");
                     if (GetNestRelocateTask(antSurface, antId, ref objective))
                     {
                         Debug.Log("Got a relocate task");
@@ -185,6 +209,7 @@ public class Nest : MonoBehaviour
                     }
                     break;
                 case "cob":
+                    Debug.Log("Getting a collect task");
                     if (GetNestCollectTask(antSurface, ref objective))
                     {
                         Debug.Log("Got a collect task");
@@ -307,6 +332,39 @@ public class Nest : MonoBehaviour
         return false;
     }
 
+    public static bool GetNestBringQueenFoodTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
+    {
+        if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return false; //Si no hay camara de comida excavada
+
+        Debug.Log("Got 1");
+        int queenChamberIndex = GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
+        Debug.Log("Got 2");
+        if (queenChamberIndex == -1) return false; //si no hay camara de reina excavada.
+        Debug.Log("Got 3");
+        if (NestParts[queenChamberIndex].CollectedCornPips.Count + antsBringingQueenFood.Count >= requieredFoodInQueenChamber) return false; //Si ya hay suficiente comida y hormigas trayendo
+        Debug.Log("Got 4");
+        List<int> NestPartIndexes = GetDugNestPartIndexes(NestPart.NestPartType.FoodChamber);
+        Shuffle(NestPartIndexes);
+        Debug.Log("Size: " + NestPartIndexes.Count);
+
+        foreach (int nestIndex in NestPartIndexes)
+        {
+            Debug.Log("NumCorn in " + nestIndex + ": " + NestParts[nestIndex].CollectedCornPips.Count);
+            foreach (int cornId in NestParts[nestIndex].CollectedCornPips)
+            {
+                //if already being picked up go to next
+                if (Task.IsCornBeingPickedUp(cornId)) continue;
+                if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                {
+                    antsBringingQueenFood.Add(antId); //add ant to set of ants getting food for queen.
+                    objective = Task.GetCornTask(cornId, antId, newPath);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static bool GetNestRelocateEggTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
         if (!HasDugNestPart(NestPart.NestPartType.EggChamber)) return false;
@@ -328,6 +386,7 @@ public class Nest : MonoBehaviour
 
     public static bool GetNestRelocateTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
+        if (GetNestBringQueenFoodTask(antSurface, antId, ref objective)) return true;
         if (GetNestRelocateEggTask(antSurface, antId, ref objective)) return true;
         if (GetNestRelocatePipTask(antSurface, antId, ref objective)) return true;
         return false;
@@ -365,6 +424,7 @@ public class Nest : MonoBehaviour
     public static bool PointInNestPart(Vector3 point, NestPart.NestPartType type)
     {
         if (type == NestPart.NestPartType.Outside) return !PointInNest(point);
+        if (type == NestPart.NestPartType.Inside) return PointInNest(point);
 
         int checkedParts = 0;
         for (int i = lastIndex; checkedParts < NestParts.Count; checkedParts++, i++)
@@ -388,19 +448,14 @@ public class Nest : MonoBehaviour
 
     public static bool PointInNestPart(Vector3 point, int nestPartIndex)
     {
-        if (nestPartIndex >= NestParts.Count) { Debug.Log("out of range"); return false; }
-        if (!NestParts[nestPartIndex].gotPoints) { Debug.Log("not got points"); return false; }
+        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0) { Debug.Log("out of range"); return false; }
+        if (!NestParts[nestPartIndex].HasBeenDug()) { Debug.Log("Not dug"); return false; }
 
         float marchingValue = NestParts[nestPartIndex].getMarchingValue(point);
         //Debug.Log("Type: " + NestPart.NestPartTypeToIndex(NestParts[nestPartIndex].mode));
         //Debug.Log("value: " + marchingValue);
         if (marchingValue < WorldGen.isolevel * 1.05f) // there was a * 1.05. Why???
-        {
-            //Debug.Log("Marching value cool");
-            //disregard undug chambers
-            if (NestParts[nestPartIndex].HasBeenDug())
-                return true;
-        }
+            return true;
 
         return false;
     }
@@ -414,6 +469,7 @@ public class Nest : MonoBehaviour
         //This is what caused the ant to be stuck going outside on a cube that is partially inside and
         //outside.
         if (type == NestPart.NestPartType.Outside) return !SurfaceInNest(surface);
+        if (type == NestPart.NestPartType.Inside) return SurfaceInNest(surface);
 
         for (int i = 0; i < 8; i++)
         {
@@ -424,21 +480,68 @@ public class Nest : MonoBehaviour
         return false;
     }
 
-    public static int GetCubeNestPart(Vector3Int cubePos, NestPart.NestPartType mode)
+    public static bool SurfaceInNestPart(CubePaths.CubeSurface surface, int NestPartIndex)
     {
-        for (int i = 0; i < NestParts.Count; i++)
+        for (int i = 0; i < 8; i++)
         {
-            if (NestParts[i].mode == mode && NestParts[i].HasBeenDug())
+            if (surface.surfaceGroup[i])
+                if (PointInNestPart(chunk.cornerIdToPos[i] + surface.pos, NestPartIndex))
+                    return true;
+        }
+        return false;
+    }
+
+    public static int GetSurfaceNestPartIndex(CubePaths.CubeSurface surface, NestPart.NestPartType mode)
+    {
+        for (int nestPartIndex = 0; nestPartIndex < NestParts.Count; nestPartIndex++)
+        {
+            if (NestParts[nestPartIndex].mode == mode && NestParts[nestPartIndex].HasBeenDug())
             {
                 for (int cornerId = 0; cornerId < 8; cornerId++)
                 {
-                    float marchingValue = NestParts[i].getMarchingValue(cubePos + chunk.cornerIdToPos[cornerId]);
-                    if (marchingValue < WorldGen.isolevel)
-                    {
-                        return i;
-                    }
+                    if (surface.surfaceGroup[cornerId])
+                        if (PointInNestPart(chunk.cornerIdToPos[cornerId] + surface.pos, nestPartIndex))
+                            return nestPartIndex;
                 }
             }
+        }
+        return -1;
+    }
+
+    public static int GetSurfaceChamberIndex(CubePaths.CubeSurface surface)
+    {
+        for (int nestPartIndex = 0; nestPartIndex < NestParts.Count; nestPartIndex++)
+        {
+            if (NestParts[nestPartIndex].mode != NestPart.NestPartType.Tunnel && NestParts[nestPartIndex].HasBeenDug())
+            {
+                for (int cornerId = 0; cornerId < 8; cornerId++)
+                {
+                    if (surface.surfaceGroup[cornerId])
+                        if (PointInNestPart(chunk.cornerIdToPos[cornerId] + surface.pos, nestPartIndex))
+                            return nestPartIndex;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static List<int> GetDugNestPartIndexes(NestPart.NestPartType type)
+    {
+        List<int> indexes = new();
+        for (int index = 0; index < NestParts.Count; index++)
+        {
+            if (NestParts[index].mode == type && NestParts[index].HasBeenDug() && NestParts[index].HasBeenPlaced())
+                indexes.Add(index);
+        }
+        return indexes;
+    }
+
+    public static int GetFirstDugNestPartIndex(NestPart.NestPartType type) //returns -1 if none
+    {
+        for (int index = 0; index < NestParts.Count; index++)
+        {
+            if (NestParts[index].mode == type && NestParts[index].HasBeenDug() && NestParts[index].HasBeenPlaced())
+                return index;
         }
         return -1;
     }
@@ -539,9 +642,21 @@ public class Nest : MonoBehaviour
 
         if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return true; //in nest, but no foodchamber around? acceptable
 
-        if (partIndex == -1) return false; //if default is lost, ignore.
+        if (partIndex == -1) return false; //if default is lost
 
         if (NestParts[partIndex].mode == NestPart.NestPartType.FoodChamber) return true; //In foodchamber? good
+
+        if (partIndex == GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber)) //if in queen chamber
+        {
+            int numCorn = 0;
+            foreach (var cornId in NestParts[partIndex].CollectedCornPips)
+                if (!Task.IsCornBeingPickedUp(id))
+                    numCorn++;
+            if (numCorn > requieredFoodInQueenChamber) //unaccaptable if too much food
+                return false;
+            else
+                return true; //if not that much food, leave it be.
+        }    
 
         return false; //theres a foodchamber and it is not in it...
     }

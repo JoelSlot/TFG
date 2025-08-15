@@ -462,6 +462,14 @@ public class CubePaths : MonoBehaviour
 
             return count;
         }
+
+        public bool IsNull() //when you create a new surface without arguments, all it's groupvalues are false. this checks if its the case
+        {
+            foreach (var value in surfaceGroup)
+                if (value)
+                    return false;
+            return true;
+        }
     }
 
     public static float DistToPoint(Vector3 pos, Vector3 point)
@@ -1141,7 +1149,7 @@ public class CubePaths : MonoBehaviour
 
         if (objective.path.Count == 0)
         {
-            Debug.Log("Path completed");
+            //Debug.Log("Path completed");
             return BehaviourTreeStatus.Success;
         }//Para evitar seguir camino nonexistente.
 
@@ -1181,7 +1189,7 @@ public class CubePaths : MonoBehaviour
 
             else if (antSurfacePathPos == objective.path.Count - 2)
             {
-                Debug.Log("Reached second to last surface of path");
+                //Debug.Log("Reached second to last surface of path");
 
                 if (IsSmallSingularTriangle(objective.path.Last(), out Vector3Int corner))
                 {
@@ -1196,7 +1204,7 @@ public class CubePaths : MonoBehaviour
 
             else
             {
-                Debug.Log("On path, following next two steps");
+                //Debug.Log("On path, following next two steps");
                 Vector3Int dir1 = objective.path[antSurfacePathPos + 1].pos - antSurface.pos;
                 Vector3Int dir2 = objective.path[antSurfacePathPos + 2].pos - objective.path[antSurfacePathPos + 1].pos;
                 goal = GetMovementGoal(antSurface, dir1, dir2);
@@ -1244,14 +1252,14 @@ public class CubePaths : MonoBehaviour
                 }
             }
             if (foundBetter) range++; //If we did find a better one on next range, save that range
-            if (foundBetter) Debug.Log("Found better in next range!");
+            //if (foundBetter) Debug.Log("Found better in next range!");
         }
 
 
         //Si no se ha encontrado el camino, hemos fallado
         if (antSurfacePathPos == -1)
         {
-            Debug.Log("not found");
+            //Debug.Log("not found");
             objective.path = new();
             return BehaviourTreeStatus.Failure;
         }

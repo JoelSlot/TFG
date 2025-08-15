@@ -147,7 +147,7 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Pick up queen
+      name: Eat Queen
       takeName: Pick up baked
       internalID: 746880465905085072
       firstFrame: 0
@@ -172,7 +172,7 @@ ModelImporter:
       curves: []
       events:
       - time: 0.7717231
-        functionName: PickupEvent
+        functionName: EatEvent
         data: 
         objectReferenceParameter: {fileID: 11500000, guid: 0ca524b848a26c14982bcc74a6211d93, type: 3}
         floatParameter: 0

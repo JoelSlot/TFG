@@ -18,6 +18,7 @@ public class Corn : MonoBehaviour
 
     void OnDestroy()
     {
+        Nest.RemovePip(id);
         cornDictionary.Remove(id);
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -87,7 +88,7 @@ public class Corn : MonoBehaviour
         return null;
     }
 
-    public static void PlaceCorn(GameObject cornObj, Ant ant, bool inNest)
+    public static void PlaceCorn(CubePaths.CubeSurface antSurface, GameObject cornObj, Ant ant, bool inNest)
     {
         Corn corn = cornObj.GetComponent<Corn>();
         if (corn == null)
@@ -101,7 +102,7 @@ public class Corn : MonoBehaviour
         if (inNest)
         {
             //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
-            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(ant.transform.position), NestPart.NestPartType.FoodChamber);
+            int nestPartId = Nest.GetSurfaceChamberIndex(antSurface);
             Nest.AddPip(corn.id, nestPartId);
             Vector3 dir; 
             if (nestPartId != -1)
@@ -112,7 +113,7 @@ public class Corn : MonoBehaviour
             else 
                 dir = (ant.transform.up * 2 + ant.transform.position - corn.transform.position).normalized;
                 
-            while (!WorldGen.IsAboveSurface(corn.transform.position - dir * 0.3f))
+            while (!WorldGen.IsAboveSurface(corn.transform.position - dir * 0.3f) && !WorldGen.IsAboveSurface(corn.transform.position))
             {
                 corn.transform.position += dir * 0.3f;
             }

@@ -98,6 +98,7 @@ public class Ant : MonoBehaviour
         Debug.Log("Destroyed me");
         antDictionary.Remove(id);
         Nest.RemoveEgg(id);
+        Nest.antsBringingQueenFood.Remove(id);
     }
 
     // Start is called before the first frame update
@@ -147,6 +148,9 @@ public class Ant : MonoBehaviour
                         .Do("Get task for carrying food", t => CarryFood())
                     .End()
 
+                    //this exists to remove ant from the list of ants getting food for queen if it failed.
+                    .Do("Remove ant from bringing food duty", t => { Nest.antsBringingQueenFood.Remove(id); return BehaviourTreeStatus.Failure; })
+
                     .Sequence("If carrying egg bring to egg chamber") //To do: expand this into giving food to larva?
                         .Condition("Carrying food check", t => IsHoldingEgg())
                         .Do("Get task for carrying food", t => CarryEgg())
@@ -174,7 +178,7 @@ public class Ant : MonoBehaviour
                         .Sequence("Pick up sequence")
                             .Do("Go to item", t => FollowTaskPath())
                             .Do("Align with item", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => { Debug.Log("Waiting"); return BehaviourTreeStatus.Running; })
+                            .Do("Wait for pickup", t => { /*Debug.Log("Waiting");*/ return BehaviourTreeStatus.Running; })
                         .End()
                     .End()
 
@@ -205,6 +209,7 @@ public class Ant : MonoBehaviour
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
                         .Condition("Make sure im ACTUALLY lost", t => AmIStillLost())
+                        .Do("Stop brining queen food if i am", t=> { Nest.antsBringingQueenFood.Remove(id);  return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Check if in nest", t => CheckLostStatus())
                     .End()
@@ -225,27 +230,62 @@ public class Ant : MonoBehaviour
     }
 
 
+    private bool BringFoodToQueen() //returns true if the ant manages to get next step in bringing food to queen. false if not tasked or failed
+    {
+        if (!Nest.antsBringingQueenFood.Contains(id)) return false;
+
+        int queenChamberIndex = Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
+
+        if (queenChamberIndex == -1) //if no dug chamber for queen, stop bringing and exit
+        {
+            Nest.antsBringingQueenFood.Remove(id); //relieve of duty if the queen chamber disapeared.
+            return false;
+        }
+
+        if (Nest.SurfaceInNestPart(antSurface, queenChamberIndex)) //if in first queen chamber, put down
+        {
+            PutDown();
+            return true;
+        }
+        else //if not in first queen chamber, go there
+        {
+            Debug.Log("3");
+            objective = Task.GoToNestPartTask(antSurface, queenChamberIndex);
+
+            if (objective.isTaskType(TaskType.Lost)) //If you didnt find path, stop bringing.
+            {
+                Nest.antsBringingQueenFood.Remove(id);
+                return false;
+            }
+
+            return true;
+        }
+        
+    }
+
     private BehaviourTreeStatus CarryFood()
     {
         if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
         {
-            
-            //Debug.Log("1");
+            Debug.Log("1");
             objective = Task.GoInsideTask(antSurface);
             //Debug.Log("Task is go inside");
             return BehaviourTreeStatus.Success;
         }
 
-        if (Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber)) //if in food chamber
+        if (BringFoodToQueen()) return BehaviourTreeStatus.Success;
+
+
+        if (Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber)) //if nest has food chamber
         {
             if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
             {
-                //Debug.Log("2");
+                Debug.Log("2");
                 return PutDown();
             }
             else
             {
-                //Debug.Log("3");
+                Debug.Log("3");
                 objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber);
                 //Debug.Log("Task is go to food chamber");
                 return BehaviourTreeStatus.Success;
@@ -253,7 +293,7 @@ public class Ant : MonoBehaviour
         }
         else if (!Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel)) //if not in tunnel
         {
-            //Debug.Log("4");
+            Debug.Log("4");
             return PutDown();
         }
         else
@@ -417,7 +457,7 @@ public class Ant : MonoBehaviour
                     //Shortenede anim but looked bad, so readjusted it
                     //then had to move the event again because adjusting anim length changes event time.
                 }
-                else tree.Tick(new TimeData(Time.deltaTime));
+                else tree.Tick(new TimeData(Time.deltaTime), "");
 
             }
 
@@ -722,6 +762,8 @@ public class Ant : MonoBehaviour
 
     public void PutDownAction()
     {
+        Animator.SetBool("Put down", false);
+        if (!Animator.GetBool("grounded")) return; //So as to not do stuff when in midair: not having valid surface
 
         Vector3 mouthPos = carriedObject.transform.position;
 
@@ -733,16 +775,15 @@ public class Ant : MonoBehaviour
 
             Corn corn = child.gameObject.GetComponent<Corn>();
             Ant antEgg = child.gameObject.GetComponent<Ant>();
-            if (corn != null) Corn.PlaceCorn(child.gameObject, this, inNest);
-            else if (antEgg != null) Ant.PlaceAntEgg(child.gameObject, this, inNest);
+            if (corn != null) Corn.PlaceCorn(antSurface, child.gameObject, this, inNest);
+            else if (antEgg != null) Ant.PlaceAntEgg(antSurface, child.gameObject, this, inNest);
 
         }
         carriedObject.transform.DetachChildren();
-        Animator.SetBool("Put down", false);
         UpdateHolding();
     }
 
-    private static void PlaceAntEgg(GameObject eggObj, Ant ant, bool inNest)
+    private static void PlaceAntEgg(CubePaths.CubeSurface antSurface, GameObject eggObj, Ant ant, bool inNest)
     {
         Ant egg = eggObj.GetComponent<Ant>();
         if (egg == null)
@@ -755,7 +796,7 @@ public class Ant : MonoBehaviour
         if (inNest)
         {
             //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
-            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(ant.transform.position), NestPart.NestPartType.EggChamber);
+            int nestPartId = Nest.GetSurfaceNestPartIndex(antSurface, NestPart.NestPartType.EggChamber);
             Nest.AddEgg(egg.id, nestPartId);
             Vector3 dir;
             if (nestPartId != -1)

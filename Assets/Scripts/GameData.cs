@@ -36,6 +36,7 @@ public class GameData
     public Dictionary<int, int> eggHeldAntDict { get; set; } //Key is egg index, value is holder index
     public HashSet<int> cornLostInNestDict { get; set; }
     public HashSet<int> eggsLostInNestDict { get; set; }
+    public HashSet<int> antsBringingQueenFoodDict { get; set; }
     public HashSet<CornCobInfo> cornCobInfoDict { get; set; }
     public Dictionary<Vector3Int, DigPoint.digPointData> digPointDict { get; set; }
     public HashSet<serializableVector3Int> availableDigPointInfoDict { get; set; }
@@ -169,6 +170,8 @@ public class GameData
         Debug.Log("Num nestParts: " + nestPartInfoDict.Count);
         cornLostInNestDict = Nest.lostPips;
         eggsLostInNestDict = Nest.lostEggs;
+        antsBringingQueenFoodDict = Nest.antsBringingQueenFood;
+
     }
 
     public void SavePhermones()
@@ -340,21 +343,23 @@ public class GameData
         public serializableQuaternion orientation { get; set; }
         public bool isHolding { get; set; }
         public int Counter { get; set; }
+        public int Energy { get; set; }
 
         private QueenInfo()
         {
 
         }
 
-        public static QueenInfo ToData(AntQueen ant)
+        public static QueenInfo ToData(AntQueen queen)
         {
             QueenInfo info = new();
-            info.objective = TaskInfo.ToData(ant.objective);
-            info.pos = new(ant.transform.position);
-            info.orientation = new(ant.transform.rotation);
-            info.Counter = ant.Counter;
+            info.objective = TaskInfo.ToData(queen.objective);
+            info.pos = new(queen.transform.position);
+            info.orientation = new(queen.transform.rotation);
+            info.Counter = queen.Counter;
+            info.Energy = queen.Energy;
 
-            info.isHolding = ant.IsHolding();
+            info.isHolding = queen.IsHolding();
 
             return info;
         }
@@ -578,6 +583,7 @@ public class GameData
 
         Nest.lostPips = cornLostInNestDict;
         Nest.lostEggs = eggsLostInNestDict;
+        Nest.antsBringingQueenFood = antsBringingQueenFoodDict;
 
         CubePaths.cubePheromones = pheromones;
 

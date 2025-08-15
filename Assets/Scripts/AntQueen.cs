@@ -42,6 +42,7 @@ public class AntQueen : MonoBehaviour
     //Datos que hay que guardar y cargar
     public Task objective = Task.NoTask();
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
+    public int Energy = 0; //increases when eating, decreases to give birth
 
 
     //Static values
@@ -78,38 +79,34 @@ public class AntQueen : MonoBehaviour
         var builder = new BehaviourTreeBuilder();
         this.tree = builder
             .Sequence("Main")
-                .Selector("Chill if in queen chamber")
-                    .Condition("Exit if not in queen chamber", t => !Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.QueenChamber))
 
-                    .Do("Give birth if conditions are fullfilled", t => { return BehaviourTreeStatus.Failure; })
-
+                .Selector("Decide what to do")
                     .Condition("Exit if doing something", t => !objective.isTaskType(TaskType.None))
 
-                    .Do("Either walk, eat or chill", t => GetQueenChamberTask(antSurface, ref objective))
+                    .Sequence("Chill if in queen chamber")
+                        .Condition("Exit if not in queen chamber", t => Nest.SurfaceInNestPart(antSurface, Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber)))
+                        .Do("Either walk, eat, give birth or chill", t => GetQueenChamberTask(antSurface, ref objective))
+                    .End()
 
-                .End()
-                .Selector("If not in chamber, go there or do other stuff.")
-                    .Condition("Exit if doing something relevant", t => { return !objective.isTaskType(TaskType.None) && !objective.isTaskType(TaskType.Wait); })
-
-                    .Sequence("If there is a queen chamber")
+                    .Sequence("If not in chamber, go there or do other stuff.")
                         .Condition("Exit if there isn't a queen chamber", t => Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber))
-                        .Do("Set task to go to queen chamber", t => { objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber); return BehaviourTreeStatus.Success; })
+                        .Do("Set task to go to queen chamber", t => { objective = Task.GoToNestPartTask(antSurface, Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber)); return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Do("Get nearby dig task", t => SenseDigTask())
-                    .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -1, ref objective))
+                    .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -2, ref objective))
+                    .Do("Did not find anything to do", t => { Debug.Log("Didnt find stuff to do as queen");  return BehaviourTreeStatus.Success; })
 
                 .End()
-
                 .Selector("Do tasks")
 
-                    .Sequence("Pick up corn routine")
-                        .Condition("My task is picking up corn?", t => objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
+                    .Sequence("Eat routine")
+                        .Condition("My task is eating?", t => objective.isTaskType(TaskType.Eat))
                         .Condition("Is my task valid", t => objective.isValid(ref objective))
-                        .Sequence("Pick up sequence")
+                        .Sequence("Eat sequence")
                             .Do("Go to food", t => FollowTaskPath())
                             .Do("Align with food", t => Align(objective.getPos()))
-                            .Do("Wait for pickup", t => BehaviourTreeStatus.Running)
+                            .Do("Wait eating", t => BehaviourTreeStatus.Running)
                         .End()
                     .End()
 
@@ -198,7 +195,7 @@ public class AntQueen : MonoBehaviour
                 //Shortenede anim but looked bad, so readjusted it
                 //then had to move the event again because adjusting anim length changes event time.
             }
-            else tree.Tick(new TimeData(Time.deltaTime), "");
+            else tree.Tick(new TimeData(Time.deltaTime));
 
 
 
@@ -380,9 +377,9 @@ public class AntQueen : MonoBehaviour
         }
         DontTurn();
 
-        if (objective.isTaskType(TaskType.GetCorn) || objective.isTaskType(TaskType.CollectFromCob))
+        if (objective.isTaskType(TaskType.Eat))
         {
-            Animator.SetBool("Pick up", true);
+            Animator.SetBool("Eat", true);
         }
         if (objective.isTaskType(TaskType.Dig))
         {
@@ -392,8 +389,10 @@ public class AntQueen : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    private void Update()
+    void OnDestroy()
     {
+        Debug.Log("Destroyed me");
+        antQueenSet.Remove(this);
     }
 
     public Vector3 GetRelativePos(float x, float y, float z)
@@ -401,15 +400,33 @@ public class AntQueen : MonoBehaviour
         return Rigidbody.position + queenObj.transform.rotation * new Vector3(x, y, z);
     }
 
-    public void PickupEvent() //function called by the animation
+    public void EatEvent() //function called by the animation
     {        
-        Animator.SetBool("Pick up", false);
+        Animator.SetBool("Eat", false);
+        
+        //Debug.Log("I GOT TO PICK UP");
+        if (!objective.isTaskType(TaskType.Eat))
+        {
+            //Debug.Log("Fail");
+            Animator.SetTrigger("Pick up fail");
+            return;
+        }
+
+        if (objective.isValid(ref objective))
+        {
+            //Debug.Log("Valid");
+            GameObject food = objective.GetItem();
+            Destroy(food); //corn destroy removes it from dictionaries
+            Energy++;
+        }
 
         objective = Task.NoTask();
     }
 
-    public void GiveBirth()
+    public bool GiveBirth()
     {
+        if (Energy < 5) return false;
+        else Energy -= 5;
 
         Vector3 eggPos = abdomenBone.transform.position;
 
@@ -417,14 +434,14 @@ public class AntQueen : MonoBehaviour
 
         if (Nest.PointInNest(transform.position))
         {
-            int nestPartId = Nest.GetCubeNestPart(Vector3Int.FloorToInt(transform.position), NestPart.NestPartType.QueenChamber);
+            int nestPartId = Nest.GetSurfaceChamberIndex(antSurface);
 
             Nest.AddEgg(newBorn.id, nestPartId);
             if (nestPartId != -1)
             {
                 Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
                 Vector3 dir = (chamberCenter - eggPos).normalized;
-                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f))
+                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f) && !WorldGen.IsAboveSurface(newBorn.transform.position))
                 {
                     newBorn.transform.position += dir * 0.3f;
                 }
@@ -432,12 +449,14 @@ public class AntQueen : MonoBehaviour
             else
             {
                 Vector3 dir = (transform.up * 2 + transform.position - eggPos).normalized;
-                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f))
+                while (!WorldGen.IsAboveSurface(newBorn.transform.position - dir * 0.3f) && !WorldGen.IsAboveSurface(newBorn.transform.position))
                 {
                     newBorn.transform.position += dir * 0.3f;
                 }
             }
         }
+
+        return true;
     }
 
     public void PutDownAction()
@@ -659,12 +678,31 @@ public class AntQueen : MonoBehaviour
             return BehaviourTreeStatus.Success;
         }*/
 
-        if (UnityEngine.Random.Range(0, 10) < 8)
-            objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
-        else
-            objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.QueenChamber);
+        //Just in case we somehow call this function when not in first dug queen chamber
+        int nestPartId = Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
+        if (nestPartId != -1)
+            if (GiveBirth())
+            {
+                objective = Task.GoToNestPartTask(antSurface, Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber));
+                if (objective.isTaskType(TaskType.Lost)) objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+                return BehaviourTreeStatus.Success;
+            }
+            else //if not given birth, go eat something if food in chamber
+            {
+                foreach (int cornId in Nest.NestParts[nestPartId].CollectedCornPips) //for each pip in chamber
+                {
+                    //if already being picked up go to next
+                    if (Task.IsCornBeingPickedUp(cornId)) continue;
+                    if (CubePaths.GetKnownPathToPoint(antSurface, Corn.cornDictionary[cornId].transform.position, 1.2f, out List<CubePaths.CubeSurface> newPath))
+                    {
+                        objective = Task.GetEatTask(cornId, -2, newPath);
+                        return BehaviourTreeStatus.Success;
+                    }
+                }
+            }
 
-        if (objective.isTaskType(TaskType.Lost)) objective = Task.WaitTask(this, 5);
+        objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+
         return BehaviourTreeStatus.Success;
 
     }

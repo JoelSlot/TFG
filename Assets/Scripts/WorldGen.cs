@@ -664,6 +664,7 @@ public class WorldGen : MonoBehaviour
 
         newQueenScript.objective = new Task(queenInfo.objective);
         newQueenScript.Counter = queenInfo.Counter;
+        newQueenScript.Energy = queenInfo.Energy;
 
         newQueen.name = "Ant Queen";
         AntQueen.antQueenSet.Add(newQueenScript);

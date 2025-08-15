@@ -18,7 +18,8 @@ public enum TaskType
     GoToTunnel,
     Lost,
     Wait,
-    None
+    None,
+    Eat
 }
 
 public class Task
@@ -38,7 +39,7 @@ public class Task
     {
         type = newType;
         if (type == TaskType.Dig) { digPointId = Vector3Int.RoundToInt(newGameObject.transform.position); Debug.Log("Got digtask"); }
-        else if (type == TaskType.GetCorn) itemId = newGameObject.GetComponent<Corn>().id;
+        else if (type == TaskType.GetCorn || type == TaskType.Eat) itemId = newGameObject.GetComponent<Corn>().id;
         else if (type == TaskType.GetEgg) itemId = newGameObject.GetComponent<Ant>().id;
         else if (type == TaskType.CollectFromCob) itemId = newGameObject.GetComponent<CornCob>().id;
         //else //Debug.Log("WRONG TASKTYPE");
@@ -77,6 +78,20 @@ public class Task
 
         Task newTask = new();
         newTask.type = TaskType.GetCorn;
+        newTask.itemId = cornId;
+        newTask.pos = Corn.cornDictionary[cornId].transform.position;
+        newTask.path = newPath;
+
+        return newTask;
+    }
+    public static Task GetEatTask(int cornId, int antId, List<CubePaths.CubeSurface> newPath)
+    {
+        if (!Corn.cornDictionary.ContainsKey(cornId)) return Task.NoTask();
+
+        Corn.cornDictionary[cornId].antId = antId;
+
+        Task newTask = new();
+        newTask.type = TaskType.Eat;
         newTask.itemId = cornId;
         newTask.pos = Corn.cornDictionary[cornId].transform.position;
         newTask.path = newPath;
@@ -122,7 +137,7 @@ public class Task
         };
 
         //Used foodchamber for now as default
-        if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.FoodChamber, out GOtask.path)) return GOtask;
+        if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.Inside, out GOtask.path)) return GOtask;
 
         //Debug.Log("No valid path");
 
@@ -156,6 +171,9 @@ public class Task
             case NestPart.NestPartType.Outside:
                 GOtask.type = TaskType.GoOutside;
                 break;
+            case NestPart.NestPartType.Inside:
+                GOtask.type = TaskType.GoInside;
+                break;
             case NestPart.NestPartType.Tunnel:
                 GOtask.type = TaskType.GoToTunnel;
                 break;
@@ -184,6 +202,43 @@ public class Task
 
         return LostTask(antSurface, Vector3.up);
     }
+
+    public static Task GoToNestPartTask(CubePaths.CubeSurface antSurface, int index) //does not work for tunnels. Will go to nearest one.
+    {
+        Task GOtask = new();
+        if (index < 0 || index > Nest.NestParts.Count) { Debug.Log("requesting to go to invalid nestpart"); return LostTask(antSurface, Vector3.up); } //si fuera de rango estamos perdidos.
+        var type = Nest.NestParts[index].mode;
+        switch (type)
+        {
+            case NestPart.NestPartType.Tunnel:
+                GOtask.type = TaskType.GoToTunnel;
+                break;
+            default:
+                GOtask.type = TaskType.GoToChamber;
+                break;
+        }
+
+        if (GOtask.type == TaskType.GoToChamber)
+        {
+            if (Nest.GetPointInChamber(index, out Vector3 point))
+            {
+                if (CubePaths.GetKnownPathToPoint(antSurface, point, 1, out GOtask.path))
+                {
+                    //Debug.Log("Going to specific point boss");
+                    return GOtask;
+                }
+            }
+
+        }
+        else
+            if (CubePaths.GetKnownPathToMapPart(antSurface, type, out GOtask.path))
+            return GOtask;
+
+        //Debug.Log("No valid path");
+
+        return LostTask(antSurface, Vector3.up);
+    }
+
 
     public static Task ExploreTask(CubePaths.CubeSurface antSurface, Vector3 forward, out int timesToRepeat)
     {
@@ -258,7 +313,7 @@ public class Task
     public bool isTaskType(TaskType checkType) { return checkType == type; }
     public GameObject GetItem()
     {
-        if (isTaskType(TaskType.GetCorn))
+        if (isTaskType(TaskType.GetCorn) || isTaskType(TaskType.Eat))
         {
             if (Corn.cornDictionary.TryGetValue(itemId, out Corn corn))
                 return corn.gameObject;
@@ -288,16 +343,27 @@ public class Task
 
     public static bool IsCornBeingPickedUp(Corn cornScript)
     {
-        //Mirar si ya lo va a recoger otra hormiga
-        if (cornScript.antId != -1)
+
+        //mirar si lo va a comer la reina
+        if (cornScript.antId == -2)
         {
-            if (Ant.antDictionary.TryGetValue(cornScript.antId, out Ant cornAnt))
+            foreach (var queen in AntQueen.antQueenSet)
             {
-                if (cornAnt.objective.isTaskType(TaskType.GetCorn))
-                    if (cornAnt.objective.itemId == cornScript.id)
+                if (queen.objective.isTaskType(TaskType.Eat))
+                    if (queen.objective.itemId == cornScript.id)
                         return true;
             }
         }
+        //Mirar si ya lo va a recoger otra hormiga
+            if (cornScript.antId != -1)
+            {
+                if (Ant.antDictionary.TryGetValue(cornScript.antId, out Ant cornAnt))
+                {
+                    if (cornAnt.objective.isTaskType(TaskType.GetCorn))
+                        if (cornAnt.objective.itemId == cornScript.id)
+                            return true;
+                }
+            }
         return false;
     }
     public static bool IsCornBeingPickedUp(int cornId)
@@ -331,14 +397,23 @@ public class Task
 
     public static bool IsDigPointBeingDug(Vector3Int digPointPos)
     {
-        //i mean if it doens't exist it mught as well be dug right???
+        //i mean if it doens't exist consider it being dug right?
         if (!DigPoint.digPointDict.TryGetValue(digPointPos, out DigPoint.digPointData digPoint)) return true;
 
-        int digPointsAntId = digPoint.antId;
-        //Mirar si ya lo va a excavar otra hormiga
-        if (digPointsAntId != -1)
+        //mirar si lo va a comer la reina
+        if (digPoint.antId == -2)
         {
-            if (Ant.antDictionary.TryGetValue(digPointsAntId, out Ant digPointsAnt))
+            foreach (var queen in AntQueen.antQueenSet)
+            {
+                if (queen.objective.isTaskType(TaskType.Eat))
+                    if (queen.objective.digPointId == digPointPos)
+                        return true;
+            }
+        }
+        //Mirar si ya lo va a excavar otra hormiga
+        if (digPoint.antId != -1)
+        {
+            if (Ant.antDictionary.TryGetValue(digPoint.antId, out Ant digPointsAnt))
             {
                 if (digPointsAnt.objective.isTaskType(TaskType.Dig))
                     if (digPointsAnt.objective.digPointId == digPointPos)
@@ -361,6 +436,7 @@ public class Task
                     return false;
                 }
                 break;
+            case TaskType.Eat:
             case TaskType.GetCorn:
                 GameObject foodObj = GetItem();
                 //if the food item no longer exists
@@ -496,6 +572,7 @@ public class Task
             case TaskType.Wait: return "Waiting";
             case TaskType.None: return "None";
             case TaskType.CollectFromCob: return "Going to cob";
+            case TaskType.Eat: return "Eating";
         }
         return "error";
     }
@@ -516,6 +593,7 @@ public class Task
             case TaskType.Wait: return 9;
             case TaskType.None: return 10;
             case TaskType.CollectFromCob: return 11;
+            case TaskType.Eat: return 12;
         }
         return -1;
     }
@@ -536,6 +614,7 @@ public class Task
             case 9: return TaskType.Wait;
             case 10: return TaskType.None;
             case 11: return TaskType.CollectFromCob;
+            case 12: return TaskType.Eat;
         }
         return TaskType.None;
     }

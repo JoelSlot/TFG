@@ -371,6 +371,7 @@ public class FlyCamera : MonoBehaviour
 
     public void GoToMenu()
     {
+        
         rotateAllowed = false;
         lockCursor(false);
         SceneManager.LoadSceneAsync(0);
@@ -632,7 +633,7 @@ public class FlyCamera : MonoBehaviour
                     break;
                 case obj.Corn:
                     if (clickObject(terrainLayer, out hit))
-                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), 2);
+                        WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), 20);
                     break;
                 case obj.test:
                     if (clickObject(terrainLayer, out hit))
