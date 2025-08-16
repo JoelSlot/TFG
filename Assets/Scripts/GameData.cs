@@ -549,11 +549,6 @@ public class GameData
             }
         }
 
-        foreach (CornCobInfo info in cornCobInfoDict)
-        {
-            CornCob cornCob = WorldGen.InstantiateCornCob(info);
-        }
-
         DigPoint.digPointDict = digPointDict;
         foreach (var id in initializedDigPoints)
         {
@@ -586,6 +581,22 @@ public class GameData
         Nest.antsBringingQueenFood = antsBringingQueenFoodDict;
 
         CubePaths.cubePheromones = pheromones;
+
+
+        foreach (CornCobInfo info in cornCobInfoDict)
+        {
+            CornCob cornCob = WorldGen.InstantiateCornCob(info);
+            if (!Nest.KnownCornCobs.Contains(cornCob.id))
+            {
+                bool known = false;
+                foreach ((var antId, var antScript) in Ant.antDictionary)
+                    if (antScript.discoveredCobs.Contains(cornCob.id))
+                        known = true;
+                if (!known)
+                    cornCob.Hide();
+            }
+        }
+
 
     }
 

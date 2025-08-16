@@ -6,6 +6,7 @@ public class CornCob : MonoBehaviour
 {
     public static Dictionary<int, CornCob> cornCobDictionary = new();
     public int id;
+    public MeshRenderer renderer;
     void OnDestroy()
     {
         cornCobDictionary.Remove(id);
@@ -108,6 +109,31 @@ public class CornCob : MonoBehaviour
                 break;
             }
         return cornCobCornDict.Remove(key);
+    }
+
+    public void Show()
+    {
+        renderer.enabled = true;
+        foreach ((var pos, var cornId) in cornCobCornDict)
+        {
+            if (Corn.cornDictionary.TryGetValue(cornId, out var cornScript))
+            {
+                cornScript.Show();
+            }
+        }
+    }
+
+    public void Hide()
+    {
+        renderer.enabled = false;
+        foreach ((var pos, var cornId) in cornCobCornDict)
+            if (Corn.cornDictionary.TryGetValue(cornId, out var cornScript))
+                cornScript.Hide();
+    }
+
+    public bool IsHidden()
+    {
+        return !renderer.enabled;
     }
 
     public static float[] cornInfo = new float[numCornSpots * 6]

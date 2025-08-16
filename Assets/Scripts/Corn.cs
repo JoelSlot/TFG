@@ -15,6 +15,8 @@ public class Corn : MonoBehaviour
 
     public int antId = -1; //Id of the ant going to pick it up
 
+    public MeshRenderer renderer;
+
 
     void OnDestroy()
     {
@@ -104,15 +106,15 @@ public class Corn : MonoBehaviour
             //Añadir pepita al nido. Si no se encuentra la hormiga en una cámara de comida, se encontrará en id -1 y tendrá que ser movido
             int nestPartId = Nest.GetSurfaceChamberIndex(antSurface);
             Nest.AddPip(corn.id, nestPartId);
-            Vector3 dir; 
+            Vector3 dir;
             if (nestPartId != -1)
             {
                 Vector3 chamberCenter = Nest.NestParts[nestPartId].getStartPos();
                 dir = (chamberCenter - corn.transform.position).normalized;
             }
-            else 
+            else
                 dir = (ant.transform.up * 2 + ant.transform.position - corn.transform.position).normalized;
-                
+
             while (!WorldGen.IsAboveSurface(corn.transform.position - dir * 0.3f) && !WorldGen.IsAboveSurface(corn.transform.position))
             {
                 corn.transform.position += dir * 0.3f;
@@ -120,4 +122,16 @@ public class Corn : MonoBehaviour
         }
 
     }
+
+    public void Show()
+    {
+        renderer.enabled = true;
+    }
+
+    public void Hide()
+    {
+        renderer.enabled = false;
+    }
+    
+
 }

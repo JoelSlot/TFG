@@ -643,13 +643,17 @@ public class Ant : MonoBehaviour
                 }
                 else if (objLayer == 11) //11 is cornCobLayer
                 {
+                    //make sure it has script.
+                    if (!sensedItem.TryGetComponent<CornCob>(out var cobScript)) continue;
                     //Only count it if it has corn left
-                    if (!sensedItem.gameObject.GetComponent<CornCob>().hasCorn()) continue;
+                    if (!cobScript.hasCorn()) continue;
                     //Set current pheromonePath to found corn!
                     if (newPath.Count < minLength) newTask = new Task(sensedItem, TaskType.CollectFromCob, newPath);
 
                     //añadimos el cob a descubiertos por hormiga.
                     discoveredCobs.Add(newTask.itemId);
+                    //Lo enseñamos si está escondido
+                    if (cobScript.IsHidden()) cobScript.Show();
                 }
                 else
                 {

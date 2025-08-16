@@ -862,6 +862,11 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &226050898 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -2147498049050074619, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
+  m_PrefabInstance: {fileID: 657142628}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &235165065
 GameObject:
   m_ObjectHideFlags: 0
@@ -3427,6 +3432,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7826695230289184442, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
+      propertyPath: m_Name
+      value: CornMesh
+      objectReference: {fileID: 0}
+    - target: {fileID: 7826695230289184442, guid: 7712aff0e486d3c44be62f7010b9d7a2, type: 3}
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
@@ -5307,6 +5316,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: 0
+  renderer: {fileID: 1266634137}
   proportion: 1
 --- !u!4 &981543630
 Transform:
@@ -6270,6 +6280,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
   m_PrefabInstance: {fileID: 1266634131}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &1266634137 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 5f4435abaf9a9d24b810233da3f6b3ac, type: 3}
+  m_PrefabInstance: {fileID: 1266634131}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1324485445
 GameObject:
   m_ObjectHideFlags: 0
@@ -7109,6 +7124,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   antId: -1
+  renderer: {fileID: 226050898}
 --- !u!1 &1569687929
 GameObject:
   m_ObjectHideFlags: 0
