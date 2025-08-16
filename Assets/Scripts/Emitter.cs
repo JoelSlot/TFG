@@ -4,6 +4,7 @@ public class Emitter : MonoBehaviour
 {
     public ParticleSystem ps;
     private ParticleSystemRenderer pr;
+    private bool enabled = true;
     int counter = 0;
     int mode = 0;
 
@@ -34,9 +35,14 @@ public class Emitter : MonoBehaviour
         ps.Emit(ep, 1);
     }
 
+    public void TogglePheromonesButton()
+    {
+        enabled = !enabled;
+    }
+
     void FixedUpdate()
     {
-        if (!FlyCamera.cameraUnderground)
+        if (!FlyCamera.cameraUnderground && enabled)
         {
             if (pr.renderMode != ParticleSystemRenderMode.Mesh)
             {

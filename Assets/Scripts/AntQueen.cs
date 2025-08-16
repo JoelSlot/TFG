@@ -685,7 +685,7 @@ public class AntQueen : MonoBehaviour
                 return BehaviourTreeStatus.Success;
             }
 
-        objective = Task.WaitTask(this, UnityEngine.Random.Range(2000, 4000));
+        objective = Task.WaitTask(this, UnityEngine.Random.Range(500, 1500));
 
         return BehaviourTreeStatus.Success;
 
