@@ -718,10 +718,12 @@ public class WorldGen : MonoBehaviour
         CornCob cornCob = cornCobObj.GetComponent<CornCob>();
         CornCob.registerCorn(cornCob);
         numPips = Math.Clamp(numPips, 0, CornCob.numCornSpots);
+        List<int> cornSpots = Enumerable.Range(0, CornCob.numCornSpots).ToList();
+        Nest.Shuffle(cornSpots);
         for (int i = 0; i < numPips; i++)
         {
             Corn newCorn = InstantiateCorn(cornCobObj.transform.position, Quaternion.identity);
-            cornCob.cornCobCornDict.Add(i, newCorn.id);
+            cornCob.cornCobCornDict.Add(cornSpots[i], newCorn.id);
         }
         return cornCob;        
     }
