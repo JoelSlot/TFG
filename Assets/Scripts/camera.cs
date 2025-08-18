@@ -6,6 +6,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Unity.VisualScripting;
 
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
@@ -15,6 +16,7 @@ public class FlyCamera : MonoBehaviour
     public float lookSensitivity = 1; // mouse look sensitivity
     public float dampingCoefficient = 5; // how quickly you break to a halt after you stop your input
     public bool focusOnEnable = true; // whether or not to focus and lock cursor immediately on enable
+    public Vector3 cameraAntVector = new(); //Distance camera has from ant
     public Camera camera; // Objeto cámara que se usa ingame
 
     public static bool cameraUnderground = false;
@@ -41,7 +43,7 @@ public class FlyCamera : MonoBehaviour
     public enum obj { None, Ant, AntQueen, Corn, digTunnel, digChamber, test }
 
     public obj objectMode = obj.None;
-    public Ant SelectedAnt;
+    public static Ant SelectedAnt = null;
     public EventSystem eventSystem;
 
     static bool rotateAllowed = false;
@@ -60,6 +62,18 @@ public class FlyCamera : MonoBehaviour
     {
         if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
         else sphere.GetComponent<MeshRenderer>().enabled = true;
+
+        //activate/deactivate control button depending on selected ant status
+        if (SelectedAnt == null) ControlButton.SetActive(false);
+        else if (SelectedAnt.IsControlled) ControlButton.SetActive(false);
+        else ControlButton.SetActive(true);
+    }
+
+    private bool IsControllingAnt()
+    {
+        if (SelectedAnt != null)
+            return SelectedAnt.IsControlled;
+        return false;
     }
 
     void Update()
@@ -105,11 +119,7 @@ public class FlyCamera : MonoBehaviour
 
     }
 
-    void FixedUpdate()
-    {
-    }
-
-    void CameraMovement()
+    void DefaultCameraMovement()
     {
         // Position
         velocity += GetAccelerationVector() * Time.deltaTime;
@@ -126,6 +136,29 @@ public class FlyCamera : MonoBehaviour
         // Physics
         velocity = Vector3.Lerp(velocity, Vector3.zero, dampingCoefficient * Time.deltaTime);
         transform.position += velocity * Time.deltaTime;
+
+    }
+
+    void ControlCameraMovement()
+    {
+
+        Vector3 changedAntVector = cameraAntVector - cameraAntVector.normalized * Input.mouseScrollDelta.y * 0.2f;
+        if (changedAntVector.magnitude < 1) changedAntVector = cameraAntVector.normalized;
+        else if (changedAntVector.magnitude > 20) changedAntVector = cameraAntVector.normalized * 20;
+
+        transform.position = SelectedAnt.transform.position + changedAntVector;
+
+        transform.RotateAround(SelectedAnt.transform.position, Vector3.up, Input.GetAxis("Mouse X"));
+        if (Input.GetAxis("Mouse Y") > 0)
+            if (Vector3.Angle(Vector3.up, changedAntVector) > 5)
+                transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
+        if (Input.GetAxis("Mouse Y") <  0)
+            if (Vector3.Angle(Vector3.down, changedAntVector) > 5)
+                transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
+
+        cameraAntVector = transform.position - SelectedAnt.transform.position;
+        
+        transform.LookAt(SelectedAnt.transform.position);
 
     }
 
@@ -230,6 +263,20 @@ public class FlyCamera : MonoBehaviour
                 PlayingModeLeftClick();
             }
         }
+    }
+
+    void ControllingMode()
+    {
+        lockCursor(true);
+        rotateAllowed = false;
+
+        //from here on inputs
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SelectedAnt.IsControlled = false;
+            ControlButton.SetActive(true);
+        }
+
     }
 
     bool clickObject(int layer, out RaycastHit hit)
@@ -368,10 +415,29 @@ public class FlyCamera : MonoBehaviour
         }
     }
 
+    public void SelectAnt(Ant newAnt)
+    {
+        if (newAnt.Equals(SelectedAnt)) return;
+        DeselectAnt();
+        SelectedAnt = newAnt;
+        SelectedAnt.outline.enabled = true;
+        ControlButton.SetActive(true);
+    }
+
+    public void DeselectAnt()
+    {
+        if (SelectedAnt != null)
+        {
+            SelectedAnt.outline.enabled = false;
+            SelectedAnt.IsControlled = false;
+        }
+        SelectedAnt = null;
+        ControlButton.SetActive(false);
+    }
 
     public void GoToMenu()
     {
-        
+
         rotateAllowed = false;
         lockCursor(false);
         SceneManager.LoadSceneAsync(0);
@@ -385,9 +451,22 @@ public class FlyCamera : MonoBehaviour
         {
             //Mouse controls depending on game mode
             if (MainMenu.GameSettings.gameMode == 0)
+            {
                 MapBuildingMode();
+                //Move the camera
+                DefaultCameraMovement();
+            }
+            else if (IsControllingAnt())
+            {
+                ControllingMode();
+                ControlCameraMovement();
+            }
             else
+            {
                 PlayingMode();
+                //Move the camera
+                DefaultCameraMovement();
+            }
         }
 
         //to return to main menu
@@ -406,8 +485,6 @@ public class FlyCamera : MonoBehaviour
             WorldGen.camera_euler = new(transform.eulerAngles);
             WG.SaveGame();
         }
-        //Move the camera
-        CameraMovement();
         if (!placingDigZone)
         {
             if (Input.GetKeyDown(KeyCode.Alpha0)) { objectMode = obj.None; Debug.Log("Modo none"); } //cambiar modo a ninguno
@@ -420,10 +497,6 @@ public class FlyCamera : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha4)) { AntQueen.antQueenSet.First().GiveBirth(); }
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
-        if (Input.GetKeyDown(KeyCode.C) && SelectedAnt != null) //Cambiar la hormiga seleccionada a modo controlado y viceversa
-        {
-            SelectedAnt.isControlled = !SelectedAnt.isControlled;
-        }
     }
 
     private Vector3Int relativeHorDir(Vector3 dir, out Vector3 left)
@@ -537,6 +610,9 @@ public class FlyCamera : MonoBehaviour
                 case obj.None:
                     if (Nest.NestVisible && clickObject(nestLayer, out RaycastHit hit)) //si en modo vision de nido buscar nido
                     {
+                        DeselectAnt();
+
+
                         NestPart hitPart = hit.transform.gameObject.GetComponent<NestPart>();
                         if (hitPart.mode != NestPart.NestPartType.Tunnel && hitPart != selectedNestPart)
                         {
@@ -553,7 +629,7 @@ public class FlyCamera : MonoBehaviour
                             selectedNestPart = null;
                             dropDownMenuObj.SetActive(false);
                         }
-                        
+
                     }
                     else
                     {
@@ -565,14 +641,16 @@ public class FlyCamera : MonoBehaviour
 
                         if (clickObject(antLayer, out hit))
                         {
-                            if (SelectedAnt != null) if (SelectedAnt.isControlled && SelectedAnt != hit.transform.gameObject.GetComponent<Ant>()) SelectedAnt.isControlled = false; //AL seleccionar una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                            SelectedAnt = hit.transform.gameObject.GetComponent<Ant>();
+                            DeselectAnt();
+                            SelectAnt(hit.transform.gameObject.GetComponent<Ant>());
                             Debug.Log("Selected an ant");
                         }
+                        else
+                            DeselectAnt();
                     }
                     break;
                 case obj.digTunnel:
-                case obj.digChamber:
+                case obj.digChamber: 
                     if (clickObject(nestLayer, out hit))
                     {
                         NestPart script = hit.transform.gameObject.GetComponent<NestPart>();
@@ -623,8 +701,7 @@ public class FlyCamera : MonoBehaviour
                 case obj.Ant:
                     if (clickObject(terrainLayer, out hit))
                     {
-                        if (SelectedAnt != null) if (SelectedAnt.isControlled) SelectedAnt.isControlled = false; //AL crear una hormiga nueva, se deselecciona la actual cambiando su estado IA a pasivo si estaba siendo controlado
-                        SelectedAnt = WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
+                        WorldGen.InstantiateAnt(hit.point, Quaternion.Euler(hit.normal), true);
                     }
                     break;
                 case obj.AntQueen:
@@ -891,6 +968,19 @@ public class FlyCamera : MonoBehaviour
     {
         if (!placingDigZone)
             WG.SaveGame();
+    }
+
+    //UI CONTROL ANT BUTTON
+
+    public GameObject ControlButton;
+    public void ControlAntButton()
+    {
+        ControlButton.SetActive(false);
+        if (SelectedAnt != null)
+        {
+            SelectedAnt.IsControlled = true;
+            cameraAntVector = (SelectedAnt.transform.up - SelectedAnt.transform.forward) * 4;
+        }
     }
 
 

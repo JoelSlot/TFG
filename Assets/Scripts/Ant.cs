@@ -39,14 +39,15 @@ public class Ant : MonoBehaviour
     public int antId = -1; //Id of the ant that is picking it up if it is still an egg
     public int age = 0;
     public Task objective = Task.NoTask();
-    public bool isControlled = false;
+    public Outline outline;
+    public bool IsControlled = false; //outline will be enabled/disabled depending on 
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
     public HashSet<int> discoveredCobs = new(); //Cobs discovered outside of nest.
 
 
 
     //Static values
-    public static float speed_per_second = 2f;
+    public static float speed_per_second = 2.5f;
     public static float degrees_per_second = 67.5f;
     public static float speed = 0;
     public static float tiltSpeed = 10;
@@ -99,6 +100,10 @@ public class Ant : MonoBehaviour
         antDictionary.Remove(id);
         Nest.RemoveEgg(id);
         Nest.antsBringingQueenFood.Remove(id);
+        if (FlyCamera.SelectedAnt != null)
+            if (FlyCamera.SelectedAnt.id == id)
+                FlyCamera.SelectedAnt = null;
+
     }
 
     // Start is called before the first frame update
@@ -437,28 +442,27 @@ public class Ant : MonoBehaviour
             DontTurn();
             SetWalking(false);
 
-            if (isControlled)
+            
+            var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsTag("noMove"))
+            {
+                SetWalking(false);
+                DontTurn();
+                //DigEvent
+                //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
+                //To copy the pickup anim into a dig anim again. whoops.
+                //After copying pickup and adding it as dig, added event
+                //Shortenede anim but looked bad, so readjusted it
+                //then had to move the event again because adjusting anim length changes event time.
+            }
+            else if (IsControlled)
             {
                 AntInputs();
                 objective = Task.NoTask();
             }
             else
             {
-
-                var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
-                if (stateInfo.IsTag("noMove"))
-                {
-                    SetWalking(false);
-                    DontTurn();
-                    //DigEvent
-                    //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
-                    //To copy the pickup anim into a dig anim again. whoops.
-                    //After copying pickup and adding it as dig, added event
-                    //Shortenede anim but looked bad, so readjusted it
-                    //then had to move the event again because adjusting anim length changes event time.
-                }
-                else tree.Tick(new TimeData(Time.deltaTime), "");
-
+                tree.Tick(new TimeData(Time.deltaTime), "");
             }
 
 
@@ -904,13 +908,6 @@ public class Ant : MonoBehaviour
         else objective = Task.NoTask();
     }
 
-    void RandomMovement()
-    {
-        speed = speed_per_second * Time.fixedDeltaTime;
-        Animator.SetBool("walking", true);
-    }
-
-
     //La idea inicial es coger el plano x-z sobre el que se encuentra la hormiga, luego proyectar el punto del objeto pheromona sobre �l.
     //Dependiendo de donde se encuentra en el plano ajustar la direcci�n y decidir si moverse hacia delante.
     void FollowGoal(Vector3 hitNormal, Vector3 goal, float minAngle)
@@ -945,7 +942,7 @@ public class Ant : MonoBehaviour
     {
         if (walk)
         {
-            speed = speed_per_second * Time.fixedDeltaTime;
+            speed = speed_per_second * Time.fixedDeltaTime * transform.localScale.x;
             Animator.SetBool("walking", true);
         }
         else
@@ -1083,10 +1080,10 @@ public class Ant : MonoBehaviour
     void AntInputs()
     {
         //if (SelectedAnt.state != Ant.AIState.Controlled) return;
-        if (Input.GetKey(KeyCode.UpArrow)) SetWalking(true);
+        if (Input.GetKey(KeyCode.W)) SetWalking(true);
         else SetWalking(false);
-        if (Input.GetKey(KeyCode.LeftArrow)) TurnLeft();
-        else if (Input.GetKey(KeyCode.RightArrow)) TurnRight();
+        if (Input.GetKey(KeyCode.A)) TurnLeft();
+        else if (Input.GetKey(KeyCode.D)) TurnRight();
         else DontTurn();
         //if(Input.GetKey(KeyCode.Comma))             LetGo();
 

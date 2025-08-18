@@ -322,7 +322,7 @@ public class GameData
             info.antId = ant.antId;
             info.age = ant.age;
             info.objective = TaskInfo.ToData(ant.objective);
-            info.isControlled = ant.isControlled;
+            info.isControlled = ant.IsControlled;
             info.pos = new(ant.transform.position);
             info.orientation = new(ant.transform.rotation);
             info.Counter = ant.Counter;

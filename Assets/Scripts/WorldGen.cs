@@ -624,7 +624,7 @@ public class WorldGen : MonoBehaviour
         else newAntScript.born = true;
         
         newAntScript.objective = new Task(antInfo.objective);
-        newAntScript.isControlled = antInfo.isControlled;
+        newAntScript.IsControlled = antInfo.isControlled;
         newAntScript.Counter = antInfo.Counter;
         newAntScript.discoveredCobs = antInfo.discoveredCobs;
 
