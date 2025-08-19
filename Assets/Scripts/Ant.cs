@@ -104,6 +104,8 @@ public class Ant : MonoBehaviour
             if (FlyCamera.SelectedAnt.id == id)
                 FlyCamera.SelectedAnt = null;
 
+        WorldGen.updateAntCounter = true;
+
     }
 
     // Start is called before the first frame update
@@ -760,6 +762,9 @@ public class Ant : MonoBehaviour
             Animator.SetTrigger("Pick up fail");
         }
 
+        WorldGen.updateCornCounter = true;
+        WorldGen.updateAntCounter = true;
+
         objective = Task.NoTask();
     }
 
@@ -784,6 +789,8 @@ public class Ant : MonoBehaviour
         }
         carriedObject.transform.DetachChildren();
         UpdateHolding();
+        WorldGen.updateCornCounter = true;
+        WorldGen.updateAntCounter = true;
     }
 
     private static void PlaceAntEgg(CubePaths.CubeSurface antSurface, GameObject eggObj, Ant ant, bool inNest)

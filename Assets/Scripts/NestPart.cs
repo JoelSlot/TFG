@@ -251,18 +251,21 @@ public class NestPart : MonoBehaviour
     public bool HasBeenDug()
     {
         if (!gotPoints) return false;
-
+        
         List<Vector3Int> positions = digPointsLeft.ToList();
         foreach (var pos in positions)
         {
             if (!DigPoint.digPointDict.ContainsKey(pos))
+
                 digPointsLeft.Remove(pos);
             else
                 return false;
         }
 
         if (digPointsLeft.Count > 0)
+        {
             return false;
+        }
 
         return true;
     }

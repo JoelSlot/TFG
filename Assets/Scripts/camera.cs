@@ -104,6 +104,18 @@ public class FlyCamera : MonoBehaviour
             WorldGen.updateNestVisibility = false;
         }
 
+        if (WorldGen.updateAntCounter)
+        {
+            updateAntCounter();
+            WorldGen.updateAntCounter = false;
+        }
+
+        if (WorldGen.updateCornCounter)
+        {
+            updateCornCounter();
+            WorldGen.updateCornCounter = false;
+        }
+
         ReadInputs();
 
         if (WorldGen.IsAboveSurface(transform.position))
@@ -617,7 +629,7 @@ public class FlyCamera : MonoBehaviour
                 if (AntQueen.antQueenSet.Count < 1)
                 {
                     if (clickObject(terrainLayer, out hit))
-                        WorldGen.InstantiateAnt(hit.point, Quaternion.LookRotation(RandomOrthogonal(hit.normal), hit.normal), true);
+                        WorldGen.InstantiateQueen(hit.point, Quaternion.LookRotation(RandomOrthogonal(hit.normal), hit.normal));
                 }
                 //Else message
                 break;
@@ -1138,5 +1150,38 @@ public class FlyCamera : MonoBehaviour
     {
         SliderText.SetText(CornAmountSlider.value.ToString());
     }
+
+
+
+    //SCORE AND COUNT SYSTEM
+
+    public TextMeshProUGUI antCounterText;
+    public TextMeshProUGUI cornCounterText;
+
+    public void updateCornCounter()
+    {
+        if (!Nest.HasDugNestPart(NestPart.NestPartType.FoodChamber))
+        {
+            cornCounterText.SetText(": ?");
+            return;
+        }
+
+        cornCounterText.SetText(": " + Nest.GetCornCount());
+    }
+
+    public void updateAntCounter()
+    {
+        if (!Nest.HasDugNestPart(NestPart.NestPartType.EggChamber))
+        {
+            antCounterText.SetText(": ?");
+            return;
+        }
+
+        antCounterText.SetText(": " + Ant.antDictionary.Count);
+    }
+
+    
+
+
 }
 

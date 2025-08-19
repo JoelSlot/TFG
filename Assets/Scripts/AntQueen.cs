@@ -430,6 +430,7 @@ public class AntQueen : MonoBehaviour
         Vector3 eggPos = abdomenBone.transform.position;
 
         Ant newBorn = WorldGen.InstantiateAnt(eggPos, transform.rotation, false);
+        WorldGen.updateAntCounter = true;
 
         if (Nest.PointInNest(transform.position))
         {

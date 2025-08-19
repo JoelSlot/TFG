@@ -11,6 +11,7 @@ using Unity.VisualScripting;
 using System.Linq;
 using Polenter.Serialization;
 using UnityEngine.Rendering;
+using TMPro;
 
 public class WorldGen : MonoBehaviour
 {
@@ -29,8 +30,10 @@ public class WorldGen : MonoBehaviour
 
     public static bool updateCameraPos = false;
     public static bool updateNestVisibility = false;
+    public static bool updateAntCounter = false;
+    public static bool updateCornCounter = false;
     public static GameData.serializableVector3 camera_pos = new(Vector3.zero);
-    public static GameData.serializableVector3 camera_euler = new (Vector3.zero);    
+    public static GameData.serializableVector3 camera_euler = new(Vector3.zero);
 
     public static int[,,] terrainMap;
     public static int[,,] memoryMap;
@@ -59,7 +62,6 @@ public class WorldGen : MonoBehaviour
     public GameObject origPheromoneParticles;
     public static GameObject originalPheromoneParticles;
 
-
     // Start is called before the first frame update
     void Start()
     {
@@ -79,7 +81,7 @@ public class WorldGen : MonoBehaviour
         {
             terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
             memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-            PopulateNoiseMap();
+            PopulateFlatMap();
             GenerateChunks();
             Nest.NestParts = new();
             Nest.KnownCornCobs = new();
@@ -93,9 +95,8 @@ public class WorldGen : MonoBehaviour
 
         updateNestVisibility = true;
 
-        
-        
-
+        updateAntCounter = true;
+        updateCornCounter = true;
     }
 
     /*
@@ -151,18 +152,18 @@ public class WorldGen : MonoBehaviour
                     else if (y == 30)
                         terrainMap[x, y, z] = 200;
                     else if (y == 0)
-                        terrainMap[x,y,z] = 0;
+                        terrainMap[x, y, z] = 0;
                     else if (y < 30)
-                        terrainMap[x,y,z] = 255;
+                        terrainMap[x, y, z] = 255;
                     else
                         terrainMap[x, y, z] = 0;
 
-                    memoryMap[x,y,z] = terrainMap[x,y,z];
+                    memoryMap[x, y, z] = terrainMap[x, y, z];
                 }
             }
         }
 
-        camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
+        camera_pos = new(new Vector3(x_dim / 2, 35, z_dim / 2));
         updateCameraPos = true;
 
         Debug.Log(string.Format("Terrain generated"));
@@ -178,7 +179,7 @@ public class WorldGen : MonoBehaviour
             {
                 for (int z = 0; z < z_dim + 1; z++)
                 {
-                    
+
                     float perlinValue = Mathf.PerlinNoise(x / (float)x_dim, z / (float)z_dim);
                     float relativeY = (float)y / (float)y_dim;
                     float value = relativeY - perlinValue;
@@ -189,12 +190,12 @@ public class WorldGen : MonoBehaviour
                         terrainMap[x, y, z] = 0;
                     else //if (y == Mathf.FloorToInt(height) || y == Mathf.CeilToInt(height))
                         terrainMap[x, y, z] = 255 - Mathf.FloorToInt(value * 255);
-/*                  else if (y > height)
-                       terrainMap[x, y, z] = 0;
-                    else
-                        terrainMap[x, y, z] = 255;
-*/
-                    memoryMap[x,y,z] = terrainMap[x,y,z];
+                    /*                  else if (y > height)
+                                           terrainMap[x, y, z] = 0;
+                                        else
+                                            terrainMap[x, y, z] = 255;
+                    */
+                    memoryMap[x, y, z] = terrainMap[x, y, z];
                 }
             }
         }
@@ -202,7 +203,7 @@ public class WorldGen : MonoBehaviour
         ApplyTerrainRedundancy();
         ApplyPastTerrainRedundancy();
 
-        camera_pos = new (new Vector3(x_dim/2, 35, z_dim/2));
+        camera_pos = new(new Vector3(x_dim / 2, 35, z_dim / 2));
         updateCameraPos = true;
 
         Debug.Log(string.Format("Terrain generated"));
@@ -316,7 +317,7 @@ public class WorldGen : MonoBehaviour
     public static int SampleTerrain(int x, int y, int z)
     {
         if (!InRange(new Vector3Int(x, y, z))) return 0;
-        return terrainMap[x,y,z];
+        return terrainMap[x, y, z];
     }
     public static int SampleTerrain(Vector3 point)
     {
@@ -365,7 +366,7 @@ public class WorldGen : MonoBehaviour
     public static int SamplePastTerrain(int x, int y, int z)
     {
         if (!InRange(new Vector3Int(x, y, z))) return 255;
-        return memoryMap[x,y,z];
+        return memoryMap[x, y, z];
     }
     public static int SamplePastTerrain(Vector3 point)
     {
@@ -523,7 +524,7 @@ public class WorldGen : MonoBehaviour
 
         ApplyTerrainRedundancy();
         ApplyPastTerrainRedundancy();
-        
+
         GameData newData = GameData.Save();
 
         //1st attempt
@@ -533,7 +534,7 @@ public class WorldGen : MonoBehaviour
         //second
         //var serializer = new SharpSerializer(true); //this is binary
         //serializer.Serialize(newData, "GameData.bin");
-        
+
         //third
         // or with the same usage as for the burst mode
         //var settings = new SharpSerializerBinarySettings(BinarySerializationMode.SizeOptimized);
@@ -580,10 +581,10 @@ public class WorldGen : MonoBehaviour
         Nest.NestParts.Add(nestPartScript);
         return nestPartScript;
     }
-    
+
     public static Ant InstantiateAnt(Vector3 pos, Quaternion orientation, bool born)
     {
-        GameObject newAnt = Instantiate(originalAnt, pos, orientation); 
+        GameObject newAnt = Instantiate(originalAnt, pos, orientation);
         newAnt.layer = 7;
         newAnt.SetActive(true);
         Ant newAntScript = newAnt.GetComponent<Ant>();
@@ -598,7 +599,7 @@ public class WorldGen : MonoBehaviour
             newAntScript.age = 100;
 
         newAnt.name = "Ant " + newAntScript.id;
-
+        
         return newAntScript;
     }
 
@@ -622,7 +623,7 @@ public class WorldGen : MonoBehaviour
             newAntScript.born = false;
         }
         else newAntScript.born = true;
-        
+
         newAntScript.objective = new Task(antInfo.objective);
         newAntScript.IsControlled = antInfo.isControlled;
         newAntScript.Counter = antInfo.Counter;
@@ -638,10 +639,10 @@ public class WorldGen : MonoBehaviour
 
         return newAntScript;
     }
-    
+
     public static AntQueen InstantiateQueen(Vector3 pos, Quaternion orientation)
     {
-        GameObject newQueen = Instantiate(originalQueen, pos, orientation); 
+        GameObject newQueen = Instantiate(originalQueen, pos, orientation);
         newQueen.layer = 7;
         newQueen.SetActive(true);
         AntQueen newQueenScript = newQueen.GetComponent<AntQueen>();
@@ -657,7 +658,7 @@ public class WorldGen : MonoBehaviour
         Vector3 pos = queenInfo.pos.ToVector3();
         Quaternion orientation = queenInfo.orientation.ToQuaternion();
 
-        GameObject newQueen = Instantiate(originalQueen, pos, orientation); 
+        GameObject newQueen = Instantiate(originalQueen, pos, orientation);
         newQueen.layer = 7;
         newQueen.SetActive(true);
         AntQueen newQueenScript = newQueen.GetComponent<AntQueen>();
@@ -686,7 +687,7 @@ public class WorldGen : MonoBehaviour
         Vector3 pos = cornInfo.pos.ToVector3();
         Quaternion orientation = cornInfo.orientation.ToQuaternion();
 
-        GameObject newCorn = Instantiate(originalCorn, pos, orientation); 
+        GameObject newCorn = Instantiate(originalCorn, pos, orientation);
         newCorn.SetActive(true);
         newCorn.layer = 10; //Food layer0
         Corn newCornScript = newCorn.GetComponent<Corn>();
@@ -701,8 +702,8 @@ public class WorldGen : MonoBehaviour
 
     public static DigPoint InstantiateDigPoint(Vector3Int pos)
     {
-        GameObject newDigPoint = Instantiate(originalDigPoint, pos, Quaternion.identity); 
-        
+        GameObject newDigPoint = Instantiate(originalDigPoint, pos, Quaternion.identity);
+
         newDigPoint.layer = 9;
         newDigPoint.SetActive(true);
         newDigPoint.name = "DigPoint (" + pos.x + ", " + pos.y + ", " + pos.z + ")";
@@ -725,7 +726,7 @@ public class WorldGen : MonoBehaviour
             Corn newCorn = InstantiateCorn(cornCobObj.transform.position, Quaternion.identity);
             cornCob.cornCobCornDict.Add(cornSpots[i], newCorn.id);
         }
-        return cornCob;        
+        return cornCob;
     }
 
     public static CornCob InstantiateCornCob(GameData.CornCobInfo cornCobInfo)
@@ -757,6 +758,16 @@ public class WorldGen : MonoBehaviour
             item.Destroy();
         }
         chunks.Clear();
+    }
+    
+
+
+    
+    //Counters
+
+    public void UpdateAntCounter()
+    {
+        
     }
 
 }

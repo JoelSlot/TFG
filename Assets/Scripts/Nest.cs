@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentBehaviourTree;
 using Polenter.Serialization.Core;
+using TMPro;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -30,7 +31,6 @@ public class Nest : MonoBehaviour
     public static HashSet<int> antsBringingQueenFood = new();
 
 
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -43,15 +43,21 @@ public class Nest : MonoBehaviour
 
     }
 
-
-    public static void UpdateFoodCount()
+    void FixedUpdate()
     {
-        foodCount = 0;
-        foreach (var part in NestParts)
-        {
-            foodCount += part.CollectedCornPips.Count;
-        }
+
     }
+
+
+    public static int GetCornCount()
+    {
+        int count = 0;
+        foreach (var part in NestParts)
+            if (part.mode == NestPart.NestPartType.FoodChamber)
+                count += part.CollectedCornPips.Count;
+        return count;
+    }
+
 
     //all pips outside of foodchambers are displaced, except a few in queenchambers.
     public static List<int> GetDisplacedPips()
@@ -200,7 +206,7 @@ public class Nest : MonoBehaviour
                     }
                     break;
                 case "corn":
-                
+
                     Debug.Log("Getting a relocate task");
                     if (GetNestRelocateTask(antSurface, antId, ref objective))
                     {
@@ -623,6 +629,7 @@ public class Nest : MonoBehaviour
         return false;
     }
 
+
     public static void Shuffle<T>(IList<T> list)
     {
         int n = list.Count;
@@ -656,11 +663,11 @@ public class Nest : MonoBehaviour
                 return false;
             else
                 return true; //if not that much food, leave it be.
-        }    
+        }
 
         return false; //theres a foodchamber and it is not in it...
     }
-    
+
     public static bool EggInAcceptableNestPart(int id)
     {
         if (!IsEggInNest(id, out int partIndex)) return false; //not in nest? unacceptable
@@ -671,4 +678,6 @@ public class Nest : MonoBehaviour
 
         return false; //theres a eggchamber and it is not in it...
     }
+
+
 }

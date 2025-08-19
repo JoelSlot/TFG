@@ -570,10 +570,6 @@ MonoBehaviour:
   origCornCob: {fileID: 981543628}
   origDigPoint: {fileID: 2026811054}
   origPheromoneParticles: {fileID: 281970058}
-  antCounterText: {fileID: 0}
-  antCounter: 0
-  cornCounterText: {fileID: 0}
-  cornCounter: 0
 --- !u!4 &35091246
 Transform:
   m_ObjectHideFlags: 0
@@ -8038,6 +8034,8 @@ MonoBehaviour:
   AntQueenButton: {fileID: 1934128573}
   EraseButton: {fileID: 553634107}
   TerrainEditButton: {fileID: 461717690}
+  antCounterText: {fileID: 797371610}
+  cornCounterText: {fileID: 703221485}
 --- !u!20 &1164272996
 Camera:
   m_ObjectHideFlags: 0
@@ -11932,7 +11930,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10301, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c3d11786ce71d754b9bbb51b6ce18d1a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
