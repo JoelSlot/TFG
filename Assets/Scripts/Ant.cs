@@ -431,7 +431,8 @@ public class Ant : MonoBehaviour
                         discoveredCobs = new();
                     }
                 }
-                else CubePaths.PlacePheromone(antSurface.pos);
+                else  if (MainMenu.GameSettings.gameMode != 0) //only place if in playing mode.
+                    CubePaths.PlacePheromone(antSurface.pos);
 
                 resetGoal = true;
             }
@@ -444,16 +445,10 @@ public class Ant : MonoBehaviour
 
             
             var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsTag("noMove"))
+            if (stateInfo.IsTag("noMove") || MainMenu.GameSettings.gameMode == 0)
             {
                 SetWalking(false);
                 DontTurn();
-                //DigEvent
-                //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
-                //To copy the pickup anim into a dig anim again. whoops.
-                //After copying pickup and adding it as dig, added event
-                //Shortenede anim but looked bad, so readjusted it
-                //then had to move the event again because adjusting anim length changes event time.
             }
             else if (IsControlled)
             {

@@ -39,7 +39,7 @@ public class CornCob : MonoBehaviour
 
     public Dictionary<int, int> cornCobCornDict = new();
     public float proportion = 10;
-    public const int numCornSpots = 954 / 6;
+    public const int numCornSpots = 159;
 
     Vector3 CornPos(int i)
     {

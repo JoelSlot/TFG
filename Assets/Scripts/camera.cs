@@ -24,7 +24,6 @@ public class FlyCamera : MonoBehaviour
 
     Vector3 velocity; // current velocity
 
-    public Component sphere;
     public WorldGen WG;
 
     //Variables para sistema de excavacion
@@ -36,11 +35,13 @@ public class FlyCamera : MonoBehaviour
 
 
 
-    float sphereDistance = 10f;
-    float sphereScale = 1f;
+    public Component sphere;
+    public MeshRenderer sphereRenderer;
+    float sphereDistance = 5f;
+    float sphereScale = 2f;
 
 
-    public enum obj { None, Ant, AntQueen, Corn, digTunnel, digChamber, test }
+    public enum obj { None, EditTerrain, Ant, AntQueen, CornPip, CornCob, Erase, digTunnel, digChamber, test }
 
     public obj objectMode = obj.None;
     public static Ant SelectedAnt = null;
@@ -60,8 +61,20 @@ public class FlyCamera : MonoBehaviour
 
     private void Start()
     {
-        if (MainMenu.GameSettings.gameMode == 1) sphere.GetComponent<MeshRenderer>().enabled = false;
-        else sphere.GetComponent<MeshRenderer>().enabled = true;
+        sphereRenderer.enabled = false;
+        CornAmountPanel.SetActive(false);
+        if (MainMenu.GameSettings.gameMode == 0) //mapbuildmode
+        {
+            MapEditPanel.SetActive(true);
+            MapEditMenuPanel.SetActive(true);
+            playingModePanel.SetActive(false);
+        }
+        else
+        {
+            MapEditPanel.SetActive(false);
+            MapEditMenuPanel.SetActive(false);
+            playingModePanel.SetActive(true);
+        }
 
         //activate/deactivate control button depending on selected ant status
         if (SelectedAnt == null) ControlButton.SetActive(false);
@@ -152,12 +165,12 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetAxis("Mouse Y") > 0)
             if (Vector3.Angle(Vector3.up, changedAntVector) > 5)
                 transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
-        if (Input.GetAxis("Mouse Y") <  0)
+        if (Input.GetAxis("Mouse Y") < 0)
             if (Vector3.Angle(Vector3.down, changedAntVector) > 5)
                 transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
 
         cameraAntVector = transform.position - SelectedAnt.transform.position;
-        
+
         transform.LookAt(SelectedAnt.transform.position);
 
     }
@@ -170,14 +183,44 @@ public class FlyCamera : MonoBehaviour
 
     void MapBuildingMode()
     {
-        // Leave cursor lock
-        if (Input.GetKeyDown(KeyCode.Escape) && rotateAllowed)
-            rotateAllowed = false;
-        if (Input.GetMouseButtonDown(0) && !rotateAllowed)
+
+        //deactivates objectmode if pressing esc
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            objectMode = obj.None;
+            ColorMapControlButtons();
+        }
+
+        //activates/deactivates camera movement depending on rightclick or terraineditmode
+        if (objectMode == obj.EditTerrain)
             rotateAllowed = true;
+        else if (Input.GetMouseButton(1))
+            rotateAllowed = true;
+        else rotateAllowed = false;
+
         lockCursor(rotateAllowed);
 
+        SphereControls();
 
+        //rightClick
+        if (Input.GetMouseButtonDown(0) && objectMode != obj.EditTerrain)
+        {
+            MapEditModeLeftClick();
+        }
+
+    }
+
+    public void SphereControls()
+    {
+        if (objectMode != obj.EditTerrain)
+        {
+            sphereRenderer.enabled = false;
+            sphereDistance = 10f;
+            sphereScale = 1f;
+            return;
+        }
+
+        sphereRenderer.enabled = true;
         //adjust sphere
         sphere.transform.position = Camera.main.transform.position + Camera.main.transform.forward * sphereDistance;
         if (sphere.transform.localScale.x != sphereScale)
@@ -187,15 +230,6 @@ public class FlyCamera : MonoBehaviour
 
         if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale / 2, -1);
         else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale / 2, 1);
-
-        //Locks/unlocks cursor when pressing escape
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (UnityEngine.Cursor.lockState == CursorLockMode.Locked)
-                UnityEngine.Cursor.lockState = CursorLockMode.None;
-            else
-                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
-        }
 
         if (Input.GetKey(KeyCode.Q))
             sphereDistance += 0.1f;
@@ -445,52 +479,39 @@ public class FlyCamera : MonoBehaviour
 
     private void ReadInputs()
     {
-
-        //Take mouse controls when not hovering over ui.
-        if (!eventSystem.IsPointerOverGameObject())
+        //Mouse controls depending on game mode
+        if (MainMenu.GameSettings.gameMode == 0)
         {
-            //Mouse controls depending on game mode
-            if (MainMenu.GameSettings.gameMode == 0)
-            {
+            if (!eventSystem.IsPointerOverGameObject())
                 MapBuildingMode();
-                //Move the camera
-                DefaultCameraMovement();
-            }
-            else if (IsControllingAnt())
-            {
+            //Move the camera
+            DefaultCameraMovement();
+        }
+        else if (IsControllingAnt())
+        {
+            if (!eventSystem.IsPointerOverGameObject())
                 ControllingMode();
-                ControlCameraMovement();
-            }
-            else
-            {
+            ControlCameraMovement();
+        }
+        else
+        {
+            if (!eventSystem.IsPointerOverGameObject())
                 PlayingMode();
-                //Move the camera
-                DefaultCameraMovement();
-            }
+            //Move the camera
+            DefaultCameraMovement();
         }
 
-        //to return to main menu
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            GoToMenu();
-        }
         //Keys to load/save map
         /*if (Input.GetKeyDown(KeyCode.L))
         {
             WG.LoadMap();
         }*/
-        if (Input.GetKeyDown(KeyCode.O) && !placingDigZone) //Make sure to not save when placing.
-        {
-            WorldGen.camera_pos = new(transform.position);
-            WorldGen.camera_euler = new(transform.eulerAngles);
-            WG.SaveGame();
-        }
         if (!placingDigZone)
         {
             if (Input.GetKeyDown(KeyCode.Alpha0)) { objectMode = obj.None; Debug.Log("Modo none"); } //cambiar modo a ninguno
             if (Input.GetKeyDown(KeyCode.Alpha1)) { objectMode = obj.Ant; Debug.Log("Modo ant"); } //cambiar modo a hormiga
             if (Input.GetKeyDown(KeyCode.Alpha2)) { objectMode = obj.AntQueen; Debug.Log("Modo antqueen"); } //cambiar modo a hormiga reina
-            if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.Corn; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
+            if (Input.GetKeyDown(KeyCode.Alpha3)) { objectMode = obj.CornCob; Debug.Log("Modo corn"); } //Cambiar al modo poner comida
             //if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
             //if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
             if (Input.GetKeyDown(KeyCode.Alpha6)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
@@ -571,6 +592,67 @@ public class FlyCamera : MonoBehaviour
         }
 
     }
+    public static Vector3 RandomOrthogonal(Vector3 input)
+    {
+        Vector3 output = UnityEngine.Random.onUnitSphere;
+        Vector3.OrthoNormalize(ref input, ref output);
+        return output;
+    }
+
+    private void MapEditModeLeftClick()
+    {
+        int antLayer = (1 << 7); //capa de hormigas
+        int terrainLayer = (1 << 6); //terrain layer
+        int cornCobLayer = (1 << 11);
+        int cornLayer = 1 << 10;
+        switch (objectMode)
+        {
+            case obj.Ant:
+                if (clickObject(terrainLayer, out RaycastHit hit))
+                {
+                    WorldGen.InstantiateAnt(hit.point, Quaternion.LookRotation(RandomOrthogonal(hit.normal), hit.normal), true);
+                }
+                break;
+            case obj.AntQueen:
+                if (AntQueen.antQueenSet.Count < 1)
+                {
+                    if (clickObject(terrainLayer, out hit))
+                        WorldGen.InstantiateAnt(hit.point, Quaternion.LookRotation(RandomOrthogonal(hit.normal), hit.normal), true);
+                }
+                //Else message
+                break;
+            case obj.CornCob:
+                if (clickObject(terrainLayer, out hit))
+                {
+                    var cobScript = WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), (int)CornAmountSlider.value);
+                    //cobScript.Hide();
+                }
+                break;
+            case obj.CornPip:
+                if (clickObject(terrainLayer, out hit))
+                {
+                    var cobScript = WorldGen.InstantiateCorn(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)));
+                    //cobScript.Hide();
+                }
+                break;
+            case obj.Erase:
+                GameObject destroyable = null;
+                if (clickObject(antLayer, out hit))
+                    destroyable = hit.transform.gameObject;
+                else if (clickObject(cornCobLayer, out hit))
+                    destroyable = hit.transform.gameObject;
+                else if (clickObject(cornLayer, out hit))
+                    destroyable = hit.transform.gameObject;
+
+                //get most parent object.
+                if (destroyable != null)
+                    while (destroyable.transform.parent != null)
+                        destroyable = destroyable.transform.parent.gameObject;
+
+                Destroy(destroyable);
+                break;
+        }
+    }
 
     private void PlayingModeLeftClick()
     {
@@ -650,7 +732,7 @@ public class FlyCamera : MonoBehaviour
                     }
                     break;
                 case obj.digTunnel:
-                case obj.digChamber: 
+                case obj.digChamber:
                     if (clickObject(nestLayer, out hit))
                     {
                         NestPart script = hit.transform.gameObject.GetComponent<NestPart>();
@@ -708,10 +790,10 @@ public class FlyCamera : MonoBehaviour
                     if (clickObject(terrainLayer, out hit))
                         WorldGen.InstantiateQueen(hit.point, Quaternion.Euler(hit.normal));
                     break;
-                case obj.Corn:
+                case obj.CornCob:
                     if (clickObject(terrainLayer, out hit))
                     {
-                        var cobScript = WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), 20);
+                        var cobScript = WorldGen.InstantiateCornCob(hit.point + hit.normal.normalized * 3f, Quaternion.Euler(new Vector3(90, 0, 0)), 130);
                         //cobScript.Hide();
                     }
                     break;
@@ -769,8 +851,11 @@ public class FlyCamera : MonoBehaviour
     }
 
 
+    //PlayingMode UI
+    public GameObject playingModePanel;
 
     //UI NEST VISIBILITY SECTION------------------------------------------------------------------------------
+
 
     public GameObject nestPartVisibilityPanel;
 
@@ -862,68 +947,36 @@ public class FlyCamera : MonoBehaviour
         ColorNestPlacingButtons();
     }
 
+    public void SetButtonColor(UnityEngine.UI.Button button, Color color)
+    {
+        ColorBlock cb = button.colors;
+        cb.normalColor = color;
+        cb.selectedColor = color;
+        button.colors = cb;
+    }
+
     //Sets the colors of the buttons used to add nest parts
     public void ColorNestPlacingButtons()
     {
         if (placingTypeIndex == 0)
-        {
-            ColorBlock cb = TunnelButton.colors;
-            cb.normalColor = Color.gray;
-            cb.selectedColor = Color.gray;
-            TunnelButton.colors = cb;
-        }
+            SetButtonColor(TunnelButton, Color.gray);
         else
-        {
-            ColorBlock cb = TunnelButton.colors;
-            cb.normalColor = Color.white;
-            cb.selectedColor = Color.white;
-            TunnelButton.colors = cb;
-        }
+            SetButtonColor(TunnelButton, Color.white);
 
         if (placingTypeIndex == 1)
-        {
-            ColorBlock cb = FoodChamberButton.colors;
-            cb.normalColor = Color.gray;
-            cb.selectedColor = Color.gray;
-            FoodChamberButton.colors = cb;
-        }
+            SetButtonColor(FoodChamberButton, Color.gray);
         else
-        {
-            ColorBlock cb = FoodChamberButton.colors;
-            cb.normalColor = Color.white;
-            cb.selectedColor = Color.white;
-            FoodChamberButton.colors = cb;
-        }
+            SetButtonColor(FoodChamberButton, Color.white);
 
         if (placingTypeIndex == 2)
-        {
-            ColorBlock cb = EggChamberButton.colors;
-            cb.normalColor = Color.gray;
-            cb.selectedColor = Color.gray;
-            EggChamberButton.colors = cb;
-        }
+            SetButtonColor(EggChamberButton, Color.gray);
         else
-        {
-            ColorBlock cb = EggChamberButton.colors;
-            cb.normalColor = Color.white;
-            cb.selectedColor = Color.white;
-            EggChamberButton.colors = cb;
-        }
+            SetButtonColor(EggChamberButton, Color.white);
 
         if (placingTypeIndex == 3)
-        {
-            ColorBlock cb = QueenChamberButton.colors;
-            cb.normalColor = Color.gray;
-            cb.selectedColor = Color.gray;
-            QueenChamberButton.colors = cb;
-        }
+            SetButtonColor(QueenChamberButton, Color.gray);
         else
-        {
-            ColorBlock cb = QueenChamberButton.colors;
-            cb.normalColor = Color.white;
-            cb.selectedColor = Color.white;
-            QueenChamberButton.colors = cb;
-        }
+            SetButtonColor(QueenChamberButton, Color.white);
     }
 
     //Updates the nest count values on the nest panel
@@ -1001,6 +1054,89 @@ public class FlyCamera : MonoBehaviour
         UpdateNestPartCountText();
     }
 
+    //Map creation control buttons and functions
 
+    public GameObject MapEditPanel;
+    public GameObject MapEditMenuPanel;
+    public GameObject CornAmountPanel;
+    public UnityEngine.UI.Slider CornAmountSlider;
+    public TextMeshProUGUI SliderText;
+
+    public UnityEngine.UI.Image CornCobButton;
+    public UnityEngine.UI.Image CornPipButton;
+    public UnityEngine.UI.Image AntButton;
+    public UnityEngine.UI.Image AntQueenButton;
+    public UnityEngine.UI.Image EraseButton;
+    public UnityEngine.UI.Image TerrainEditButton;
+
+    public void ColorMapControlButtons()
+    {
+        if (objectMode == obj.Ant)
+            AntButton.color = Color.gray;
+        else
+            AntButton.color = Color.white;
+
+        if (objectMode == obj.AntQueen)
+            AntQueenButton.color = Color.grey;
+        else
+            AntQueenButton.color = Color.white;
+
+        if (objectMode == obj.CornCob)
+        {
+            CornCobButton.color = Color.gray;
+            CornAmountPanel.SetActive(true);
+        }
+        else
+        {
+            CornCobButton.color = Color.white;
+            CornAmountPanel.SetActive(false);
+        }
+
+        if (objectMode == obj.CornPip)
+            CornPipButton.color = Color.gray;
+        else
+            CornPipButton.color = Color.white;
+
+        if (objectMode == obj.Erase)
+            EraseButton.color = Color.gray;
+        else
+            EraseButton.color = Color.white;
+
+        if (objectMode == obj.EditTerrain)
+            TerrainEditButton.color = Color.gray;
+        else
+            TerrainEditButton.color = Color.white;
+    }
+
+    //convert int to map edit mode. For use in buttons.
+    private obj intToMapEditObj(int i)
+    {
+        switch (i)
+        {
+            case 0: return obj.Ant;
+            case 1: return obj.AntQueen;
+            case 2: return obj.EditTerrain;
+            case 3: return obj.Erase;
+            case 4: return obj.CornPip;
+            case 5: return obj.CornCob;
+        }
+        return obj.None;
+    }
+
+    public void EditModeButton(int objInt)
+    {
+        obj mode = intToMapEditObj(objInt);
+        if (objectMode == mode)
+            objectMode = obj.None;
+        else
+            objectMode = mode;
+
+        ColorMapControlButtons();
+    }
+
+    public void CornCobSliderAction()
+    {
+        SliderText.SetText(CornAmountSlider.value.ToString());
+    }
 }
 
