@@ -1029,10 +1029,17 @@ public class FlyCamera : MonoBehaviour
     }
 
     //UI SAVE BUTTON
+    public GameObject SavePanel;
+
     public void SaveGameButton()
     {
         if (!placingDigZone)
-            WG.SaveGame();
+            SavePanel.SetActive(true);
+    }
+
+    public void ExitSavePanel()
+    {
+        SavePanel.SetActive(false);
     }
 
     //UI CONTROL ANT BUTTON

@@ -101,7 +101,7 @@ public class GameData
                 eggHeldAntDict.Add(id, holderAntIndex);
             }
         }
-        Debug.Log("Num ants: " + antInfoDict.Count);
+        //Debug.Log("Num ants: " + antInfoDict.Count);
     }
 
     public void SaveQueens()

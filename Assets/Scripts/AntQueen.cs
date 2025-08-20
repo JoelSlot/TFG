@@ -95,7 +95,7 @@ public class AntQueen : MonoBehaviour
 
                     .Do("Get nearby dig task", t => SenseDigTask())
                     .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -2, ref objective))
-                    .Do("Did not find anything to do", t => { Debug.Log("Didnt find stuff to do as queen"); return BehaviourTreeStatus.Success; })
+                    .Do("Did not find anything to do", t => { /*Debug.Log("Didnt find stuff to do as queen");*/ return BehaviourTreeStatus.Success; })
 
                 .End()
                 .Selector("Do tasks")

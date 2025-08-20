@@ -9,9 +9,10 @@ public class MainMenu : MonoBehaviour
     public static class GameSettings
     {
         public static int gameMode = 0;
-            //0: map builder
-            //1: map tester
-        public static string saveFile = "none";
+        //0: map builder
+        //1: map tester
+        public static bool newMap = false; //if true, means player starts new map in playing mode.
+        public static string fileName = "flat";
     }
 
     public void StartMapBuilder()
@@ -23,14 +24,14 @@ public class MainMenu : MonoBehaviour
     public void StartMapTester()
     {
         GameSettings.gameMode = 1;
-        GameSettings.saveFile = "none"; // did not assign this bfore. Also i accidentally wrote None after.
+        GameSettings.fileName = "none"; // did not assign this bfore. Also i accidentally wrote None after.
         SceneManager.LoadSceneAsync("Map");
     }
 
     public void LoadMapTester()
     {
         GameSettings.gameMode = 1;
-        GameSettings.saveFile = "Encoded.xml";
+        GameSettings.fileName = "Encoded.xml";
         SceneManager.LoadSceneAsync("Map");
     }
 

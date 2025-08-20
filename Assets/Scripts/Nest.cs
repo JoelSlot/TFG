@@ -454,8 +454,8 @@ public class Nest : MonoBehaviour
 
     public static bool PointInNestPart(Vector3 point, int nestPartIndex)
     {
-        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0) { Debug.Log("out of range"); return false; }
-        if (!NestParts[nestPartIndex].HasBeenDug()) { Debug.Log("Not dug"); return false; }
+        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0) {return false; }
+        if (!NestParts[nestPartIndex].HasBeenDug()) {return false; }
 
         float marchingValue = NestParts[nestPartIndex].getMarchingValue(point);
         //Debug.Log("Type: " + NestPart.NestPartTypeToIndex(NestParts[nestPartIndex].mode));
