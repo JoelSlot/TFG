@@ -9,37 +9,48 @@ public class MainMenu : MonoBehaviour
     public static class GameSettings
     {
         public static int gameMode = 0;
-        //0: map builder
-        //1: map tester
-        public static bool newMap = false; //if true, means player starts new map in playing mode.
+        //0: building map mode
+        //1: playing map mode
+        public static bool newMap = false; //if true, load a preset map
+        public static int SaveSlot = 1; //the saveslot to load
         public static string fileName = "flat";
     }
 
-    public void StartMapBuilder()
+    public GameObject saveFilePanel;
+    public SaveManager saveInfoManager;
+
+
+    public void LoadSaveFileMenuOpen()
     {
-        GameSettings.gameMode = 0;
-        SceneManager.LoadSceneAsync("Map");
+        saveFilePanel.SetActive(true);
     }
 
-    public void StartMapTester()
+    public void HideSaveFileMenuClose()
     {
-        GameSettings.gameMode = 1;
-        GameSettings.fileName = "none"; // did not assign this bfore. Also i accidentally wrote None after.
-        SceneManager.LoadSceneAsync("Map");
+        saveFilePanel.SetActive(false);
     }
 
-    public void LoadMapTester()
+    public void LoadSlot(int slot)
     {
-        GameSettings.gameMode = 1;
-        GameSettings.fileName = "Encoded.xml";
-        SceneManager.LoadSceneAsync("Map");
+        if (slot > 0 && 4 > slot)
+            if (saveInfoManager.SaveExists[slot - 1])
+            {
+                GameSettings.newMap = false;
+                GameSettings.SaveSlot = slot;
+                GameSettings.gameMode = 1;
+                SceneManager.LoadSceneAsync("Map");
+            }
+        
+    }
+
+    public void SetPlayingMode(int mode)
+    {
+        GameSettings.gameMode = Mathf.Clamp(mode, 0, 1);
     }
 
     public void QuitGame()
     {
         Application.Quit();
     }
-
-
 
 }

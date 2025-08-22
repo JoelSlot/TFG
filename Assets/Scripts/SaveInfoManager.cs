@@ -29,6 +29,8 @@ public class SaveManager : MonoBehaviour
 
     public TextMeshProUGUI[] SaveTime;
 
+    public bool[] SaveExists = {false, false, false};
+
 
     public void Start()
     {
@@ -45,14 +47,15 @@ public class SaveManager : MonoBehaviour
 
     public void UpdateSaveText(int slot)
     {
-
         slot = Mathf.Clamp(slot, 1, 3);
 
-        if (GetValues(slot, out SaveInfo info))
+        if (DeserializeValues(slot, out SaveInfo info))
         {
-            SaveValues[slot-1].SetText(info.mapName + "\n" + info.antCount + "\n" + info.cornCount);
-            SaveTime[slot-1].SetText("Time\n" + TimeString(info.playTime));
+            SaveExists[slot - 1] = true;
+            SaveValues[slot - 1].SetText(info.mapName + "\n" + info.antCount + "\n" + info.cornCount);
+            SaveTime[slot - 1].SetText("Time\n" + TimeString(info.playTime));
         }
+        else SaveExists[slot - 1] = false;
     }
 
     public string TimeString(float totalSeconds)
@@ -72,7 +75,7 @@ public class SaveManager : MonoBehaviour
         return output;
     }
 
-    public bool GetValues(int slot, out SaveInfo info)
+    public bool DeserializeValues(int slot, out SaveInfo info)
     {
         slot = Mathf.Clamp(slot, 0, 3);
         try

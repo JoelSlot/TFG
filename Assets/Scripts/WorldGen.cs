@@ -13,6 +13,7 @@ using Polenter.Serialization;
 using UnityEngine.Rendering;
 using TMPro;
 using UnityEngine.Rendering.Universal;
+using NUnit.Framework.Constraints;
 
 public class WorldGen : MonoBehaviour
 {
@@ -88,24 +89,23 @@ public class WorldGen : MonoBehaviour
 
         if (MainMenu.GameSettings.newMap)
         {
-            StartMap(MainMenu.GameSettings.fileName);
-        }
-        else if (MainMenu.GameSettings.fileName == "flat")
-        {
-            terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-            memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-            PopulateFlatMap();
-            GenerateChunks();
-            Nest.NestParts = new();
-            Nest.KnownCornCobs = new();
-            CubePaths.cubePheromones = new();
+            if (!StartMap(MainMenu.GameSettings.fileName))
+            {
+                terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+                memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+                PopulateFlatMap();
+                GenerateChunks();
+                Nest.NestParts = new();
+                Nest.KnownCornCobs = new();
+                CubePaths.cubePheromones = new();
 
-            mapName = "flat";
-            playTime = 0;
+                mapName = "flat";
+                playTime = 0;
+            }
         }
         else
         {
-            LoadSaveFile(MainMenu.GameSettings.fileName, "default", 0);
+            LoadSaveFile(MainMenu.GameSettings.SaveSlot, "default", 0);
         }
         Physics.gravity = new Vector3(0, -15.0F, 0);
 
@@ -503,11 +503,13 @@ public class WorldGen : MonoBehaviour
                     memoryMap[x, y, z] = GetRedundantPastTerrainSample(new(x, y, z));
     }
 
-    public void LoadSaveFile(string saveFile, string mapName, float playTime)
+    public void LoadSaveFile(int saveSlot, string mapName, float playTime)
     {
         Debug.Log("Starting loading");
 
         WorldGen.mapName = mapName;
+
+        string saveFile = "SaveData/Save" + saveSlot + "/data.xml";
 
         //XML
         var serializer = new SharpSerializer();
@@ -539,15 +541,29 @@ public class WorldGen : MonoBehaviour
     }
 
 
-    public void StartMap(string mapName)
+    public bool StartMap(string mapName)
     {
-        Debug.Log("Starting loading");
-
         WorldGen.mapName = mapName;
+        Debug.Log(mapName);
+        Debug.Log("Starting loading");
+        string mapDir = "";
+
+        if (File.Exists("SaveData/CustomMaps/" + mapName + ".xml"))
+        {
+            mapDir = "SaveData/CustomMaps/" + mapName + ".xml";
+        }
+        else if (File.Exists("SaveData/Maps/" + mapName + ".xml"))
+        {
+            mapDir = "SaveData/Maps/" + mapName + ".xml";
+        }
+        else return false;
+
+
+
 
         //XML
         var serializer = new SharpSerializer();
-        GameData loadedData = (GameData)serializer.Deserialize(mapName);
+        GameData loadedData = (GameData)serializer.Deserialize(mapDir);
 
         //BINARY
         //var serializer = new SharpSerializer(true);
@@ -569,8 +585,10 @@ public class WorldGen : MonoBehaviour
 
         Debug.Log("Loaded succesfully!");
         GC.Collect();
-        
+
         WorldGen.playTime = 0;
+
+        return true;
 
     }
 
@@ -609,25 +627,28 @@ public class WorldGen : MonoBehaviour
     }
 
 
-    public void SaveMap(string saveName)
+    public bool SaveMap(string saveName)
     {
+
         if (saveName == "")
         {
             //message could not save
-            return;
+            return false;
         }
 
         // else if  check if same name as other map
         string[] saves = Directory.GetFiles("SaveData/Maps", "*.xml");
         foreach (string map in saves)
         {
-            string trimmed = map.Remove(saveName.Length - 4);
+            Debug.Log(map);
+            string trimmed = map.Remove(map.Length - 4);
+            trimmed = trimmed.Remove(0, 14);
             Debug.Log(trimmed);
 
             if (trimmed.Equals(saveName))
             {
                 Debug.Log("That name already exists");
-                return;
+                return false;
             }
         }
 
@@ -641,7 +662,7 @@ public class WorldGen : MonoBehaviour
 
         //1st attempt
         var serializer = new SharpSerializer(); //this is not binary
-        serializer.Serialize(newData, "SaveData/Maps/" + saveName +  ".xml");
+        serializer.Serialize(newData, "SaveData/CustomMaps/" + saveName + ".xml");
 
         //second
         //var serializer = new SharpSerializer(true); //this is binary
@@ -655,6 +676,8 @@ public class WorldGen : MonoBehaviour
         //sizeOptimizedSerializer2.Serialize(newData, "GameDataOptimized.bin");
 
         Debug.Log("Saved succesfully!");
+
+        return true;
     }
 
 
