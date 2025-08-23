@@ -243,15 +243,21 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetMouseButton(0)) terrainEditSphere(sphere.transform.position, sphereScale / 2, -1);
         else if (Input.GetMouseButton(1)) terrainEditSphere(sphere.transform.position, sphereScale / 2, 1);
 
+        int magnitude = 1;
+        if (Input.GetKey(KeyCode.LeftShift))
+            magnitude = 2;
+
         if (Input.GetKey(KeyCode.Q))
-            sphereDistance += 0.1f;
+                sphereDistance += 0.1f * magnitude;
         if (Input.GetKey(KeyCode.E))
-            sphereDistance -= 0.1f;
+            sphereDistance -= 0.1f * magnitude;
 
         if (Input.mouseScrollDelta.y > 0)
-            sphereScale += 0.1f;
+            sphereScale += 0.1f * magnitude;
         if (Input.mouseScrollDelta.y < 0)
-            sphereScale -= 0.1f;
+            sphereScale -= 0.1f * magnitude;
+
+        if (sphereScale < 1) sphereScale = 1;
     }
 
     Vector3 GetAccelerationVector()
@@ -1097,6 +1103,8 @@ public class FlyCamera : MonoBehaviour
     public UnityEngine.UI.Image EraseButton;
     public UnityEngine.UI.Image TerrainEditButton;
 
+    public GameObject controlPanel;
+
     public void ColorMapControlButtons()
     {
         if (objectMode == obj.Ant)
@@ -1131,9 +1139,15 @@ public class FlyCamera : MonoBehaviour
             EraseButton.color = Color.white;
 
         if (objectMode == obj.EditTerrain)
+        {
             TerrainEditButton.color = Color.gray;
+            controlPanel.SetActive(true);
+        }
         else
+        {
             TerrainEditButton.color = Color.white;
+            controlPanel.SetActive(false);
+        }
     }
 
     //convert int to map edit mode. For use in buttons.
@@ -1196,7 +1210,10 @@ public class FlyCamera : MonoBehaviour
         antCounterText.SetText(": " + Ant.antDictionary.Count);
     }
 
-    
+    public void FixedUpdate()
+    {
+        //Debug.Log(Mathf.FloorToInt(this.transform.position.x) + ", " + Mathf.FloorToInt(this.transform.position.y) + ", " + Mathf.FloorToInt(this.transform.position.z));
+    }
 
 
 }

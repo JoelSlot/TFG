@@ -85,6 +85,11 @@ public class CornCob : MonoBehaviour
         }
     }
 
+    public void FixedUpdate()
+    {
+        if (transform.position.y < 0) Destroy(this.gameObject);
+    }
+
     public bool hasCorn()
     {
         return cornCobCornDict.Count > 0;

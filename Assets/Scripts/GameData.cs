@@ -586,17 +586,19 @@ public class GameData
         foreach (CornCobInfo info in cornCobInfoDict)
         {
             CornCob cornCob = WorldGen.InstantiateCornCob(info);
-            if (!Nest.KnownCornCobs.Contains(cornCob.id))
+            if (MainMenu.GameSettings.gameMode == 1)
             {
-                bool known = false;
-                foreach ((var antId, var antScript) in Ant.antDictionary)
-                    if (antScript.discoveredCobs.Contains(cornCob.id))
-                        known = true;
-                if (!known)
-                    cornCob.Hide();
+                if (!Nest.KnownCornCobs.Contains(cornCob.id))
+                {
+                    bool known = false;
+                    foreach ((var antId, var antScript) in Ant.antDictionary)
+                        if (antScript.discoveredCobs.Contains(cornCob.id))
+                            known = true;
+                    if (!known)
+                        cornCob.Hide();
+                }
             }
         }
-
 
     }
 

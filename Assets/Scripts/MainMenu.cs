@@ -14,6 +14,13 @@ public class MainMenu : MonoBehaviour
         public static bool newMap = false; //if true, load a preset map
         public static int SaveSlot = 1; //the saveslot to load
         public static string fileName = "flat";
+
+        //variables to be used when generating new world.
+        public static bool flatMap = false;
+        public static int x_chunks = 5;
+        public static int y_chunks = 1;
+        public static int z_chunks = 5;
+        public static int height = 30;
     }
 
     public GameObject saveFilePanel;

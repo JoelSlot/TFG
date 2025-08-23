@@ -183,32 +183,21 @@ public class chunk
 
     public void CreateMeshData()
     {
-
         ClearMeshData();
 
-        for (int x = 0; x < x_dim; x++)
-        {
-            for (int z = 0; z < z_dim; z++)
-            {
-                for (int y = 0; y < y_dim; y++)
-                {
+        //Los limites se incrementan en 1 si en dicha direccion ya no hay mas chunks, y por tanto hay que rellenar su final.
+        int x_limit = x_dim;
+        if (!WorldGen.chunks.ContainsKey(chunkPosition + Vector3Int.right * x_dim)) x_limit++;
+        int y_limit = y_dim;
+        if (!WorldGen.chunks.ContainsKey(chunkPosition + Vector3Int.up * y_dim)) y_limit++;
+        int z_limit = z_dim;
+        if (!WorldGen.chunks.ContainsKey(chunkPosition + Vector3Int.forward * z_dim)) z_limit++;
 
+        for (int x = 0; x < x_limit; x++)
+            for (int z = 0; z < z_limit; z++)
+                for (int y = 0; y < y_limit; y++)
                     MarchCube(new Vector3Int(x + chunkPosition.x, y + chunkPosition.y, z + chunkPosition.z));
-                    
-                }
-            }
-            
-        }
 
-        /*
-        colors = new Color[vertices.Count];
-        for (int x = 0; x < x_dim; x++)
-        {
-            for (int z = 0; z < z_dim; z++)
-            {
-                for (int y = 0; y < y_dim; y++)
-                {
-        */
         BuildMesh();
     }
 

@@ -38,6 +38,8 @@ public class Corn : MonoBehaviour
                 if (Nest.IsPipInNest(id, out int partIndex))
                     if (Nest.GetPointInChamber(partIndex, out Vector3 point))
                         transform.position = point + Vector3.up;
+
+            if (transform.position.y < 0) Destroy(this.gameObject);
         }
 
     }

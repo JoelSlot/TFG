@@ -47,7 +47,7 @@ public class WorldGen : MonoBehaviour
 
     public static int[,,] terrainMap;
     public static int[,,] memoryMap;
-    static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
+    public static Dictionary<Vector3Int, chunk> chunks = new Dictionary<Vector3Int, chunk>();
 
     public Material terrainMaterial;
 
@@ -89,25 +89,18 @@ public class WorldGen : MonoBehaviour
 
         if (MainMenu.GameSettings.newMap)
         {
-            if (!StartMap(MainMenu.GameSettings.fileName))
-            {
-                terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-                memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
-                PopulateFlatMap();
-                GenerateChunks();
-                Nest.NestParts = new();
-                Nest.KnownCornCobs = new();
-                CubePaths.cubePheromones = new();
-
-                mapName = "flat";
-                playTime = 0;
-            }
+            if (MainMenu.GameSettings.flatMap)
+                StartFlatMap();
+            else if (!StartMap(MainMenu.GameSettings.fileName))
+                StartFlatMap();
         }
         else
         {
             LoadSaveFile(MainMenu.GameSettings.SaveSlot, "default", 0);
         }
         Physics.gravity = new Vector3(0, -15.0F, 0);
+
+
 
         updateNestVisibility = true;
 
@@ -154,7 +147,7 @@ public class WorldGen : MonoBehaviour
     /*
      * Crea el terreno. 
      */
-    public void PopulateFlatMap()
+    public void PopulateFlatMap(int height)
     {
         //Itera sobre todos los puntos del campo escalar
         for (int x = 0; x < x_dim + 1; x++)
@@ -165,11 +158,11 @@ public class WorldGen : MonoBehaviour
                 {
                     if (z == 0 || z == z_dim || x == 0 || x == x_dim)
                         terrainMap[x, y, z] = 0;
-                    else if (y == 30)
-                        terrainMap[x, y, z] = 200;
                     else if (y == 0)
                         terrainMap[x, y, z] = 0;
-                    else if (y < 30)
+                    else if (y == height)
+                        terrainMap[x, y, z] = 200;
+                    else if (y < height)
                         terrainMap[x, y, z] = 255;
                     else
                         terrainMap[x, y, z] = 0;
@@ -179,7 +172,7 @@ public class WorldGen : MonoBehaviour
             }
         }
 
-        camera_pos = new(new Vector3(x_dim / 2, 35, z_dim / 2));
+        camera_pos = new(new Vector3(x_dim / 2, height + 5, z_dim / 2));
         updateCameraPos = true;
 
         Debug.Log(string.Format("Terrain generated"));
@@ -237,39 +230,56 @@ public class WorldGen : MonoBehaviour
             float val = points[i].Item2;
             if (InRange(point))
             {
-                terrainMap[point.x, point.y, point.z] += Mathf.RoundToInt(val * degree);
-                if (terrainMap[point.x, point.y, point.z] < 0)
-                    terrainMap[point.x, point.y, point.z] = 0;
-                if (terrainMap[point.x, point.y, point.z] > 255)
-                    terrainMap[point.x, point.y, point.z] = 255;
-
-                affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
+                terrainMap[point.x, point.y, point.z] = Mathf.Clamp(terrainMap[point.x, point.y, point.z] + Mathf.RoundToInt(val * degree), 0, 255);
+                Vector3Int mainChunk = new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, (point.y / chunk_y_dim) * chunk_y_dim, (point.z / chunk_z_dim) * chunk_z_dim);
+                affectedChunks.Add(mainChunk);
                 bool x_0 = false;
                 //mirar si est� justo entre dos chunks en x y no al principio
                 if (point.x % chunk_x_dim == 0 && point.x != 0)
                 {
                     x_0 = true;
-                    affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim) * chunk_z_dim));
+                    affectedChunks.Add(mainChunk + Vector3Int.left * chunk_x_dim);
                 }
                 bool z_0 = false;
                 if (point.z % chunk_z_dim == 0 && point.z != 0)
                 {
                     z_0 = true;
-                    affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
+                    affectedChunks.Add(mainChunk + Vector3Int.back * chunk_z_dim);
                 }
                 if (x_0 && z_0)
                 {
-                    affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim - 1) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
+                    affectedChunks.Add(mainChunk + Vector3Int.left * chunk_x_dim + Vector3Int.back * chunk_z_dim);
+                }
+                bool y_0 = false;
+                if (point.y % chunk_y_dim == 0 && point.y != 0)
+                {
+                    y_0 = true;
+                    affectedChunks.Add(mainChunk + Vector3Int.down * chunk_y_dim);
+                }
+                if (x_0 && y_0)
+                {
+                    affectedChunks.Add(mainChunk + Vector3Int.left * chunk_x_dim + Vector3Int.down * chunk_y_dim);
+                }
+                if (y_0 && z_0)
+                {
+                    affectedChunks.Add(mainChunk + Vector3Int.down * chunk_y_dim + Vector3Int.back * chunk_z_dim);
+                }
+                if (x_0 && y_0 && z_0)
+                {
+                    affectedChunks.Add(mainChunk + Vector3Int.left * chunk_x_dim + Vector3Int.down * chunk_y_dim + Vector3Int.back * chunk_z_dim);
                 }
             }
         }
         //check what chunks it affects
         foreach (Vector3Int point in affectedChunks)
         {
-            //If in terrain edit mode, set memoryMap to copy of terrainMap
-            if (MainMenu.GameSettings.gameMode == 0)
-                chunks[point].saveChunkTerrainToMemory();
-            chunks[point].CreateMeshData();
+            if (chunks.ContainsKey(point))
+            {
+                //If in terrain edit mode, set memoryMap to copy of terrainMap
+                if (MainMenu.GameSettings.gameMode == 0)
+                    chunks[point].saveChunkTerrainToMemory();
+                chunks[point].CreateMeshData();
+            }
         }
 
     }
@@ -317,17 +327,18 @@ public class WorldGen : MonoBehaviour
 
     public static bool InRange(Vector3Int point)
     {
-        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return false;
+        if (point.x < 1 || point.x > x_dim || point.y < 1 || point.y > y_dim || point.z < 1 || point.z > z_dim) return false;
         return true;
     }
     public static bool InRange(Vector3 point)
     {
-        if (point.x < 0 || point.x >= x_dim || point.y < 0 || point.y >= y_dim || point.z < 0 || point.z >= z_dim) return false;
+        if (point.x < 1 || point.x > x_dim || point.y < 1 || point.y > y_dim || point.z < 1 || point.z > z_dim) return false;
         return true;
     }
     public static int SampleTerrain(Vector3Int point)
     {
-        if (!InRange(point)) return 0;
+        if (!InRange(point))
+                return 0;
         return terrainMap[point.x, point.y, point.z];
     }
     public static int SampleTerrain(int x, int y, int z)
@@ -540,6 +551,24 @@ public class WorldGen : MonoBehaviour
 
     }
 
+    public void StartFlatMap()
+    {
+        x_dim = MainMenu.GameSettings.x_chunks * chunk_x_dim;
+        y_dim = MainMenu.GameSettings.y_chunks * chunk_y_dim;
+        z_dim = MainMenu.GameSettings.z_chunks * chunk_z_dim;
+
+        terrainMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+        memoryMap = new int[x_dim + 1, y_dim + 1, z_dim + 1];
+        PopulateFlatMap(MainMenu.GameSettings.height);
+        GenerateChunks();
+        Nest.NestParts = new();
+        Nest.KnownCornCobs = new();
+        CubePaths.cubePheromones = new();
+
+        if (MainMenu.GameSettings.height > 0) mapName = "flat";
+        else mapName = "empty";
+        playTime = 0;
+    }
 
     public bool StartMap(string mapName)
     {
