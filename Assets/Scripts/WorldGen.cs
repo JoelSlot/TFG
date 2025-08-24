@@ -21,10 +21,6 @@ public class WorldGen : MonoBehaviour
     public static string mapName;
     public static float playTime;
 
-    public void FixedUpdate()
-    {
-        playTime += Time.fixedDeltaTime;
-    }
 
     public static float isolevel = 127.5f;
     public static int x_dim = 200;
@@ -38,6 +34,7 @@ public class WorldGen : MonoBehaviour
     int num_chunks_y;
     int num_chunks_z;
 
+    public static bool hasWon = false; //if haswon is true, won't check for victory enymore
     public static bool updateCameraPos = false;
     public static bool updateNestVisibility = false;
     public static bool updateAntCounter = false;
@@ -301,7 +298,7 @@ public class WorldGen : MonoBehaviour
                 }
                 bool z_0 = false;
                 if (point.z % chunk_z_dim == 0 && point.z != 0)
-                {   
+                {
                     z_0 = true;
                     affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
                 }
@@ -338,7 +335,7 @@ public class WorldGen : MonoBehaviour
     public static int SampleTerrain(Vector3Int point)
     {
         if (!InRange(point))
-                return 0;
+            return 0;
         return terrainMap[point.x, point.y, point.z];
     }
     public static int SampleTerrain(int x, int y, int z)
@@ -935,15 +932,44 @@ public class WorldGen : MonoBehaviour
         }
         chunks.Clear();
     }
-    
 
 
-    
-    //Counters
+    public GameObject victoryPanel; 
 
-    public void UpdateAntCounter()
+    private int counter = 0;
+
+    public void FixedUpdate()
     {
-        
+        playTime += Time.fixedDeltaTime;
+
+        if (!hasWon)
+        {
+            counter++;
+            if (counter > 100)
+            {
+                counter = 0;
+                if (Won())
+                {
+                    hasWon = true;
+                    victoryPanel.SetActive(true);
+                }
+            }
+        }
+    }
+
+    //if no more corn on corncobs returns true.
+    private bool Won()
+    {
+        foreach ((var id, var cob) in CornCob.cornCobDictionary)
+        {
+            if (cob != null)
+            {
+                if (cob.hasCorn())
+                    return false;
+            }
+        }
+
+        return true;
     }
 
 }

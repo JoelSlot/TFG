@@ -27,6 +27,8 @@ public class GameData
     public int chunk_y_dim { get; set; }
     public int chunk_z_dim { get; set; }
 
+
+    public bool hasWon { get; set; }
     public serializableVector3 camera_pos { get; set; }
     public serializableVector3 camera_euler { get; set; }
     public QueenInfo queenInfo { get; set; }
@@ -475,6 +477,8 @@ public class GameData
         data.chunk_y_dim = WorldGen.chunk_y_dim;
         data.chunk_z_dim = WorldGen.chunk_z_dim;
 
+        data.hasWon = WorldGen.hasWon;
+
         data.camera_pos = WorldGen.camera_pos;
         data.camera_euler = WorldGen.camera_euler;
 
@@ -507,6 +511,8 @@ public class GameData
         WorldGen.chunk_x_dim = chunk_x_dim;
         WorldGen.chunk_y_dim = chunk_y_dim;
         WorldGen.chunk_z_dim = chunk_z_dim;
+
+        WorldGen.hasWon = hasWon;
 
         WorldGen.updateCameraPos = true;
         WorldGen.camera_pos = camera_pos;
