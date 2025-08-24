@@ -58,7 +58,7 @@ public class SaveManager : MonoBehaviour
         else SaveExists[slot - 1] = false;
     }
 
-    public string TimeString(float totalSeconds)
+    public static string TimeString(float totalSeconds)
     {
         int hours = Mathf.FloorToInt(totalSeconds / 3600);
         int minutes = Mathf.FloorToInt(totalSeconds / 60) - hours * 60;

@@ -105,6 +105,9 @@ public class WorldGen : MonoBehaviour
 
         updateAntCounter = true;
         updateCornCounter = true;
+
+        //Set UI timer
+        timeText.SetText(SaveManager.TimeString(playTime));
     }
 
     /*
@@ -938,11 +941,19 @@ public class WorldGen : MonoBehaviour
 
     private int counter = 0;
 
+    public TextMeshProUGUI timeText;
+
+
     public void FixedUpdate()
     {
-        playTime += Time.fixedDeltaTime;
 
-        if (!hasWon)
+        //update timer
+        int seconds = Mathf.FloorToInt(playTime);
+        playTime += Time.fixedDeltaTime;
+        if (seconds < Mathf.FloorToInt(playTime))
+            timeText.SetText(SaveManager.TimeString(playTime));
+
+        if (!hasWon && MainMenu.GameSettings.gameMode == 1)
         {
             counter++;
             if (counter > 100)
