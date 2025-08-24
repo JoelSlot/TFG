@@ -943,13 +943,10 @@ public class CubePaths : MonoBehaviour
     {
         //No interesa explorar dentro del nido 
         if (Nest.SurfaceInNest(surface)) return int.MinValue;
-        /*
-        //Si no hay feromonas aún:
-        if (sortedPheromonePosList.Count == 0) return int.MaxValue;
 
-        if (index == 0) index = 1;
-        Vector3Int closest = sortedPheromonePosList[index - 1];
-        */
+        //NO queremos exporar debajo del mapa.
+        if (surface.pos.y < 2) return -100;
+
         float penalty = 0;
         if (nearbyPhers.Contains(surface.pos)) penalty += 5;
         int count = surface.Count();
