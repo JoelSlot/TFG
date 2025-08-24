@@ -997,7 +997,7 @@ MonoBehaviour:
   origDigPoint: {fileID: 2026811054}
   origPheromoneParticles: {fileID: 281970058}
   mapBox: {fileID: 811198823}
-  victoryPanel: {fileID: 0}
+  victoryPanel: {fileID: 369093468}
 --- !u!4 &35091246
 Transform:
   m_ObjectHideFlags: 0
