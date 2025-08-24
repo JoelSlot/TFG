@@ -459,7 +459,7 @@ public class Ant : MonoBehaviour
             }
             else
             {
-                tree.Tick(new TimeData(Time.deltaTime), "");
+                tree.Tick(new TimeData(Time.deltaTime));
             }
 
 
@@ -1081,15 +1081,11 @@ public class Ant : MonoBehaviour
 
     void AntInputs()
     {
-        //if (SelectedAnt.state != Ant.AIState.Controlled) return;
         if (Input.GetKey(KeyCode.W)) SetWalking(true);
         else SetWalking(false);
         if (Input.GetKey(KeyCode.A)) TurnLeft();
         else if (Input.GetKey(KeyCode.D)) TurnRight();
         else DontTurn();
-        //if(Input.GetKey(KeyCode.Comma))             LetGo();
-
-        //if (Input.GetKeyDown(KeyCode.DownArrow) && SelectedAnt.placedPheromone != null) SelectedAnt.placedPheromone.ShowPath(false);
     }
 
     public AnimatorStateInfo GetAnimatorStateInfo()

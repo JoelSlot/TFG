@@ -29,7 +29,7 @@ public class GameData
 
     public serializableVector3 camera_pos { get; set; }
     public serializableVector3 camera_euler { get; set; }
-    public HashSet<QueenInfo> queenInfoDict { get; set; }
+    public QueenInfo queenInfo { get; set; }
     public HashSet<AntInfo> antInfoDict { get; set; }
     public HashSet<CornInfo> cornInfoDict { get; set; }
     public Dictionary<int, int> cornHeldAntDict { get; set; } //Key is corn index, value is ant index
@@ -106,12 +106,7 @@ public class GameData
 
     public void SaveQueens()
     {
-        queenInfoDict = new();
-        foreach (var queen in AntQueen.antQueenSet)
-        {
-            queenInfoDict.Add(QueenInfo.ToData(queen));
-        }
-        Debug.Log("Num queens: " + queenInfoDict.Count);
+        queenInfo = QueenInfo.ToData(AntQueen.Queen);
     }
 
     //Save all corn to the dictionary, and add links between held coins and the ants holding them
@@ -524,10 +519,8 @@ public class GameData
 
     public void LoadGameObjects()
     {
-        foreach (QueenInfo info in queenInfoDict)
-        {
-            WorldGen.InstantiateQueen(info);
-        }
+        
+        WorldGen.InstantiateQueen(queenInfo);
 
         foreach (AntInfo info in antInfoDict)
         {

@@ -32,8 +32,9 @@ public class AntQueen : MonoBehaviour
     Vector3 normalMedian; //Is updated at the start of every update, no need to save
     IBehaviourTreeNode tree;
 
-    public static HashSet<AntQueen> antQueenSet = new();
-
+    public static AntQueen Queen = null;
+    public static bool IsControlled = false;
+    public Outline outline;
 
     //Datos que hay que guardar y cargar
     public Task objective = Task.NoTask();
@@ -181,14 +182,15 @@ public class AntQueen : MonoBehaviour
 
 
             var stateInfo = Animator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsTag("noMove"))
+            if (stateInfo.IsTag("noMove") || MainMenu.GameSettings.gameMode == 0)
             {
-                //DigEvent
-                //nothing to do here. The ant didnt do anything on dig, but that was because i forgot
-                //To copy the pickup anim into a dig anim again. whoops.
-                //After copying pickup and adding it as dig, added event
-                //Shortenede anim but looked bad, so readjusted it
-                //then had to move the event again because adjusting anim length changes event time.
+                SetWalking(false);
+                DontTurn();
+            }
+            else if (IsControlled)
+            {
+                QueenInputs();
+                objective = Task.NoTask();
             }
             else tree.Tick(new TimeData(Time.deltaTime));
 
@@ -387,7 +389,9 @@ public class AntQueen : MonoBehaviour
     void OnDestroy()
     {
         Debug.Log("Destroyed me");
-        antQueenSet.Remove(this);
+        Queen = null;
+        FlyCamera.SelectedQueen = false;
+        //Game over
     }
 
     public Vector3 GetRelativePos(float x, float y, float z)
@@ -708,7 +712,17 @@ public class AntQueen : MonoBehaviour
         return BehaviourTreeStatus.Success;
     }
 
-    
+
+    void QueenInputs()
+    {
+        if (Input.GetKey(KeyCode.W)) SetWalking(true);
+        else SetWalking(false);
+        if (Input.GetKey(KeyCode.A)) TurnLeft();
+        else if (Input.GetKey(KeyCode.D)) TurnRight();
+        else DontTurn();
+    }
+
+
 
 
 }

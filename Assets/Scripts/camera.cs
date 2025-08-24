@@ -45,6 +45,7 @@ public class FlyCamera : MonoBehaviour
 
     public obj objectMode = obj.None;
     public static Ant SelectedAnt = null;
+    public static bool SelectedQueen = false;
     public EventSystem eventSystem;
 
     static bool rotateAllowed = false;
@@ -77,8 +78,11 @@ public class FlyCamera : MonoBehaviour
         }
 
         //activate/deactivate control button depending on selected ant status
-        if (SelectedAnt == null) ControlButton.SetActive(false);
-        else if (SelectedAnt.IsControlled) ControlButton.SetActive(false);
+        if (SelectedAnt == null && !SelectedQueen) ControlButton.SetActive(false);
+        else if (SelectedAnt != null)
+            ControlButton.SetActive(!SelectedAnt.IsControlled);
+        else if (SelectedQueen)
+            ControlButton.SetActive(!AntQueen.IsControlled);
         else ControlButton.SetActive(true);
     }
 
@@ -86,6 +90,8 @@ public class FlyCamera : MonoBehaviour
     {
         if (SelectedAnt != null)
             return SelectedAnt.IsControlled;
+        if (SelectedQueen)
+            return AntQueen.IsControlled;
         return false;
     }
 
@@ -166,24 +172,39 @@ public class FlyCamera : MonoBehaviour
 
     void ControlCameraMovement()
     {
+        GameObject ant = null;
+        if (SelectedAnt != null)
+        {
+            if (SelectedAnt.IsControlled)
+                ant = SelectedAnt.gameObject;
+        }
 
+        if (SelectedQueen)
+        {
+            if (AntQueen.IsControlled)
+                ant = AntQueen.Queen.gameObject;
+        }
+
+        if (ant == null) return;
+
+        
         Vector3 changedAntVector = cameraAntVector - cameraAntVector.normalized * Input.mouseScrollDelta.y * 0.2f;
         if (changedAntVector.magnitude < 1) changedAntVector = cameraAntVector.normalized;
         else if (changedAntVector.magnitude > 20) changedAntVector = cameraAntVector.normalized * 20;
 
-        transform.position = SelectedAnt.transform.position + changedAntVector;
+        transform.position = ant.transform.position + changedAntVector;
 
-        transform.RotateAround(SelectedAnt.transform.position, Vector3.up, Input.GetAxis("Mouse X"));
+        transform.RotateAround(ant.transform.position, Vector3.up, Input.GetAxis("Mouse X"));
         if (Input.GetAxis("Mouse Y") > 0)
             if (Vector3.Angle(Vector3.up, changedAntVector) > 5)
-                transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
+                transform.RotateAround(ant.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
         if (Input.GetAxis("Mouse Y") < 0)
             if (Vector3.Angle(Vector3.down, changedAntVector) > 5)
-                transform.RotateAround(SelectedAnt.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
+                transform.RotateAround(ant.transform.position, transform.right, -Input.GetAxis("Mouse Y"));
 
-        cameraAntVector = transform.position - SelectedAnt.transform.position;
+        cameraAntVector = transform.position - ant.transform.position;
 
-        transform.LookAt(SelectedAnt.transform.position);
+        transform.LookAt(ant.transform.position);
 
     }
 
@@ -325,7 +346,9 @@ public class FlyCamera : MonoBehaviour
         //from here on inputs
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            SelectedAnt.IsControlled = false;
+            if (SelectedAnt != null)
+                SelectedAnt.IsControlled = false;
+            AntQueen.IsControlled = false;
             ControlButton.SetActive(true);
         }
 
@@ -476,6 +499,15 @@ public class FlyCamera : MonoBehaviour
         ControlButton.SetActive(true);
     }
 
+    public void SelectQueen()
+    {
+        if (SelectedQueen) return;
+        DeselectAnt();
+        SelectedQueen = true;
+        AntQueen.Queen.outline.enabled = true;
+        ControlButton.SetActive(true);
+    }
+
     public void DeselectAnt()
     {
         if (SelectedAnt != null)
@@ -483,7 +515,13 @@ public class FlyCamera : MonoBehaviour
             SelectedAnt.outline.enabled = false;
             SelectedAnt.IsControlled = false;
         }
+        if (SelectedQueen)
+        {
+            AntQueen.Queen.outline.enabled = false;
+            AntQueen.IsControlled = false;
+        }
         SelectedAnt = null;
+        SelectedQueen = false;
         ControlButton.SetActive(false);
     }
 
@@ -533,7 +571,7 @@ public class FlyCamera : MonoBehaviour
             //if (Input.GetKeyDown(KeyCode.Alpha4)) { objectMode = obj.digTunnel; Debug.Log("Modo túnel"); } //cambiar de modo a construir
             //if (Input.GetKeyDown(KeyCode.Alpha5)) { objectMode = obj.digChamber; Debug.Log("Modo chamber"); } // cambiar de modo a construir 
             if (Input.GetKeyDown(KeyCode.Alpha6)) { objectMode = obj.test; Debug.Log("Modo test"); } // cambiar de modo a test 
-            if (Input.GetKeyDown(KeyCode.Alpha4)) { AntQueen.antQueenSet.First().GiveBirth(); }
+            if (Input.GetKeyDown(KeyCode.Alpha4)) { AntQueen.Queen.GiveBirth(); }
         }
         if (Input.GetKeyDown(KeyCode.Alpha9)) { digAllPoints(); }
     }
@@ -632,7 +670,7 @@ public class FlyCamera : MonoBehaviour
                 }
                 break;
             case obj.AntQueen:
-                if (AntQueen.antQueenSet.Count < 1)
+                if (AntQueen.Queen == null)
                 {
                     if (clickObject(terrainLayer, out hit))
                         WorldGen.InstantiateQueen(hit.point, Quaternion.LookRotation(RandomOrthogonal(hit.normal), hit.normal));
@@ -742,8 +780,11 @@ public class FlyCamera : MonoBehaviour
                         if (clickObject(antLayer, out hit))
                         {
                             DeselectAnt();
-                            SelectAnt(hit.transform.gameObject.GetComponent<Ant>());
-                            Debug.Log("Selected an ant");
+                            if (hit.transform.gameObject.TryGetComponent<Ant>(out Ant ant))
+                                SelectAnt(ant);
+                            else if (hit.transform.gameObject.TryGetComponent<AntQueen>(out AntQueen queen))
+                                SelectQueen();
+                            //Debug.Log("Selected an ant");
                         }
                         else
                             DeselectAnt();
@@ -1067,6 +1108,11 @@ public class FlyCamera : MonoBehaviour
         {
             SelectedAnt.IsControlled = true;
             cameraAntVector = (SelectedAnt.transform.up - SelectedAnt.transform.forward) * 4;
+        }
+        else if (SelectedQueen)
+        {
+            AntQueen.IsControlled = true;
+            cameraAntVector = (AntQueen.Queen.transform.up - AntQueen.Queen.transform.forward) * 4;
         }
     }
 

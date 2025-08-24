@@ -33,7 +33,7 @@ public class MapSaveManager : MonoBehaviour
 
         mapName = inputField.text;
 
-        if (AntQueen.antQueenSet.Count != 1)
+        if (AntQueen.Queen == null)
         {
             errorPanel.SetActive(true);
             errorPanelTextBox.SetText("Map must have an ant queen");

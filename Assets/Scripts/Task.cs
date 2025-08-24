@@ -347,12 +347,10 @@ public class Task
         //mirar si lo va a comer la reina
         if (cornScript.antId == -2)
         {
-            foreach (var queen in AntQueen.antQueenSet)
-            {
-                if (queen.objective.isTaskType(TaskType.Eat))
-                    if (queen.objective.itemId == cornScript.id)
-                        return true;
-            }
+            
+            if (AntQueen.Queen.objective.isTaskType(TaskType.Eat))
+                if (AntQueen.Queen.objective.itemId == cornScript.id)
+                    return true;
         }
         //Mirar si ya lo va a recoger otra hormiga
             if (cornScript.antId != -1)
@@ -403,12 +401,9 @@ public class Task
         //mirar si lo va a comer la reina
         if (digPoint.antId == -2)
         {
-            foreach (var queen in AntQueen.antQueenSet)
-            {
-                if (queen.objective.isTaskType(TaskType.Eat))
-                    if (queen.objective.digPointId == digPointPos)
-                        return true;
-            }
+            if (AntQueen.Queen.objective.isTaskType(TaskType.Eat))
+                if (AntQueen.Queen.objective.digPointId == digPointPos)
+                    return true;
         }
         //Mirar si ya lo va a excavar otra hormiga
         if (digPoint.antId != -1)
