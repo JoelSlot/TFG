@@ -368,6 +368,7 @@ public class Ant : MonoBehaviour
 
     Vector3Int nextPosDraw = Vector3Int.zero;
     int ageUpdateCounter = 0;
+    public int neededCounterDisplay = 0;
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -385,7 +386,18 @@ public class Ant : MonoBehaviour
         {
             //Sistema de edad
             ageUpdateCounter += 1;
-            if (ageUpdateCounter > 100)
+
+            //the age accel/decel system.
+            int neededCounter = 100;
+            if (!born && antDictionary.Count <= 4)
+                neededCounter = 20;
+            else if (!born)
+                neededCounter = 100 + antDictionary.Count * 3;
+
+            //To check it in editor
+            neededCounterDisplay = neededCounter;
+            
+            if (ageUpdateCounter > neededCounter)
             {
                 age++;
                 ageUpdateCounter = 0;

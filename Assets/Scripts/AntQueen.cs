@@ -39,7 +39,8 @@ public class AntQueen : MonoBehaviour
     //Datos que hay que guardar y cargar
     public Task objective = Task.NoTask();
     public int Counter = 0; //Counter of how long the ant is lost before checking if it can go home.
-    public int Energy = 0; //increases when eating, decreases to give birth
+    public int Energy = 20; //increases when eating, decreases to give birth
+    //starts with enough energy for 4 ants.
 
 
     //Static values
@@ -654,11 +655,19 @@ public class AntQueen : MonoBehaviour
             if (GiveBirth())
             {
                 objective = Task.GoToNestPartTask(antSurface, Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber));
-                if (objective.isTaskType(TaskType.Lost)) objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+
+                if (objective.isTaskType(TaskType.Lost))
+                {
+                    if (Ant.antDictionary.Count < 4)
+                        objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
+                    else objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+                }
                 return BehaviourTreeStatus.Success;
             }
-
-        objective = Task.WaitTask(this, UnityEngine.Random.Range(500, 1500));
+            
+        if (Ant.antDictionary.Count < 4)
+            objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
+        else objective = Task.WaitTask(this, UnityEngine.Random.Range(500, 800));
 
         return BehaviourTreeStatus.Success;
 
