@@ -4,7 +4,7 @@ public class Emitter : MonoBehaviour
 {
     public ParticleSystem ps;
     private ParticleSystemRenderer pr;
-    private bool enabled = true;
+    public static bool enabled = true;
     int counter = 0;
     int mode = 0;
 

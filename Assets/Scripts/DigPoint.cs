@@ -13,6 +13,8 @@ public class DigPoint : MonoBehaviour
     public static Dictionary<Vector3Int, digPointData> digPointDict = new();
     public static HashSet<Vector3Int> availableDigPoints = new();
 
+    public ParticleSystem particles;
+
 
     public class digPointData
     {
@@ -57,12 +59,6 @@ public class DigPoint : MonoBehaviour
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
     {
 
     }
@@ -306,6 +302,12 @@ public class DigPoint : MonoBehaviour
                 Destroy(this.gameObject);
             }
         }
+
+        //Disable/enable particles
+        if (Emitter.enabled && particles.isStopped)
+            particles.Play();
+        else if (!Emitter.enabled && particles.isPlaying)
+            particles.Stop();
     }
 
 }

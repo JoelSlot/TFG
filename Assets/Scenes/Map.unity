@@ -4539,7 +4539,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198909573904484406, guid: 2b5ba3f0e23ea4246a8cf4a37ffd8767, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 1.4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 198909573904484406, guid: 2b5ba3f0e23ea4246a8cf4a37ffd8767, type: 3}
       propertyPath: InitialModule.startLifetime.scalar
@@ -16872,7 +16872,7 @@ MonoBehaviour:
   taskName: 
   outline: {fileID: 1937663691}
   Counter: 0
-  Energy: 0
+  Energy: 20
 --- !u!95 &1937663690
 Animator:
   serializedVersion: 7
@@ -17830,6 +17830,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41104be904bbd25438fd56189981d634, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particles: {fileID: 2026811060}
 --- !u!135 &2026811056
 SphereCollider:
   m_ObjectHideFlags: 0
