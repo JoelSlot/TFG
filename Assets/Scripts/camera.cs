@@ -1132,6 +1132,8 @@ public class FlyCamera : MonoBehaviour
 
         selectedNestPart.mode = NestPart.IndexToNestPartType(typeMenu.value + 1);
         UpdateNestPartCountText();
+        WorldGen.updateAntCounter = true;
+        WorldGen.updateCornCounter = true;
     }
 
     //Map creation control buttons and functions
