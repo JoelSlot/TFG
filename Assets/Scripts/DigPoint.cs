@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 public class DigPoint : MonoBehaviour
@@ -50,7 +51,7 @@ public class DigPoint : MonoBehaviour
     }
 
     void OnDestroy()
-    {                            
+    {
         digPointDict.Remove(Vector3Int.RoundToInt(transform.position));
     }
 
@@ -66,47 +67,158 @@ public class DigPoint : MonoBehaviour
 
     }
 
+    private void RemoveDigPointAssignedAnt(Vector3Int pos)
+    {
+        if (!digPointDict.TryGetValue(pos, out var digPointData)) return;
+        int antId = digPointData.antId;
+        if (antId != -1)
+            if (Ant.antDictionary.TryGetValue(antId, out Ant ant))
+                if (ant.objective.digPointId == pos)
+                    ant.objective = Task.NoTask();
+    }
+
+    private void DigEffectOnAdyacent(Vector3Int key, ref List<Tuple<Vector3Int, int>> terrainEdit)
+    {
+        //Si el punto adyacente existe
+        if (digPointDict.ContainsKey(key))
+        {
+            digPointData nextDigData = digPointDict[key];
+            //Si el punto no influye el terreno y se encuentra en el aire, lo eliminamos y editamos el mapa
+            if (IsPointless(key) && WorldGen.IsAboveSurface(key))
+            {
+                terrainEdit.Add(new Tuple<Vector3Int, int>(key, nextDigData.value));
+                digPointDict.Remove(key);
+                Destroy(nextDigData.digPoint.gameObject);
+            }
+            //Si al excavarlo aun se encontraría bajo suelo, es pared. Lo excavamos entonces de gratis.
+            else if (nextDigData.value > WorldGen.isolevel)
+            {
+                if (WorldGen.SampleTerrain(key) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(key, nextDigData.value));
+                digPointDict.Remove(key);
+            }
+            //si no es ni pared ni inútil, le quitamos un poco de valor para que sea mas natural la excavación.
+            else
+            {
+                nextDigData.InstantiatePoint(key, false);
+                //Quitar un poco de los alrededores
+                int newVal = WorldGen.SampleTerrain(key) - 2;
+                if (newVal > nextDigData.value) //Si el valor es mayor que el valor min que se queire obtener:
+                    //sampled terrain with original pos for some reason. Error or intentional? We'll see in testing now that it's "fixed"
+                    if (WorldGen.SampleTerrain(key) > newVal) terrainEdit.Add(new Tuple<Vector3Int, int>(key, newVal)); //Lo ponemos al valor obtenido
+            }
+        }
+    }
+
     public void Dig()
     {
         //Comenzamos la lista de puntos a editar con el digPoint mismo
         Vector3Int pos = Vector3Int.RoundToInt(transform.position);
+        if (!digPointDict.ContainsKey(pos))
+        {
+            Destroy(this.gameObject);
+            return;  
+        }
         int val = digPointDict[pos].value;
         List<Tuple<Vector3Int, int>> terrainEdit = new();
         if (WorldGen.SampleTerrain(pos) > val) terrainEdit.Add(new Tuple<Vector3Int, int>(pos, val));
 
         //Eliminamos el task de la hormiga que lo está excavando (para casos de autoexcavación)
-        int antId = digPointDict[pos].antId;
-        if (antId != -1)
-            if (Ant.antDictionary.TryGetValue(antId, out Ant ant))
-                if (ant.objective.digPointId == pos)
-                    ant.objective = Task.NoTask();
-
-
-
+        RemoveDigPointAssignedAnt(pos);
 
         //Miramos todos los digPoints alrededores
         Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
         foreach (Vector3Int direction in directions)
         {
+            Vector3Int ady = pos + direction;
+            DigEffectOnAdyacent(ady, ref terrainEdit);
+        }
+        digPointDict.Remove(pos);
+
+        if (terrainEdit.Count > 0) WorldGen.EditTerrainSet(terrainEdit);
+    }
+
+    public void BigDig()
+    {
+        this.Dig();
+        
+        Vector3Int pos = Vector3Int.RoundToInt(transform.position);
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        foreach (Vector3Int direction in directions)
+        {
+            Vector3Int ady = pos + direction;
+            if (digPointDict.ContainsKey(ady))
+            {
+                if (digPointDict[ady].digPoint != null)
+                    digPointDict[ady].digPoint.Dig();
+            }
+        }
+    }
+
+    public void BigFaultyDig()
+    {
+        //Comenzamos la lista de puntos a editar con el digPoint mismo
+        Vector3Int pos = Vector3Int.RoundToInt(transform.position);
+        int val = digPointDict[pos].value;
+        List<Tuple<Vector3Int, int>> terrainEdit = new();
+        if (WorldGen.SampleTerrain(pos) > val)
+            terrainEdit.Add(new Tuple<Vector3Int, int>(pos, val));
+
+
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
+        HashSet<Vector3Int> checkedPos = new() { pos };
+        foreach (Vector3Int direction in directions)
+        {
+            Vector3Int adyacent = pos + direction;
+            if (digPointDict.ContainsKey(adyacent))
+            {
+                val = digPointDict[adyacent].value;
+                if (WorldGen.SampleTerrain(adyacent) > val)
+                {
+                    terrainEdit.Add(new Tuple<Vector3Int, int>(adyacent, val));
+                    foreach (Vector3Int direction2 in directions)
+                    {
+                        Vector3Int adyacent2 = adyacent + direction;
+                        if (checkedPos.Contains(adyacent2)) continue; //exit if already checked
+                        checkedPos.Add(adyacent2);
+                        DigEffectOnAdyacent(adyacent2, ref terrainEdit);
+                    }
+                }
+                //destroy the adyacent digpoints
+                Destroy(digPointDict[adyacent].digPoint.gameObject);
+                digPointDict.Remove(adyacent);
+            }
+        }
+
+
+
+
+        //Eliminamos el task de la hormiga que lo está excavando (para casos de autoexcavación)
+        RemoveDigPointAssignedAnt(pos);
+
+        //Miramos todos los digPoints alrededores
+        foreach (Vector3Int direction in directions)
+        {
             Vector3Int key = pos + direction;
+            //Si el punto adyacente existe
             if (digPointDict.ContainsKey(key))
             {
                 digPointData nextDigData = digPointDict[key];
-                if (IsPointless(key)) //Si ahora da igual excavar el punto, lo eliminamos y editamos el mapa
+                //Si el punto no influye el terreno y se encuentra en el aire, lo eliminamos y editamos el mapa
+                if (IsPointless(key) && WorldGen.IsAboveSurface(key))
                 {
                     terrainEdit.Add(new Tuple<Vector3Int, int>(key, nextDigData.value));
                     digPointDict.Remove(key);
                     Destroy(nextDigData.digPoint.gameObject);
                 }
-                else if (nextDigData.value > WorldGen.isolevel) //si es pared lo excavamos y lo eliminamos del diccionario
+                //Si al excavarlo aun se encontraría bajo suelo, es pared. Lo excavamos entonces de gratis.
+                else if (nextDigData.value > WorldGen.isolevel)
                 {
                     if (WorldGen.SampleTerrain(pos) > nextDigData.value) terrainEdit.Add(new Tuple<Vector3Int, int>(pos + direction, nextDigData.value));
                     digPointDict.Remove(key);
                 }
+                //si no es ni pared ni inútil, le quitamos un poco de valor para que sea mas natural la excavación.
                 else
                 {
-                    //Debug.Log("AM instantiated: " + nextDigData.digPoint != null);
-                    //Inicializamos si no lo está
                     nextDigData.InstantiatePoint(key, false);
                     //Quitar un poco de los alrededores
                     int newVal = WorldGen.SampleTerrain(key) - 2;

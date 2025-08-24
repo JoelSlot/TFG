@@ -183,6 +183,7 @@ public class chunk
 
     public void CreateMeshData()
     {
+        meshRenderer.enabled = false;
         ClearMeshData();
 
         //Los limites se incrementan en 1 si en dicha direccion ya no hay mas chunks, y por tanto hay que rellenar su final.
@@ -199,6 +200,7 @@ public class chunk
                     MarchCube(new Vector3Int(x + chunkPosition.x, y + chunkPosition.y, z + chunkPosition.z));
 
         BuildMesh();
+        meshRenderer.enabled = true;
     }
 
 

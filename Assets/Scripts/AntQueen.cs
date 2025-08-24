@@ -124,12 +124,6 @@ public class AntQueen : MonoBehaviour
                         .Do("Objective complete or failed", t => { objective = Task.NoTask(); /*Debug.Log("REACHED OR FAILED");*/ return BehaviourTreeStatus.Success; })
                     .End()
 
-                    .Sequence("Explore")
-                        .Condition("Is my task exploring?", t => objective.isTaskType(TaskType.Explore))
-                        .Do("Follow objective path", t => FollowTaskPath())
-                        .Do("Objective complete or failed", t => CheckExploreStatus())
-                    .End()
-
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
                         .Condition("Make sure im ACTUALLY lost", t => AmIStillLost())
@@ -192,7 +186,7 @@ public class AntQueen : MonoBehaviour
                 QueenInputs();
                 objective = Task.NoTask();
             }
-            else tree.Tick(new TimeData(Time.deltaTime));
+            else tree.Tick(new TimeData(Time.deltaTime), "");
 
 
 
@@ -222,7 +216,7 @@ public class AntQueen : MonoBehaviour
             if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
             if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
             if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
-            if (dist < 2f && objective.isTaskType(TaskType.Dig)) return BehaviourTreeStatus.Success;
+            if (dist < 2.5f && objective.isTaskType(TaskType.Dig)) return BehaviourTreeStatus.Success;
 
             BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
 
@@ -239,29 +233,6 @@ public class AntQueen : MonoBehaviour
         }
         else return BehaviourTreeStatus.Failure;
 
-    }
-
-    //Función de gestion de estado explore
-    private BehaviourTreeStatus CheckExploreStatus()
-    {
-        //Si no se ha encontrado task cerca y por tanto task no ha cambiado
-        if (SenseDigTask() == BehaviourTreeStatus.Failure)
-        {
-            Counter--;
-            //Si hemos explorado la distancia que queríamos, volvemos a casa.
-            if (Counter < 1)
-            {
-                Counter = 0; //Just to be extra sure.
-                objective = Task.GoInsideTask(antSurface);
-            }
-            else
-            {
-                objective = Task.ExploreTask(antSurface, transform.forward, out int Unimportant);
-            }
-        }
-        else Counter = 0;
-
-        return BehaviourTreeStatus.Success;
     }
 
     private bool AmIStillLost()
@@ -300,7 +271,7 @@ public class AntQueen : MonoBehaviour
         PriorityQueue<DigPoint, float> sensedItems = new();
         int maxColliders = 100;
         Collider[] hitColliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 7, hitColliders, digPointMask);
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 10, hitColliders, digPointMask);
         for (int i = 0; i < numColliders; i++)
         {
             sensedItems.Enqueue(hitColliders[i].gameObject.GetComponent<DigPoint>(), Vector3.Distance(hitColliders[i].transform.position, transform.position));
@@ -312,6 +283,7 @@ public class AntQueen : MonoBehaviour
         while (sensedItems.Count > 0)
         {
             DigPoint sensedPoint = sensedItems.Dequeue();
+            if (sensedPoint == null) continue;
             //Solo a los que se puede llegar son considerados -> si el camino de un considerado es vacio, ya se está
             if (CubePaths.GetPathToPoint(antSurface, Vector3Int.RoundToInt(sensedPoint.transform.position), 10, out List<CubePaths.CubeSurface> newPath))
             {
@@ -487,7 +459,7 @@ public class AntQueen : MonoBehaviour
             DigPoint thePoint = objective.GetDigPoint();
             if (thePoint != null)
             {
-                thePoint.Dig();
+                thePoint.BigDig();
                 DigPoint.digPointDict.Remove(Vector3Int.RoundToInt(thePoint.transform.position));
                 Destroy(thePoint.gameObject);
             }

@@ -585,6 +585,8 @@ public class Ant : MonoBehaviour
         while (sensedItems.Count > 0)
         {
             GameObject sensedItem = sensedItems.Dequeue();
+            //Asegurarnos de que el objeto no ha sido eliminado.
+            if (sensedItem == null) continue;
             //DigPoints tienen prioridad sobre comida. Si se mira un objeto no DigPoint habiendo detectado ya uno, se ignora el objeto actual
             if (sensedItem.gameObject.layer != 9 && foundDigPoint) continue;
             //Comida dentro de una cámara de comida no se recoge
