@@ -17,10 +17,6 @@ public class AntQueen : MonoBehaviour
     public GameObject carriedObject; // the head bone
     public GameObject abdomenBone; //the abdomen bone
     public string taskName = "";
-    //public GameObject staticEgg;
-    //public GameObject eggAnim;
-    //private Animator eggAnimator;
-
 
     //el animador
     private Animator Animator;

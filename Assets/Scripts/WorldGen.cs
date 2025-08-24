@@ -72,6 +72,8 @@ public class WorldGen : MonoBehaviour
     public GameObject origPheromoneParticles;
     public static GameObject originalPheromoneParticles;
 
+    public GameObject mapBox;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -156,7 +158,7 @@ public class WorldGen : MonoBehaviour
             {
                 for (int z = 0; z < z_dim + 1; z++)
                 {
-                    if (z == 0 || z == z_dim || x == 0 || x == x_dim)
+                    if (z == 0 || z == z_dim + 1 || x == 0 || x == x_dim + 1)
                         terrainMap[x, y, z] = 0;
                     else if (y == 0)
                         terrainMap[x, y, z] = 0;
@@ -198,12 +200,7 @@ public class WorldGen : MonoBehaviour
                     if (z == 0 || z == z_dim || x == 0 || x == x_dim)
                         terrainMap[x, y, z] = 0;
                     else //if (y == Mathf.FloorToInt(height) || y == Mathf.CeilToInt(height))
-                        terrainMap[x, y, z] = 255 - Mathf.FloorToInt(value * 255);
-                    /*                  else if (y > height)
-                                           terrainMap[x, y, z] = 0;
-                                        else
-                                            terrainMap[x, y, z] = 255;
-                    */
+                        terrainMap[x, y, z] = Mathf.Clamp(255 - Mathf.FloorToInt(value * 255), 0, 255);
                     memoryMap[x, y, z] = terrainMap[x, y, z];
                 }
             }
@@ -304,7 +301,7 @@ public class WorldGen : MonoBehaviour
                 }
                 bool z_0 = false;
                 if (point.z % chunk_z_dim == 0 && point.z != 0)
-                {
+                {   
                     z_0 = true;
                     affectedChunks.Add(new Vector3Int((point.x / chunk_x_dim) * chunk_x_dim, 0, (point.z / chunk_z_dim - 1) * chunk_z_dim));
                 }
@@ -317,10 +314,13 @@ public class WorldGen : MonoBehaviour
         //check what chunks it affects
         foreach (Vector3Int point in affectedChunks)
         {
-            //If in terrain edit mode, set memoryMap to copy of terrainMap
-            if (MainMenu.GameSettings.gameMode == 0)
-                chunks[point].saveChunkTerrainToMemory();
-            chunks[point].CreateMeshData();
+            if (WorldGen.chunks.ContainsKey(point))
+            {
+                //If in terrain edit mode, set memoryMap to copy of terrainMap
+                if (MainMenu.GameSettings.gameMode == 0)
+                    chunks[point].saveChunkTerrainToMemory();
+                chunks[point].CreateMeshData();
+            }
         }
 
     }
@@ -387,12 +387,12 @@ public class WorldGen : MonoBehaviour
     }
     public static int SamplePastTerrain(Vector3Int point)
     {
-        if (!InRange(point)) return 255;
+        if (!InRange(point)) return 0;
         return memoryMap[point.x, point.y, point.z];
     }
     public static int SamplePastTerrain(int x, int y, int z)
     {
-        if (!InRange(new Vector3Int(x, y, z))) return 255;
+        if (!InRange(new Vector3Int(x, y, z))) return 0;
         return memoryMap[x, y, z];
     }
     public static int SamplePastTerrain(Vector3 point)
@@ -471,9 +471,8 @@ public class WorldGen : MonoBehaviour
         Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
         foreach (Vector3Int direction in directions)
         {
-            if (InRange(pos))
-                if (isAbove != IsAboveSurface(pos + direction))
-                    return val;
+            if (isAbove != IsAboveSurface(pos + direction))
+                return val;
         }
         if (isAbove) return 0;
         return 255;
@@ -488,9 +487,8 @@ public class WorldGen : MonoBehaviour
         Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right, Vector3Int.forward, Vector3Int.back };
         foreach (Vector3Int direction in directions)
         {
-            if (InRange(pos))
-                if (isAbove != WasAboveSurface(pos + direction))
-                    return val;
+            if (isAbove != WasAboveSurface(pos + direction))
+                return val;
         }
         if (isAbove) return 0;
         return 255;
@@ -503,6 +501,18 @@ public class WorldGen : MonoBehaviour
             for (int y = 0; y < y_dim + 1; y++)
                 for (int z = 0; z < z_dim + 1; z++)
                     terrainMap[x, y, z] = GetRedundantTerrainSample(new(x, y, z));
+    }
+
+    public void SetMapCube()
+    {
+        if (MainMenu.GameSettings.gameMode == 0)
+        {
+            mapBox.SetActive(true);
+            Vector3 value = new((x_dim + 1f), y_dim + 1, z_dim + 1);
+            mapBox.transform.position = value / 2f;
+            mapBox.transform.localScale = value;
+        }
+        else mapBox.SetActive(false);
     }
 
     public static void ApplyPastTerrainRedundancy()
@@ -549,6 +559,8 @@ public class WorldGen : MonoBehaviour
 
         WorldGen.playTime = playTime;
 
+        SetMapCube();
+
     }
 
     public void StartFlatMap()
@@ -568,6 +580,8 @@ public class WorldGen : MonoBehaviour
         if (MainMenu.GameSettings.height > 0) mapName = "flat";
         else mapName = "empty";
         playTime = 0;
+
+        SetMapCube();
     }
 
     public bool StartMap(string mapName)
@@ -586,9 +600,6 @@ public class WorldGen : MonoBehaviour
             mapDir = "SaveData/Maps/" + mapName + ".xml";
         }
         else return false;
-
-
-
 
         //XML
         var serializer = new SharpSerializer();
@@ -616,7 +627,7 @@ public class WorldGen : MonoBehaviour
         GC.Collect();
 
         WorldGen.playTime = 0;
-
+        SetMapCube();
         return true;
 
     }
@@ -685,7 +696,7 @@ public class WorldGen : MonoBehaviour
         Debug.Log("Starting save");
 
         ApplyTerrainRedundancy();
-        ApplyPastTerrainRedundancy();
+        //memoryMap = terrainMap;
 
         GameData newData = GameData.Save();
 

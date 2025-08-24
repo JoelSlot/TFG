@@ -45,9 +45,10 @@ public class MainMenu : MonoBehaviour
                 GameSettings.newMap = false;
                 GameSettings.SaveSlot = slot;
                 GameSettings.gameMode = 1;
+                GameSettings.flatMap = false;
                 SceneManager.LoadSceneAsync("Map");
             }
-        
+
     }
 
     public void SetPlayingMode(int mode)
@@ -58,6 +59,15 @@ public class MainMenu : MonoBehaviour
     public void QuitGame()
     {
         Application.Quit();
+    }
+
+    void Start()
+    {
+        System.IO.Directory.CreateDirectory("SaveData/CustomMaps");
+        System.IO.Directory.CreateDirectory("SaveData/Maps");
+        System.IO.Directory.CreateDirectory("SaveData/Save1");
+        System.IO.Directory.CreateDirectory("SaveData/Save2");
+        System.IO.Directory.CreateDirectory("SaveData/Save3");
     }
 
 }

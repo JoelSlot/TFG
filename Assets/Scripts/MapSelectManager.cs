@@ -27,6 +27,9 @@ public class MapSelectManager : MonoBehaviour
             nameList.Add(RemoveCustomExcess(dir));
         }
 
+        if (nameList.Count == 0)
+            nameList.Add("No maps available");
+
         dropDown.AddOptions(nameList);
     }
 
@@ -37,6 +40,7 @@ public class MapSelectManager : MonoBehaviour
             MainMenu.GameSettings.fileName = nameList[dropDown.value];
             Debug.Log(MainMenu.GameSettings.fileName);
             MainMenu.GameSettings.newMap = true;
+            MainMenu.GameSettings.flatMap = false;
             SceneManager.LoadSceneAsync("Map");
 
         }

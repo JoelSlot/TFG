@@ -43,9 +43,9 @@ public class FlatMapManager : MonoBehaviour
         SceneManager.LoadSceneAsync("Map");
     }
 
-    void OEnable()
+    void OnEnable()
     {
-        
+        sliderValueChange();
     }
 
 
