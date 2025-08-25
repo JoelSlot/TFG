@@ -153,9 +153,9 @@ public class NestPart : MonoBehaviour
         else
         //The chamber uses startpos as its center, and endPos as one of it's corners
         {
-            endPos.x = Mathf.Clamp(endPos.x, startPos.x + 5, startPos.x + 20);
-            endPos.y = Mathf.Clamp(endPos.y, startPos.y + 5, startPos.y + 15);
-            endPos.z = Mathf.Clamp(endPos.z, startPos.z + 5, startPos.z + 20);
+            endPos.x = Mathf.Clamp(endPos.x, startPos.x + 8, startPos.x + 15);
+            endPos.y = Mathf.Clamp(endPos.y, startPos.y + 5, startPos.y + 10);
+            endPos.z = Mathf.Clamp(endPos.z, startPos.z + 8, startPos.z + 15);
 
             Vector3 distance = endPos - startPos;
             startSphere.transform.localPosition = Vector3.zero;
