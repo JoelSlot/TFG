@@ -208,7 +208,7 @@ public static class Nest
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn" };
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn", "lounge"};
         Shuffle(checkOrder);
 
         while (checkOrder.Count > 0)
@@ -218,7 +218,7 @@ public static class Nest
             switch (function)
             {
                 case "dig":
-                    Debug.Log("Getting a dig task");
+                    //Debug.Log("Getting a dig task");
                     if (GetNestDigTask(antSurface, antId, ref objective))
                     {
                         Debug.Log("Got a dig task");
@@ -226,7 +226,7 @@ public static class Nest
                     }
                     break;
                 case "corn":
-                    Debug.Log("Getting a relocate task");
+                    //Debug.Log("Getting a relocate task");
                     if (GetNestRelocateTask(antSurface, antId, ref objective))
                     {
                         Debug.Log("Got a relocate task");
@@ -235,10 +235,17 @@ public static class Nest
                     break;
                 case "cob":
                     if (!foodSpace) continue;
-                    Debug.Log("Getting a collect task");
+                    //Debug.Log("Getting a collect task");
                     if (GetNestCollectTask(antSurface, ref objective))
                     {
-                        Debug.Log("Got a collect task");
+                        //Debug.Log("Got a collect task");
+                        return BehaviourTreeStatus.Success;
+                    }
+                    break;
+                case "lounge":
+                    if (GetNestChillTask(antSurface, antId, ref objective))
+                    {
+                        //Debug.Log("Got a chill task")
                         return BehaviourTreeStatus.Success;
                     }
                     break;
@@ -247,6 +254,34 @@ public static class Nest
 
         Debug.Log("Did not get a requested task");
         return BehaviourTreeStatus.Failure;
+    }
+
+    public static bool GetNestChillTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
+    {
+
+        List<int> dugChamberIndexes = new();
+        for (int i = 0; i < NestParts.Count; i++)
+        {
+            if (NestParts[i].mode != NestPart.NestPartType.Tunnel && NestParts[i].HasBeenDug() && NestParts[i].HasBeenPlaced())
+            {
+                dugChamberIndexes.Add(i);
+            }
+        }
+
+        Shuffle(dugChamberIndexes);
+        foreach (var index in dugChamberIndexes)
+        {
+            if (GetPointInChamber(index, out Vector3 point))
+            {
+                if (CubePaths.GetKnownPathToPoint(antSurface, point, 1, out var path))
+                {
+                    objective = Task.WaitTask(antId, UnityEngine.Random.Range(100, 300), path);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static bool GetNestDigTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
@@ -362,13 +397,13 @@ public static class Nest
     {
         if (!HasDugNestPart(NestPart.NestPartType.FoodChamber)) return false; //Si no hay camara de comida excavada
 
-        Debug.Log("Got 1");
+        //Debug.Log("Got 1");
         int queenChamberIndex = GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber);
-        Debug.Log("Got 2");
+        //Debug.Log("Got 2");
         if (queenChamberIndex == -1) return false; //si no hay camara de reina excavada.
-        Debug.Log("Got 3");
+        //Debug.Log("Got 3");
         if (NestParts[queenChamberIndex].CollectedCornPips.Count + antsBringingQueenFood.Count >= requieredFoodInQueenChamber) return false; //Si ya hay suficiente comida y hormigas trayendo
-        Debug.Log("Got 4");
+        //Debug.Log("Got 4");
         List<int> NestPartIndexes = GetDugNestPartIndexes(NestPart.NestPartType.FoodChamber);
         Shuffle(NestPartIndexes);
         Debug.Log("Size: " + NestPartIndexes.Count);

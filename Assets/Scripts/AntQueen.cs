@@ -660,15 +660,15 @@ public class AntQueen : MonoBehaviour
                 if (objective.isTaskType(TaskType.Lost))
                 {
                     if (Ant.antDictionary.Count < 4)
-                        objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
-                    else objective = Task.WaitTask(this, UnityEngine.Random.Range(100, 200));
+                        objective = Task.WaitTask(-2, UnityEngine.Random.Range(50, 100));
+                    else objective = Task.WaitTask(-2, UnityEngine.Random.Range(100, 200));
                 }
                 return BehaviourTreeStatus.Success;
             }
 
         if (Ant.antDictionary.Count < 4)
-            objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
-        else objective = Task.WaitTask(this, UnityEngine.Random.Range(500, 800));
+            objective = Task.WaitTask(-2, UnityEngine.Random.Range(50, 100));
+        else objective = Task.WaitTask(-2, UnityEngine.Random.Range(500, 800));
 
         return BehaviourTreeStatus.Success;
 

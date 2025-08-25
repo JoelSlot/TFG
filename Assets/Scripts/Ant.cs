@@ -216,13 +216,14 @@ public class Ant : MonoBehaviour
                     .Sequence("Lost")
                         .Condition("Am i lost?", t => objective.isTaskType(TaskType.Lost))
                         .Condition("Make sure im ACTUALLY lost", t => AmIStillLost())
-                        .Do("Stop brining queen food if i am", t=> { Nest.antsBringingQueenFood.Remove(id);  return BehaviourTreeStatus.Success; })
+                        .Do("Stop brining queen food if i am", t => { Nest.antsBringingQueenFood.Remove(id); return BehaviourTreeStatus.Success; })
                         .Do("Follow objective path", t => FollowTaskPath())
                         .Do("Check if in nest", t => CheckLostStatus())
                     .End()
 
                     .Sequence("Waiting")
                         .Condition("Am i waiting?", t => objective.isTaskType(TaskType.Wait))
+                        .Do("Go to wait spot", t => FollowTaskPath())
                         .Do("Decrease waiting counter", t => { Counter -= 1; return BehaviourTreeStatus.Success; })
                         .Selector("Terminar espera si contador es 0")
                             .Condition("contador es mayor que 0?", t => Counter > 0)
@@ -274,7 +275,6 @@ public class Ant : MonoBehaviour
     {
         if (!Nest.SurfaceInNest(antSurface)) //go to nest if not in nest.
         {
-            Debug.Log("1");
             objective = Task.GoInsideTask(antSurface);
             //Debug.Log("Task is go inside");
             return BehaviourTreeStatus.Success;
@@ -287,12 +287,10 @@ public class Ant : MonoBehaviour
         {
             if (Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.FoodChamber))
             {
-                Debug.Log("2");
                 return PutDown();
             }
             else
             {
-                Debug.Log("3");
                 objective = Task.GoToNestPartTask(antSurface, NestPart.NestPartType.FoodChamber);
                 //Debug.Log("Task is go to food chamber");
                 return BehaviourTreeStatus.Success;
@@ -300,12 +298,10 @@ public class Ant : MonoBehaviour
         }
         else if (!Nest.SurfaceInNestPart(antSurface, NestPart.NestPartType.Tunnel)) //if not in tunnel
         {
-            Debug.Log("4");
             return PutDown();
         }
         else
         {
-            //Debug.Log("5");
             objective = Task.GoToAnyChamber(antSurface);
             return BehaviourTreeStatus.Success;
         }

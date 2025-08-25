@@ -284,29 +284,31 @@ public class Task
         return lostTask;
     }
 
-    public static Task WaitTask(Ant ant, int time)
+    public static Task WaitTask(int id, int time)
     {
         Task waitTask = new()
         {
             type = TaskType.Wait,
             path = new()
         };
-
-        ant.Counter = time;
+        if (id == -2)
+            AntQueen.Queen.Counter = time;
+        else if (Ant.antDictionary.ContainsKey(id))
+            Ant.antDictionary[id].Counter = time;
         return waitTask;
     }
 
-    public static Task WaitTask(AntQueen antQueen, int time)
+    public static Task WaitTask(int id, int time, List<CubePaths.CubeSurface> path)
     {
-
-        //Debug.Log("Got a waiting task zzzz");
         Task waitTask = new()
         {
             type = TaskType.Wait,
-            path = new()
+            path = path
         };
-
-        antQueen.Counter = time;
+        if (id == -2)
+            AntQueen.Queen.Counter = time;
+        else if (Ant.antDictionary.ContainsKey(id))
+            Ant.antDictionary[id].Counter = time;
         return waitTask;
     }
 
