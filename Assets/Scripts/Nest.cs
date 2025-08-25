@@ -208,7 +208,7 @@ public static class Nest
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn", "lounge"};
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn", "lounge", "explore"};
         Shuffle(checkOrder);
 
         while (checkOrder.Count > 0)
@@ -249,6 +249,18 @@ public static class Nest
                         return BehaviourTreeStatus.Success;
                     }
                     break;
+                case "explore":
+                    if (NumAntsWithTask(TaskType.Explore) < Ant.antDictionary.Count * 0.2f)
+                    {
+                        objective = Task.ExploreTask(antSurface, Vector3.up, out int antCounterVal);
+                        if (Ant.antDictionary.ContainsKey(antId))
+                        {
+                            Ant.antDictionary[antId].Counter = antCounterVal;
+                        }
+                        return BehaviourTreeStatus.Success;
+                    }
+                    break;
+
             }
         }
 
@@ -509,8 +521,8 @@ public static class Nest
 
     public static bool PointInNestPart(Vector3 point, int nestPartIndex)
     {
-        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0) {return false; }
-        if (!NestParts[nestPartIndex].HasBeenDug()) {return false; }
+        if (nestPartIndex >= NestParts.Count || nestPartIndex < 0) { return false; }
+        if (!NestParts[nestPartIndex].HasBeenDug()) { return false; }
 
         float marchingValue = NestParts[nestPartIndex].getMarchingValue(point);
         //Debug.Log("Type: " + NestPart.NestPartTypeToIndex(NestParts[nestPartIndex].mode));
@@ -678,7 +690,7 @@ public static class Nest
         }
         point = Vector3.zero;
         if (selectedIndex == -1) return false;
-        
+
         return GetPointInChamber(selectedIndex, out point);
     }
 
@@ -764,6 +776,14 @@ public static class Nest
         if (NestParts[partIndex].mode == NestPart.NestPartType.EggChamber) return true; //In eggchamber? good
 
         return false; //theres a eggchamber and it is not in it...
+    }
+
+    public static int NumAntsWithTask(TaskType type)
+    {
+        int amount = 0;
+        foreach ((var id, var ant) in Ant.antDictionary)
+            if (ant.objective.isTaskType(type)) amount++;
+        return amount;
     }
 
 
