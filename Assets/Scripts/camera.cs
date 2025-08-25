@@ -76,6 +76,9 @@ public class FlyCamera : MonoBehaviour
             MapEditMenuPanel.SetActive(false);
             playingModePanel.SetActive(true);
         }
+        
+        Nest.NestVisible = false;
+        applyNestMode();
 
         //activate/deactivate control button depending on selected ant status
         if (SelectedAnt == null && !SelectedQueen) ControlButton.SetActive(false);

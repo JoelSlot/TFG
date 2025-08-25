@@ -75,6 +75,8 @@ public class WorldGen : MonoBehaviour
     void Start()
     {
 
+        Emitter.enabled = true;
+
         //Turn all non static members into static ones:
         originalAnt = origAnt;
         originalQueen = origQueen;
@@ -557,7 +559,7 @@ public class WorldGen : MonoBehaviour
         Debug.Log("Loaded succesfully!");
         GC.Collect();
 
-        WorldGen.playTime = playTime;
+        WorldGen.playTime = loadedData.playTime;
 
         SetMapCube();
 
@@ -978,11 +980,12 @@ public class WorldGen : MonoBehaviour
 
     public void FixedUpdate()
     {
-        Nest.foodSpace = Nest.HasCornSpace();
-        Nest.eggSpace = Nest.HasEggSpace();
-
-        ManageMessagePos();
-
+        if (MainMenu.GameSettings.gameMode == 1)
+        {
+            Nest.foodSpace = Nest.HasCornSpace();
+            Nest.eggSpace = Nest.HasEggSpace();
+            ManageMessagePos();
+        }
         //update timer
         int seconds = Mathf.FloorToInt(playTime);
         playTime += Time.fixedDeltaTime;

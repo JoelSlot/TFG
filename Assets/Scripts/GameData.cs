@@ -29,6 +29,8 @@ public class GameData
 
 
     public bool hasWon { get; set; }
+    public float playTime { get; set; }
+
     public serializableVector3 camera_pos { get; set; }
     public serializableVector3 camera_euler { get; set; }
     public QueenInfo queenInfo { get; set; }
@@ -478,6 +480,7 @@ public class GameData
         data.chunk_z_dim = WorldGen.chunk_z_dim;
 
         data.hasWon = WorldGen.hasWon;
+        data.playTime = WorldGen.playTime;
 
         data.camera_pos = WorldGen.camera_pos;
         data.camera_euler = WorldGen.camera_euler;

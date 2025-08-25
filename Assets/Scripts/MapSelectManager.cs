@@ -9,6 +9,8 @@ public class MapSelectManager : MonoBehaviour
 {
 
     public TMP_Dropdown dropDown;
+    public GameObject mapSelectPanel;
+    public GameObject loadingScreen;
     List<string> nameList;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void OnEnable()
@@ -41,10 +43,14 @@ public class MapSelectManager : MonoBehaviour
             Debug.Log(MainMenu.GameSettings.fileName);
             MainMenu.GameSettings.newMap = true;
             MainMenu.GameSettings.flatMap = false;
+
+            mapSelectPanel.SetActive(false);
+            loadingScreen.SetActive(true);
+
             SceneManager.LoadSceneAsync("Map");
 
         }
-        else Debug.Log("no count");
+        //else Debug.Log("no count");
     }
 
     private List<string> GetDefaultMaps()

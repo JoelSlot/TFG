@@ -24,6 +24,7 @@ public class MainMenu : MonoBehaviour
     }
 
     public GameObject saveFilePanel;
+    public GameObject LoadingScreen;
     public SaveManager saveInfoManager;
 
 
@@ -42,10 +43,16 @@ public class MainMenu : MonoBehaviour
         if (slot > 0 && 4 > slot)
             if (saveInfoManager.SaveExists[slot - 1])
             {
+                
+                saveFilePanel.SetActive(false);
+                LoadingScreen.SetActive(true);
+
                 GameSettings.newMap = false;
                 GameSettings.SaveSlot = slot;
                 GameSettings.gameMode = 1;
                 GameSettings.flatMap = false;
+
+
                 SceneManager.LoadSceneAsync("Map");
             }
 
