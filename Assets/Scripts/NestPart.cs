@@ -206,7 +206,7 @@ public class NestPart : MonoBehaviour
             else material = errorMaterial;
         }
         else if (FlyCamera.selectedNestPart == this) material = TunnelMaterial;
-        else if (!dug) material = unDugMaterial;
+        else if (!dug && mode != NestPartType.Tunnel) material = unDugMaterial;
         else
         {
             material = mode switch //compact switch statement. useful.
