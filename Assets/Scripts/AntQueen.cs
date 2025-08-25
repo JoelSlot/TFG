@@ -398,6 +398,7 @@ public class AntQueen : MonoBehaviour
     public bool GiveBirth()
     {
         if (Energy < 5) return false;
+        else if (!Nest.eggSpace) return false;
         else Energy -= 5;
 
         Vector3 eggPos = abdomenBone.transform.position;
@@ -664,7 +665,7 @@ public class AntQueen : MonoBehaviour
                 }
                 return BehaviourTreeStatus.Success;
             }
-            
+
         if (Ant.antDictionary.Count < 4)
             objective = Task.WaitTask(this, UnityEngine.Random.Range(50, 100));
         else objective = Task.WaitTask(this, UnityEngine.Random.Range(500, 800));

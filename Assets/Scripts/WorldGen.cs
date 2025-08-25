@@ -943,9 +943,45 @@ public class WorldGen : MonoBehaviour
 
     public TextMeshProUGUI timeText;
 
+    //Message panels
+    public GameObject eggMessagePanel;
+    public RectTransform eggMessagePanelTransform;
+    public GameObject foodMessagePanel;
+    public RectTransform foodMessagePanelTransform;
+    public GameObject queenMessagePanel;
+    public RectTransform queenMessagePanelTransform;
+
+    public void ManageMessagePos()
+    {
+        foodMessagePanel.SetActive(!Nest.foodSpace);
+        eggMessagePanel.SetActive(!Nest.eggSpace);
+        queenMessagePanel.SetActive(!Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber));
+
+        int y = 0;
+        if (foodMessagePanel.activeInHierarchy)
+        {
+            foodMessagePanelTransform.anchoredPosition = new(0, y);
+            y += 25;
+        }
+        if (eggMessagePanel.activeInHierarchy)
+        {
+            eggMessagePanelTransform.anchoredPosition = new(0, y);
+            y += 25;
+        }
+        if (queenMessagePanel.activeInHierarchy)
+        {
+            queenMessagePanelTransform.anchoredPosition = new(0,y);
+        }
+
+    }
+
 
     public void FixedUpdate()
     {
+        Nest.foodSpace = Nest.HasCornSpace();
+        Nest.eggSpace = Nest.HasEggSpace();
+
+        ManageMessagePos();
 
         //update timer
         int seconds = Mathf.FloorToInt(playTime);

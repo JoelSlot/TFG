@@ -412,7 +412,7 @@ public class Ant : MonoBehaviour
 
         if (Animator.speed == 0) //Cuando la hormiga no ha nacido aún:
         {
-            Ant.CatchOutOfBounds(this.gameObject);
+            if (transform.position.y < 0) Ant.CatchOutOfBounds(this.gameObject);
             Rigidbody.useGravity = true;
             if (age > 100)
             {

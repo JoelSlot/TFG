@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class Nest : MonoBehaviour
+public static class Nest
 {
     public static List<NestPart> NestParts = new();
     public static HashSet<int> KnownCornCobs = new();
@@ -30,24 +30,9 @@ public class Nest : MonoBehaviour
     public static HashSet<int> lostEggs = new();
     public static HashSet<int> antsBringingQueenFood = new();
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    void FixedUpdate()
-    {
-
-    }
-
+    //determines whether there is space in nest for resources
+    public static bool foodSpace = false;
+    public static bool eggSpace = false;
 
     public static int GetCornCount()
     {
@@ -164,6 +149,41 @@ public class Nest : MonoBehaviour
         return false;
     }
 
+    public static bool HasCornSpace()
+    {
+        int cornCount = 0;
+        int cornSpace = 0;
+        foreach (var part in NestParts)
+        {
+            if (part.mode == NestPart.NestPartType.FoodChamber)
+                cornSpace += 40;
+
+            cornCount += part.CollectedCornPips.Count;
+        }
+        cornCount += Nest.lostPips.Count;
+        if (Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber))
+            cornSpace += 5;
+
+        return cornCount < cornSpace;
+    }
+
+    public static bool HasEggSpace()
+    {
+        int eggCount = 0;
+        int eggSpace = 0;
+        foreach (var part in NestParts)
+        {
+            if (part.mode == NestPart.NestPartType.EggChamber)
+                eggSpace += 20;
+
+            eggCount += part.AntEggs.Count;
+        }
+        eggCount += Nest.lostEggs.Count;
+        eggSpace += 4;
+
+        return eggCount < eggSpace;
+    }
+
 
 
     public static bool HasNestPart(NestPart.NestPartType type)
@@ -188,7 +208,7 @@ public class Nest : MonoBehaviour
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig" };
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn" };
         Shuffle(checkOrder);
 
         while (checkOrder.Count > 0)
@@ -206,7 +226,6 @@ public class Nest : MonoBehaviour
                     }
                     break;
                 case "corn":
-
                     Debug.Log("Getting a relocate task");
                     if (GetNestRelocateTask(antSurface, antId, ref objective))
                     {
@@ -215,6 +234,7 @@ public class Nest : MonoBehaviour
                     }
                     break;
                 case "cob":
+                    if (!foodSpace) continue;
                     Debug.Log("Getting a collect task");
                     if (GetNestCollectTask(antSurface, ref objective))
                     {
@@ -592,7 +612,39 @@ public class Nest : MonoBehaviour
         int randIndex = rng.Next(available.Count);//get random chamber
 
         return GetPointInChamber(available[randIndex], out point);
+    }
 
+    public static bool GetPointInLeastFilledChamber(NestPart.NestPartType type, out Vector3 point)
+    {
+        if (type != NestPart.NestPartType.EggChamber && type != NestPart.NestPartType.FoodChamber)
+            return GetPointInChamber(type, out point);
+
+        int minCount = int.MaxValue;
+        int selectedIndex = -1;
+        for (int i = 0; i < NestParts.Count; i++)
+        {
+            if (NestParts[i].mode == type)
+                if (NestParts[i].HasBeenDug() && NestParts[i].HasBeenPlaced())
+                {
+                    if (type == NestPart.NestPartType.FoodChamber)
+                        if (NestParts[i].CollectedCornPips.Count < minCount - 5)
+                        {
+                            minCount = NestParts[i].CollectedCornPips.Count;
+                            selectedIndex = i;
+                        }
+
+                    if (type == NestPart.NestPartType.EggChamber)
+                        if (NestParts[i].AntEggs.Count < minCount - 5)
+                        {
+                            minCount = NestParts[i].AntEggs.Count;
+                            selectedIndex = i;
+                        }
+                }
+        }
+        point = Vector3.zero;
+        if (selectedIndex == -1) return false;
+        
+        return GetPointInChamber(selectedIndex, out point);
     }
 
     public static bool GetPointInChamber(int index, out Vector3 point)
