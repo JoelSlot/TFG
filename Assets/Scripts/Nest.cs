@@ -473,7 +473,7 @@ public static class Nest
             i %= NestParts.Count;
             if (!NestParts[i].HasBeenPlaced()) continue;
             float marchingValue = NestParts[i].getMarchingValue(point);
-            if (marchingValue < WorldGen.isolevel)
+            if (marchingValue < WorldGen.isolevel * 1.05)
             {
                 lastIndex = i;
                 return true;
@@ -508,7 +508,7 @@ public static class Nest
             if (NestParts[i].mode == type && (type == NestPart.NestPartType.Tunnel || NestParts[i].HasBeenDug()))
             {
                 float marchingValue = NestParts[i].getMarchingValue(point);
-                if (marchingValue < WorldGen.isolevel) // there was a * 1.05. Why???
+                if (marchingValue < WorldGen.isolevel * 1.05) // there was a * 1.05. Why???
                 {
                     lastIndex = i;
                     return true;
@@ -533,6 +533,18 @@ public static class Nest
         return false;
     }
 
+    public static bool SurfaceVeryOutside(CubePaths.CubeSurface surface)
+    {
+        if (SurfaceInNest(surface))
+            return false;
+            
+        foreach (var adySurface in CubePaths.GetAdyacentSurfaces(surface))
+            if (SurfaceInNest(adySurface))
+                return false;
+
+        return true;
+    }
+
     public static bool SurfaceInNestPart(CubePaths.CubeSurface surface, NestPart.NestPartType type)
     {
         //Added this line because this, used in GetPathToMapPart would give a positive of being outside with
@@ -541,6 +553,7 @@ public static class Nest
         //The default way i want it to work is on point inside = inside. Just like in SurfaceInNest().
         //This is what caused the ant to be stuck going outside on a cube that is partially inside and
         //outside.
+        if (type == NestPart.NestPartType.VeryOutside) return SurfaceVeryOutside(surface);
         if (type == NestPart.NestPartType.Outside) return !SurfaceInNest(surface);
         if (type == NestPart.NestPartType.Inside) return SurfaceInNest(surface);
 

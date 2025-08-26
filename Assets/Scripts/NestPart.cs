@@ -21,7 +21,7 @@ public class NestPart : MonoBehaviour
     public MeshRenderer startSphereRenderer;
     public MeshRenderer endSphereRenderer;
 
-    public enum NestPartType { Tunnel, FoodChamber, EggChamber, QueenChamber, Outside, Inside }
+    public enum NestPartType { Tunnel, FoodChamber, EggChamber, QueenChamber, Outside, VeryOutside, Inside }
 
     public static int NestPartTypeToIndex(NestPartType type)
     {

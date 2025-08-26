@@ -244,13 +244,13 @@ public class Task
     {
         Task exploreTask = new()
         {
-            type = TaskType.Explore,
+            type = TaskType.Explore
         };
         timesToRepeat = Random.Range(30, 80); //La "distancia" de exploración
 
         //Si la hormiga se encuentra dentro del nido se le pone un camino a fuera como primer paso
         if (Nest.SurfaceInNest(antSurface))
-            if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.Outside, out exploreTask.path))
+            if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.VeryOutside, out exploreTask.path))
                 return exploreTask;
 
 
