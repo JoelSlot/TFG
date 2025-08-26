@@ -433,6 +433,7 @@ public class Ant : MonoBehaviour
 
             if (changedSurface)
             {
+                if (IsControlled) CheckForCobs();
                 if (Nest.SurfaceInNest(antSurface))
                 {
                     //Si hemos llegado al nido habiendo descubierto mazorcas, lo compartimos en el nido.
@@ -442,7 +443,7 @@ public class Ant : MonoBehaviour
                         discoveredCobs = new();
                     }
                 }
-                else  if (MainMenu.GameSettings.gameMode != 0) //only place if in playing mode.
+                else if (MainMenu.GameSettings.gameMode != 0) //only place if in playing mode.
                     CubePaths.PlacePheromone(antSurface.pos);
 
                 resetGoal = true;
@@ -494,27 +495,35 @@ public class Ant : MonoBehaviour
     //Failure if lost path or wrong taskType. Success if reached end. Running if in progress.
     private BehaviourTreeStatus FollowTaskPath()
     {
-        if (!objective.isTaskType(TaskType.None))
+        if (objective.isTaskType(TaskType.Explore))
         {
-            float dist = CubePaths.DistToPoint(transform.position, objective.getPos());
-            if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
-            if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
-            if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
-
-            BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
-
-            if (status != BehaviourTreeStatus.Running)
+            foreach (var surface in objective.path)
             {
-                DontTurn();
-                SetWalking(false);
-                return status;
+                CubePaths.DrawSurface(surface, Color.white, 1);
             }
-
-            FollowGoal(normalMedian, goal, 70f);
-            return status;
-
         }
-        else return BehaviourTreeStatus.Failure;
+
+        if (!objective.isTaskType(TaskType.None))
+            {
+                float dist = CubePaths.DistToPoint(transform.position, objective.getPos());
+                if (dist < 1.5f && !objective.isTaskType(TaskType.GetCorn)) return BehaviourTreeStatus.Success;
+                if (dist < 3f && objective.isTaskType(TaskType.CollectFromCob)) return BehaviourTreeStatus.Success;
+                if (dist < 2f && objective.isTaskType(TaskType.GoToChamber)) return BehaviourTreeStatus.Success;
+
+                BehaviourTreeStatus status = CubePaths.SetGoalFromPath(antSurface, transform.forward, ref objective, ref resetGoal, ref goal);
+
+                if (status != BehaviourTreeStatus.Running)
+                {
+                    DontTurn();
+                    SetWalking(false);
+                    return status;
+                }
+
+                FollowGoal(normalMedian, goal, 70f);
+                return status;
+
+            }
+            else return BehaviourTreeStatus.Failure;
 
     }
 
@@ -568,6 +577,26 @@ public class Ant : MonoBehaviour
             objective = Task.LostTask(antSurface, transform.forward);
 
         return BehaviourTreeStatus.Success;
+    }
+
+    //checks if there are cobs nearby. discovers and remembers them.
+    private void CheckForCobs()
+    {
+        int cornCobMask = 1 << 11;
+        int maxColliders = 100;
+        Collider[] hitColliders = new Collider[maxColliders];
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, 5, hitColliders, cornCobMask);
+        for (int i = 0; i < numColliders; i++)
+        {
+            //make sure it has script.
+            if (!hitColliders[i].gameObject.TryGetComponent<CornCob>(out var cobScript)) continue;
+            //Only count it if it has corn left
+            if (!cobScript.hasCorn()) continue;
+            //añadimos el cob a descubiertos por hormiga.
+            discoveredCobs.Add(cobScript.id);
+            //Lo enseñamos si está escondido
+            if (cobScript.IsHidden()) cobScript.Show();
+        }
     }
 
     private BehaviourTreeStatus SenseTask()

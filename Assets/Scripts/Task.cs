@@ -253,7 +253,7 @@ public class Task
             if (CubePaths.GetKnownPathToMapPart(antSurface, NestPart.NestPartType.Outside, out exploreTask.path))
                 return exploreTask;
 
-        
+
         if (CubePaths.GetExplorePath(antSurface, forward, out exploreTask.path))
         {
             return exploreTask;
@@ -563,7 +563,7 @@ public class Task
     {
         switch (type)
         {
-            case TaskType.Explore: return "Go to pos";
+            case TaskType.Explore: return "Explore";
             case TaskType.Dig: return "Dig point";
             case TaskType.GetCorn: return "Get food";
             case TaskType.GetEgg: return "Get egg";
