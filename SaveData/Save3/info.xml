@@ -1,0 +1,8 @@
+﻿<Complex name="Root" type="SaveManager+SaveInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+  <Properties>
+    <Simple name="mapName" value="default" />
+    <Simple name="cornCount" value="31" />
+    <Simple name="antCount" value="31" />
+    <Simple name="playTime" value="3285.723" />
+  </Properties>
+</Complex>

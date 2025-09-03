@@ -257,7 +257,7 @@ public class DigPoint : MonoBehaviour
     }
 
 
-    public static bool Separated(Vector3Int pos)
+    public static bool IsSeparated(Vector3Int pos)
     {
         if (!digPointDict.ContainsKey(pos))
             return true;
@@ -295,7 +295,7 @@ public class DigPoint : MonoBehaviour
         {
             counter = 0;
             Vector3Int pos = Vector3Int.RoundToInt(transform.position);
-            if (Separated(pos))
+            if (IsSeparated(pos))
             {
                 Dig();
                 Destroy(this.gameObject);

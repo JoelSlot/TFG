@@ -1102,7 +1102,7 @@ public class Ant : MonoBehaviour
             deltaRotation = Quaternion.Euler(new Vector3(xRotation, 0, zRotation));
             Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
         }
-        else //Si el raycast central si ve terreno, la hormiga ajusta solo si la diferencia es notable entre los raycast de las esquinas esquinas
+        else //Si el raycast central si ve terreno, la hormiga ajusta solo si la diferencia es notable entre los raycast de las esquinas
         {
             float xRotation = 0;
             float zRotation = 0;

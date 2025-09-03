@@ -21,11 +21,11 @@ public class FlatMapManager : MonoBehaviour
     public void sliderValueChange()
     {
         valX = (int)sliderX.value;
-        textX.SetText(valX.ToString());
+        textX.SetText((valX * WorldGen.chunk_x_dim).ToString());
         valY = (int)sliderY.value;
-        textY.SetText(valY.ToString());
+        textY.SetText((valY * WorldGen.chunk_y_dim).ToString());
         valZ = (int)sliderZ.value;
-        textZ.SetText(valZ.ToString());
+        textZ.SetText((valZ * WorldGen.chunk_z_dim).ToString());
 
         sliderH.maxValue = valY * WorldGen.chunk_y_dim + 1;
         valH = Mathf.Clamp((int)sliderH.value, 0, (int)sliderH.maxValue);

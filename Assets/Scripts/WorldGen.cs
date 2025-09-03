@@ -209,7 +209,6 @@ public class WorldGen : MonoBehaviour
         }
 
         ApplyTerrainRedundancy();
-        ApplyPastTerrainRedundancy();
 
         camera_pos = new(new Vector3(x_dim / 2, 35, z_dim / 2));
         updateCameraPos = true;
@@ -503,6 +502,12 @@ public class WorldGen : MonoBehaviour
             for (int y = 0; y < y_dim + 1; y++)
                 for (int z = 0; z < z_dim + 1; z++)
                     terrainMap[x, y, z] = GetRedundantTerrainSample(new(x, y, z));
+        
+        //Itera sobre todos los puntos del campo escalar
+        for (int x = 0; x < x_dim + 1; x++)
+            for (int y = 0; y < y_dim + 1; y++)
+                for (int z = 0; z < z_dim + 1; z++)
+                    memoryMap[x, y, z] = GetRedundantPastTerrainSample(new(x, y, z));
     }
 
     public void SetMapCube()
@@ -517,13 +522,18 @@ public class WorldGen : MonoBehaviour
         else mapBox.SetActive(false);
     }
 
-    public static void ApplyPastTerrainRedundancy()
+    public void LoadGame(GameData loadedData)
     {
-        //Itera sobre todos los puntos del campo escalar
-        for (int x = 0; x < x_dim + 1; x++)
-            for (int y = 0; y < y_dim + 1; y++)
-                for (int z = 0; z < z_dim + 1; z++)
-                    memoryMap[x, y, z] = GetRedundantPastTerrainSample(new(x, y, z));
+        loadedData.LoadMap();
+
+        //Crear nuevos chunks
+        GenerateChunks();
+
+        //Generar objetos del juego
+        loadedData.LoadGameObjects();
+
+        Debug.Log("Loaded succesfully!");
+        GC.Collect();
     }
 
     public void LoadSaveFile(int saveSlot, string mapName, float playTime)
@@ -548,16 +558,7 @@ public class WorldGen : MonoBehaviour
 
         //GameData loadedData = (GameData)sizeOptimizedSerializer2.Deserialize("GameDataOptimized.bin");
 
-        loadedData.LoadMap();
-
-        //Crear nuevos chunks
-        GenerateChunks();
-
-        //Generar objetos del juego
-        loadedData.LoadGameObjects();
-
-        Debug.Log("Loaded succesfully!");
-        GC.Collect();
+        LoadGame(loadedData);
 
         WorldGen.playTime = loadedData.playTime;
 
@@ -617,18 +618,9 @@ public class WorldGen : MonoBehaviour
 
         //GameData loadedData = (GameData)sizeOptimizedSerializer2.Deserialize("GameDataOptimized.bin");
 
-        loadedData.LoadMap();
+        LoadGame(loadedData);
 
-        //Crear nuevos chunks
-        GenerateChunks();
-
-        //Generar objetos del juego
-        loadedData.LoadGameObjects();
-
-        Debug.Log("Loaded succesfully!");
-        GC.Collect();
-
-        WorldGen.playTime = 0;
+        playTime = 0;
         SetMapCube();
         return true;
 
@@ -640,7 +632,6 @@ public class WorldGen : MonoBehaviour
         Debug.Log("Starting save");
 
         ApplyTerrainRedundancy();
-        ApplyPastTerrainRedundancy();
 
         GameData newData = GameData.Save();
 

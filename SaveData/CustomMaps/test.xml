@@ -1,0 +1,2644 @@
+﻿<Complex name="Root" type="GameData, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+  <Properties>
+    <Simple name="terrainMapStream" value="//8A/wD/AP8A/wD/AFMAHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv96AB7/AB7I/wD/AI0A" />
+    <Simple name="terrainMemoryStream" value="//8A/wD/AP8A/wD/AFMAHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv/6AB7/AB7I/wD/AK0AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7Ir/8A/wCtAB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/+gAe/wAeyP8A/wCtAB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAeyK//AP8ArQAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe//oAHv8AHsj/AP8ArQAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHsiv/wD/AK0AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv+qAB7/AB7/AB7/AB7/qgAe/wAe/wAe/wAe/6oAHv8AHv8AHv8AHv96AB7/AB7I/wD/AI0A" />
+    <Simple name="x_dim" value="30" />
+    <Simple name="y_dim" value="50" />
+    <Simple name="z_dim" value="30" />
+    <Simple name="chunk_x_dim" value="10" />
+    <Simple name="chunk_y_dim" value="50" />
+    <Simple name="chunk_z_dim" value="10" />
+    <Simple name="hasWon" value="False" />
+    <Simple name="playTime" value="0" />
+    <Complex name="camera_pos">
+      <Properties>
+        <Simple name="x" value="15" />
+        <Simple name="y" value="34" />
+        <Simple name="z" value="15" />
+      </Properties>
+    </Complex>
+    <Complex name="camera_euler">
+      <Properties>
+        <Simple name="x" value="0" />
+        <Simple name="y" value="0" />
+        <Simple name="z" value="0" />
+      </Properties>
+    </Complex>
+    <Complex name="queenInfo">
+      <Properties>
+        <Complex name="objective">
+          <Properties>
+            <Complex name="digPointId">
+              <Properties>
+                <Simple name="x" value="0" />
+                <Simple name="y" value="0" />
+                <Simple name="z" value="0" />
+              </Properties>
+            </Complex>
+            <Simple name="foodId" value="0" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="0" />
+                <Simple name="y" value="0" />
+                <Simple name="z" value="0" />
+              </Properties>
+            </Complex>
+            <Simple name="typeIndex" value="10" />
+            <Collection name="path">
+              <Properties>
+                <Simple name="Capacity" value="0" />
+              </Properties>
+              <Items />
+            </Collection>
+          </Properties>
+        </Complex>
+        <Complex name="pos">
+          <Properties>
+            <Simple name="x" value="8.927538" />
+            <Simple name="y" value="29.4" />
+            <Simple name="z" value="16.77932" />
+          </Properties>
+        </Complex>
+        <Complex name="orientation">
+          <Properties>
+            <Simple name="x" value="2.006542E-06" />
+            <Simple name="y" value="0.8328823" />
+            <Simple name="z" value="-2.414505E-06" />
+            <Simple name="w" value="0.5534502" />
+          </Properties>
+        </Complex>
+        <Simple name="isHolding" value="False" />
+        <Simple name="Counter" value="0" />
+        <Simple name="Energy" value="20" />
+      </Properties>
+    </Complex>
+    <Collection name="antInfoDict">
+      <Items />
+    </Collection>
+    <Collection name="cornInfoDict">
+      <Items>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="0" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.30706" />
+                <Simple name="y" value="29.5305" />
+                <Simple name="z" value="29.50344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3835901" />
+                <Simple name="y" value="0.598716" />
+                <Simple name="z" value="0.596458" />
+                <Simple name="w" value="0.3723384" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="1" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.96505" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="30.10845" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1124006" />
+                <Simple name="y" value="0.702117" />
+                <Simple name="z" value="0.6955512" />
+                <Simple name="w" value="0.1029884" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="2" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.71409" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="28.11245" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6800419" />
+                <Simple name="y" value="0.2077141" />
+                <Simple name="z" value="0.2132815" />
+                <Simple name="w" value="0.6700068" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="3" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.47009" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="28.33144" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6422768" />
+                <Simple name="y" value="0.3050946" />
+                <Simple name="z" value="0.3091318" />
+                <Simple name="w" value="0.6315343" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="4" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.57009" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="28.22644" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.660693" />
+                <Simple name="y" value="0.2628439" />
+                <Simple name="z" value="0.2675686" />
+                <Simple name="w" value="0.6502346" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="5" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21707" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="29.16344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4728889" />
+                <Simple name="y" value="0.5310162" />
+                <Simple name="z" value="0.5305541" />
+                <Simple name="w" value="0.4614221" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="6" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.05105" />
+                <Simple name="y" value="30.0825" />
+                <Simple name="z" value="29.91047" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.2414391" />
+                <Simple name="y" value="-0.6688119" />
+                <Simple name="z" value="-0.658511" />
+                <Simple name="w" value="0.2464979" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="7" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45407" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="29.08848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4940136" />
+                <Simple name="y" value="-0.5114223" />
+                <Simple name="z" value="-0.4999532" />
+                <Simple name="w" value="0.4944136" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="8" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.39808" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="28.42944" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6246548" />
+                <Simple name="y" value="0.3397184" />
+                <Simple name="z" value="0.3431629" />
+                <Simple name="w" value="0.6137077" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="9" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.14209" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="28.27147" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6547377" />
+                <Simple name="y" value="-0.2773459" />
+                <Simple name="z" value="-0.2666348" />
+                <Simple name="w" value="0.6506181" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="10" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.55405" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="29.85545" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.261177" />
+                <Simple name="y" value="0.6613538" />
+                <Simple name="z" value="0.6569722" />
+                <Simple name="w" value="0.2505703" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="11" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.29808" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="28.61644" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5895585" />
+                <Simple name="y" value="0.3975209" />
+                <Simple name="z" value="0.3999099" />
+                <Simple name="w" value="0.5783339" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="12" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.32209" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="27.92646" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7110337" />
+                <Simple name="y" value="0.005772924" />
+                <Simple name="z" value="0.01396393" />
+                <Simple name="w" value="0.7029958" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="13" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.93505" />
+                <Simple name="y" value="29.8635" />
+                <Simple name="z" value="29.99547" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.2054831" />
+                <Simple name="y" value="0.6807194" />
+                <Simple name="z" value="0.6707025" />
+                <Simple name="w" value="-0.2110833" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="14" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.47009" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="28.33144" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6422768" />
+                <Simple name="y" value="0.3050946" />
+                <Simple name="z" value="0.3091318" />
+                <Simple name="w" value="0.6315343" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="15" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.76209" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.01147" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6977872" />
+                <Simple name="y" value="-0.1367306" />
+                <Simple name="z" value="-0.1270959" />
+                <Simple name="w" value="0.6915523" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="16" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.34506" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="29.57944" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3605152" />
+                <Simple name="y" value="0.6128874" />
+                <Simple name="z" value="0.6102027" />
+                <Simple name="w" value="0.3493575" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="17" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.14209" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="27.94346" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7082234" />
+                <Simple name="y" value="0.06341816" />
+                <Simple name="z" value="0.07093032" />
+                <Simple name="w" value="0.6995476" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="18" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.30105" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="30.16946" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.01180407" />
+                <Simple name="y" value="-0.7109591" />
+                <Simple name="z" value="-0.7031261" />
+                <Simple name="w" value="-0.003416882" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="19" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.55405" />
+                <Simple name="y" value="29.5305" />
+                <Simple name="z" value="29.85545" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.261177" />
+                <Simple name="y" value="0.6613538" />
+                <Simple name="z" value="0.6569722" />
+                <Simple name="w" value="0.2505703" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="20" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.28506" />
+                <Simple name="y" value="30.0825" />
+                <Simple name="z" value="29.44844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3994341" />
+                <Simple name="y" value="0.588264" />
+                <Simple name="z" value="0.5863072" />
+                <Simple name="w" value="0.3881261" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="21" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.88605" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="30.07745" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1390528" />
+                <Simple name="y" value="0.6973281" />
+                <Simple name="z" value="0.6911254" />
+                <Simple name="w" value="0.1293974" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="22" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21207" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="29.01944" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5062721" />
+                <Simple name="y" value="0.4992901" />
+                <Simple name="z" value="0.4995712" />
+                <Simple name="w" value="0.4947996" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="23" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.23507" />
+                <Simple name="y" value="29.8635" />
+                <Simple name="z" value="29.27844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4446021" />
+                <Simple name="y" value="0.5549154" />
+                <Simple name="z" value="0.5538569" />
+                <Simple name="w" value="0.4331749" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="24" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.60809" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="27.96046" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7058849" />
+                <Simple name="y" value="-0.08560831" />
+                <Simple name="z" value="-0.07645267" />
+                <Simple name="w" value="0.6989657" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="25" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.23507" />
+                <Simple name="y" value="30.3035" />
+                <Simple name="z" value="29.27844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4446021" />
+                <Simple name="y" value="0.5549154" />
+                <Simple name="z" value="0.5538569" />
+                <Simple name="w" value="0.4331749" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="26" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.81805" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="30.05947" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1567324" />
+                <Simple name="y" value="-0.6935685" />
+                <Simple name="z" value="-0.6839735" />
+                <Simple name="w" value="0.1630283" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="27" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.35608" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="28.58848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5976424" />
+                <Simple name="y" value="-0.3852605" />
+                <Simple name="z" value="-0.3740024" />
+                <Simple name="w" value="0.5954159" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="28" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.51206" />
+                <Simple name="y" value="29.6415" />
+                <Simple name="z" value="29.81344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.2787366" />
+                <Simple name="y" value="0.6541469" />
+                <Simple name="z" value="0.6500501" />
+                <Simple name="w" value="0.2680166" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="29" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21207" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="29.07844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.492765" />
+                <Simple name="y" value="0.5126255" />
+                <Simple name="z" value="0.5126002" />
+                <Simple name="w" value="0.4812889" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="30" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.28506" />
+                <Simple name="y" value="29.6415" />
+                <Simple name="z" value="29.44844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3994341" />
+                <Simple name="y" value="0.588264" />
+                <Simple name="z" value="0.5863072" />
+                <Simple name="w" value="0.3881261" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="31" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.52709" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.26744" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6534278" />
+                <Simple name="y" value="0.280418" />
+                <Simple name="z" value="0.2848613" />
+                <Simple name="w" value="0.6428469" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="32" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21707" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="29.16344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4728889" />
+                <Simple name="y" value="0.5310162" />
+                <Simple name="z" value="0.5305541" />
+                <Simple name="w" value="0.4614221" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="33" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.71409" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="28.11245" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6800419" />
+                <Simple name="y" value="0.2077141" />
+                <Simple name="z" value="0.2132815" />
+                <Simple name="w" value="0.6700068" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="34" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21207" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="29.07844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.492765" />
+                <Simple name="y" value="0.5126255" />
+                <Simple name="z" value="0.5126002" />
+                <Simple name="w" value="0.4812889" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="35" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.23507" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="28.81844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5493116" />
+                <Simple name="y" value="0.4515076" />
+                <Simple name="z" value="0.452824" />
+                <Simple name="w" value="0.5379112" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="36" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.14209" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="28.27147" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6547377" />
+                <Simple name="y" value="-0.2773459" />
+                <Simple name="z" value="-0.2666348" />
+                <Simple name="w" value="0.6506181" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="37" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.25108" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="28.75344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5625886" />
+                <Simple name="y" value="0.434852" />
+                <Simple name="z" value="0.4365093" />
+                <Simple name="w" value="0.5512328" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="38" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.43006" />
+                <Simple name="y" value="30.3035" />
+                <Simple name="z" value="29.71344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.316223" />
+                <Simple name="y" value="0.6368714" />
+                <Simple name="z" value="0.6334035" />
+                <Simple name="w" value="0.3052833" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="39" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.36906" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="29.47948" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3943601" />
+                <Simple name="y" value="-0.5916775" />
+                <Simple name="z" value="-0.5804657" />
+                <Simple name="w" value="0.3968091" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="40" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.30706" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="29.50344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3835901" />
+                <Simple name="y" value="0.598716" />
+                <Simple name="z" value="0.596458" />
+                <Simple name="w" value="0.3723384" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="41" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45407" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="29.08848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4940136" />
+                <Simple name="y" value="-0.5114223" />
+                <Simple name="z" value="-0.4999532" />
+                <Simple name="w" value="0.4944136" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="42" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.96509" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="27.98845" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7006503" />
+                <Simple name="y" value="0.1212082" />
+                <Simple name="z" value="0.1279845" />
+                <Simple name="w" value="0.6913883" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="43" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.33306" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="29.55748" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3715454" />
+                <Simple name="y" value="-0.6062642" />
+                <Simple name="z" value="-0.5951537" />
+                <Simple name="w" value="0.3744195" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="44" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.30105" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="30.16946" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.01180407" />
+                <Simple name="y" value="-0.7109591" />
+                <Simple name="z" value="-0.7031261" />
+                <Simple name="w" value="-0.003416882" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="45" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.31408" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="28.50448" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6131288" />
+                <Simple name="y" value="-0.3601046" />
+                <Simple name="z" value="-0.3489488" />
+                <Simple name="w" value="0.6104366" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="46" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.24406" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="29.70348" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3241746" />
+                <Simple name="y" value="-0.632861" />
+                <Simple name="z" value="-0.6220025" />
+                <Simple name="w" value="0.3278885" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="47" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.38209" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="27.92746" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7109344" />
+                <Simple name="y" value="-0.01320779" />
+                <Simple name="z" value="-0.00480515" />
+                <Simple name="w" value="0.703118" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="48" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.38808" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="28.66648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5825398" />
+                <Simple name="y" value="-0.4077371" />
+                <Simple name="z" value="-0.3964024" />
+                <Simple name="w" value="0.5807436" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="49" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.27608" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="28.67244" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.578738" />
+                <Simple name="y" value="0.4131155" />
+                <Simple name="z" value="0.415204" />
+                <Simple name="w" value="0.5674536" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="50" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.24406" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="29.70348" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3241746" />
+                <Simple name="y" value="-0.632861" />
+                <Simple name="z" value="-0.6220025" />
+                <Simple name="w" value="0.3278885" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="51" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.27608" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.67244" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.578738" />
+                <Simple name="y" value="0.4131155" />
+                <Simple name="z" value="0.415204" />
+                <Simple name="w" value="0.5674536" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="52" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.18209" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="28.31548" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6471016" />
+                <Simple name="y" value="-0.2947231" />
+                <Simple name="z" value="-0.2839058" />
+                <Simple name="w" value="0.6432693" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="53" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45407" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="29.00348" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5131285" />
+                <Simple name="y" value="-0.4922412" />
+                <Simple name="z" value="-0.4807652" />
+                <Simple name="w" value="0.5130914" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="54" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.81709" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="28.03647" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6938812" />
+                <Simple name="y" value="-0.1553417" />
+                <Simple name="z" value="-0.1455437" />
+                <Simple name="w" value="0.6879063" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="55" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.90909" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.01045" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6971654" />
+                <Simple name="y" value="0.1398665" />
+                <Simple name="z" value="0.1463932" />
+                <Simple name="w" value="0.687726" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="56" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.30406" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="29.60948" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3552001" />
+                <Simple name="y" value="-0.615983" />
+                <Simple name="z" value="-0.6049535" />
+                <Simple name="w" value="0.3583702" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="57" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45007" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="29.14848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4801606" />
+                <Simple name="y" value="-0.5244501" />
+                <Simple name="z" value="-0.5129958" />
+                <Simple name="w" value="0.4808672" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="58" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.36906" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="29.47948" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3943601" />
+                <Simple name="y" value="-0.5916775" />
+                <Simple name="z" value="-0.5804657" />
+                <Simple name="w" value="0.3968091" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="59" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.74005" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="30.09347" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1302104" />
+                <Simple name="y" value="-0.6990333" />
+                <Simple name="z" value="-0.689685" />
+                <Simple name="w" value="0.1368671" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="60" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.42707" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="29.29648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4438388" />
+                <Simple name="y" value="-0.5555261" />
+                <Simple name="z" value="-0.5441452" />
+                <Simple name="w" value="0.4453133" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="61" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.68209" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="27.98247" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7024873" />
+                <Simple name="y" value="-0.1100625" />
+                <Simple name="z" value="-0.1006721" />
+                <Simple name="w" value="0.6958901" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="62" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45407" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="29.08848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4940136" />
+                <Simple name="y" value="-0.5114223" />
+                <Simple name="z" value="-0.4999532" />
+                <Simple name="w" value="0.4944136" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="63" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.55405" />
+                <Simple name="y" value="29.5305" />
+                <Simple name="z" value="29.85545" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.261177" />
+                <Simple name="y" value="0.6613538" />
+                <Simple name="z" value="0.6569722" />
+                <Simple name="w" value="0.2505703" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="64" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.56605" />
+                <Simple name="y" value="30.3035" />
+                <Simple name="z" value="30.14547" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.08079822" />
+                <Simple name="y" value="0.7064517" />
+                <Simple name="z" value="0.697594" />
+                <Simple name="w" value="-0.08809496" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="65" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.96509" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="27.98845" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7006503" />
+                <Simple name="y" value="0.1212082" />
+                <Simple name="z" value="0.1279845" />
+                <Simple name="w" value="0.6913883" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="66" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.13605" />
+                <Simple name="y" value="29.8635" />
+                <Simple name="z" value="30.15246" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.05668982" />
+                <Simple name="y" value="0.7087936" />
+                <Simple name="z" value="0.7015061" />
+                <Simple name="w" value="0.04782459" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="67" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.44207" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="28.87648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5403155" />
+                <Simple name="y" value="-0.4622352" />
+                <Simple name="z" value="-0.4507799" />
+                <Simple name="w" value="0.5396253" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="68" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.38808" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.66648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5825398" />
+                <Simple name="y" value="-0.4077371" />
+                <Simple name="z" value="-0.3964024" />
+                <Simple name="w" value="0.5807436" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="69" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.43006" />
+                <Simple name="y" value="29.8635" />
+                <Simple name="z" value="29.71344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.316223" />
+                <Simple name="y" value="0.6368714" />
+                <Simple name="z" value="0.6334035" />
+                <Simple name="w" value="0.3052833" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="70" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.83205" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="30.05245" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1576162" />
+                <Simple name="y" value="0.6933681" />
+                <Simple name="z" value="0.6874253" />
+                <Simple name="w" value="0.1477986" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="71" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.31408" />
+                <Simple name="y" value="29.86351" />
+                <Simple name="z" value="28.50448" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6131288" />
+                <Simple name="y" value="-0.3601046" />
+                <Simple name="z" value="-0.3489488" />
+                <Simple name="w" value="0.6104366" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="72" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.88605" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="30.07745" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1390528" />
+                <Simple name="y" value="0.6973281" />
+                <Simple name="z" value="0.6911254" />
+                <Simple name="w" value="0.1293974" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="73" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.30406" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="29.60948" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3552001" />
+                <Simple name="y" value="-0.615983" />
+                <Simple name="z" value="-0.6049535" />
+                <Simple name="w" value="0.3583702" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="74" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.23709" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="27.93046" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7102983" />
+                <Simple name="y" value="0.0328421" />
+                <Simple name="z" value="0.04072111" />
+                <Simple name="w" value="0.7019542" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="75" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.83109" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="28.04545" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6913342" />
+                <Simple name="y" value="0.1663104" />
+                <Simple name="z" value="0.172473" />
+                <Simple name="w" value="0.6816532" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="76" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.35608" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="28.58848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5976425" />
+                <Simple name="y" value="-0.3852606" />
+                <Simple name="z" value="-0.3740025" />
+                <Simple name="w" value="0.595416" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="77" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.24105" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="30.16646" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.0307765" />
+                <Simple name="y" value="-0.7103908" />
+                <Simple name="z" value="-0.7027844" />
+                <Simple name="w" value="-0.02218324" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="78" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.52709" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="28.26744" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6534278" />
+                <Simple name="y" value="0.280418" />
+                <Simple name="z" value="0.2848613" />
+                <Simple name="w" value="0.6428469" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="79" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.73005" />
+                <Simple name="y" value="29.8635" />
+                <Simple name="z" value="29.99445" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1935345" />
+                <Simple name="y" value="0.6842123" />
+                <Simple name="z" value="0.6787893" />
+                <Simple name="w" value="0.1834207" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="80" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.14209" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="27.94346" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7082234" />
+                <Simple name="y" value="0.06341816" />
+                <Simple name="z" value="0.07093032" />
+                <Simple name="w" value="0.6995476" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="81" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.83109" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="28.04545" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6913342" />
+                <Simple name="y" value="0.1663104" />
+                <Simple name="z" value="0.172473" />
+                <Simple name="w" value="0.6816532" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="82" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.38605" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="30.16946" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.01527498" />
+                <Simple name="y" value="-0.7108932" />
+                <Simple name="z" value="-0.7027463" />
+                <Simple name="w" value="0.02335784" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="83" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45407" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="29.00348" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5131285" />
+                <Simple name="y" value="-0.4922412" />
+                <Simple name="z" value="-0.4807652" />
+                <Simple name="w" value="0.5130914" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="84" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.74005" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="30.09347" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1302104" />
+                <Simple name="y" value="-0.6990333" />
+                <Simple name="z" value="-0.689685" />
+                <Simple name="w" value="0.1368671" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="85" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.88605" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="30.07745" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.1390528" />
+                <Simple name="y" value="0.6973281" />
+                <Simple name="z" value="0.6911254" />
+                <Simple name="w" value="0.1293974" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="86" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.40708" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="28.72348" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5714279" />
+                <Simple name="y" value="-0.4231694" />
+                <Simple name="z" value="-0.4117907" />
+                <Simple name="w" value="0.5699354" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="87" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.42707" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="29.29648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4438388" />
+                <Simple name="y" value="-0.5555261" />
+                <Simple name="z" value="-0.5441452" />
+                <Simple name="w" value="0.4453133" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="88" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.61805" />
+                <Simple name="y" value="29.74351" />
+                <Simple name="z" value="29.91245" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.2358059" />
+                <Simple name="y" value="0.6708187" />
+                <Simple name="z" value="0.6660365" />
+                <Simple name="w" value="0.2253737" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="89" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.21207" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="29.07844" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.492765" />
+                <Simple name="y" value="0.5126255" />
+                <Simple name="z" value="0.5126002" />
+                <Simple name="w" value="0.4812889" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="90" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.99409" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="28.14247" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6765709" />
+                <Simple name="y" value="-0.2187556" />
+                <Simple name="z" value="-0.2084477" />
+                <Simple name="w" value="0.6715263" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="91" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.34506" />
+                <Simple name="y" value="30.18451" />
+                <Simple name="z" value="29.57944" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3605152" />
+                <Simple name="y" value="0.6128874" />
+                <Simple name="z" value="0.6102027" />
+                <Simple name="w" value="0.3493575" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="92" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.30706" />
+                <Simple name="y" value="29.9705" />
+                <Simple name="z" value="29.50344" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.3835901" />
+                <Simple name="y" value="0.598716" />
+                <Simple name="z" value="0.596458" />
+                <Simple name="w" value="0.3723384" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="93" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="26.29808" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="28.61644" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5895585" />
+                <Simple name="y" value="0.3975209" />
+                <Simple name="z" value="0.3999099" />
+                <Simple name="w" value="0.5783339" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="94" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.32209" />
+                <Simple name="y" value="29.97051" />
+                <Simple name="z" value="27.92646" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.7110337" />
+                <Simple name="y" value="0.005772924" />
+                <Simple name="z" value="0.01396393" />
+                <Simple name="w" value="0.7029958" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="95" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.81709" />
+                <Simple name="y" value="30.08251" />
+                <Simple name="z" value="28.03647" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6938812" />
+                <Simple name="y" value="-0.1553417" />
+                <Simple name="z" value="-0.1455437" />
+                <Simple name="w" value="0.6879063" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="96" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.18209" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="28.31548" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.6471016" />
+                <Simple name="y" value="-0.2947231" />
+                <Simple name="z" value="-0.2839058" />
+                <Simple name="w" value="0.6432693" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="97" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.44207" />
+                <Simple name="y" value="30.30351" />
+                <Simple name="z" value="28.87648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5403155" />
+                <Simple name="y" value="-0.4622352" />
+                <Simple name="z" value="-0.4507799" />
+                <Simple name="w" value="0.5396253" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="98" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.38808" />
+                <Simple name="y" value="29.53051" />
+                <Simple name="z" value="28.66648" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.5825398" />
+                <Simple name="y" value="-0.4077371" />
+                <Simple name="z" value="-0.3964024" />
+                <Simple name="w" value="0.5807436" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+        <Complex type="GameData+CornInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="99" />
+            <Simple name="antId" value="-1" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="28.45007" />
+                <Simple name="y" value="29.64151" />
+                <Simple name="z" value="29.14848" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="-0.4801606" />
+                <Simple name="y" value="-0.5244501" />
+                <Simple name="z" value="-0.5129958" />
+                <Simple name="w" value="0.4808672" />
+              </Properties>
+            </Complex>
+          </Properties>
+        </Complex>
+      </Items>
+    </Collection>
+    <Dictionary name="cornHeldAntDict">
+      <Items />
+    </Dictionary>
+    <Dictionary name="eggHeldAntDict">
+      <Items />
+    </Dictionary>
+    <Collection name="cornLostInNestDict">
+      <Items />
+    </Collection>
+    <Collection name="eggsLostInNestDict">
+      <Items />
+    </Collection>
+    <Collection name="antsBringingQueenFoodDict">
+      <Items />
+    </Collection>
+    <Collection name="cornCobInfoDict">
+      <Items>
+        <Complex type="GameData+CornCobInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <Properties>
+            <Simple name="id" value="0" />
+            <Complex name="pos">
+              <Properties>
+                <Simple name="x" value="27.33307" />
+                <Simple name="y" value="29.86251" />
+                <Simple name="z" value="29.04846" />
+              </Properties>
+            </Complex>
+            <Complex name="orientation">
+              <Properties>
+                <Simple name="x" value="0.7071071" />
+                <Simple name="y" value="-6.788839E-06" />
+                <Simple name="z" value="7.136513E-06" />
+                <Simple name="w" value="0.7071065" />
+              </Properties>
+            </Complex>
+            <Dictionary name="cornCobCornDict">
+              <Items>
+                <Item>
+                  <Simple value="12" />
+                  <Simple value="0" />
+                </Item>
+                <Item>
+                  <Simple value="99" />
+                  <Simple value="1" />
+                </Item>
+                <Item>
+                  <Simple value="93" />
+                  <Simple value="2" />
+                </Item>
+                <Item>
+                  <Simple value="55" />
+                  <Simple value="3" />
+                </Item>
+                <Item>
+                  <Simple value="118" />
+                  <Simple value="4" />
+                </Item>
+                <Item>
+                  <Simple value="61" />
+                  <Simple value="5" />
+                </Item>
+                <Item>
+                  <Simple value="120" />
+                  <Simple value="6" />
+                </Item>
+                <Item>
+                  <Simple value="131" />
+                  <Simple value="7" />
+                </Item>
+                <Item>
+                  <Simple value="63" />
+                  <Simple value="8" />
+                </Item>
+                <Item>
+                  <Simple value="156" />
+                  <Simple value="9" />
+                </Item>
+                <Item>
+                  <Simple value="146" />
+                  <Simple value="10" />
+                </Item>
+                <Item>
+                  <Simple value="46" />
+                  <Simple value="11" />
+                </Item>
+                <Item>
+                  <Simple value="30" />
+                  <Simple value="12" />
+                </Item>
+                <Item>
+                  <Simple value="74" />
+                  <Simple value="13" />
+                </Item>
+                <Item>
+                  <Simple value="102" />
+                  <Simple value="14" />
+                </Item>
+                <Item>
+                  <Simple value="0" />
+                  <Simple value="15" />
+                </Item>
+                <Item>
+                  <Simple value="60" />
+                  <Simple value="16" />
+                </Item>
+                <Item>
+                  <Simple value="65" />
+                  <Simple value="17" />
+                </Item>
+                <Item>
+                  <Simple value="9" />
+                  <Simple value="18" />
+                </Item>
+                <Item>
+                  <Simple value="11" />
+                  <Simple value="19" />
+                </Item>
+                <Item>
+                  <Simple value="113" />
+                  <Simple value="20" />
+                </Item>
+                <Item>
+                  <Simple value="19" />
+                  <Simple value="21" />
+                </Item>
+                <Item>
+                  <Simple value="112" />
+                  <Simple value="22" />
+                </Item>
+                <Item>
+                  <Simple value="71" />
+                  <Simple value="23" />
+                </Item>
+                <Item>
+                  <Simple value="66" />
+                  <Simple value="24" />
+                </Item>
+                <Item>
+                  <Simple value="86" />
+                  <Simple value="25" />
+                </Item>
+                <Item>
+                  <Simple value="101" />
+                  <Simple value="26" />
+                </Item>
+                <Item>
+                  <Simple value="50" />
+                  <Simple value="27" />
+                </Item>
+                <Item>
+                  <Simple value="43" />
+                  <Simple value="28" />
+                </Item>
+                <Item>
+                  <Simple value="141" />
+                  <Simple value="29" />
+                </Item>
+                <Item>
+                  <Simple value="44" />
+                  <Simple value="30" />
+                </Item>
+                <Item>
+                  <Simple value="7" />
+                  <Simple value="31" />
+                </Item>
+                <Item>
+                  <Simple value="96" />
+                  <Simple value="32" />
+                </Item>
+                <Item>
+                  <Simple value="64" />
+                  <Simple value="33" />
+                </Item>
+                <Item>
+                  <Simple value="144" />
+                  <Simple value="34" />
+                </Item>
+                <Item>
+                  <Simple value="87" />
+                  <Simple value="35" />
+                </Item>
+                <Item>
+                  <Simple value="129" />
+                  <Simple value="36" />
+                </Item>
+                <Item>
+                  <Simple value="95" />
+                  <Simple value="37" />
+                </Item>
+                <Item>
+                  <Simple value="79" />
+                  <Simple value="38" />
+                </Item>
+                <Item>
+                  <Simple value="105" />
+                  <Simple value="39" />
+                </Item>
+                <Item>
+                  <Simple value="140" />
+                  <Simple value="40" />
+                </Item>
+                <Item>
+                  <Simple value="26" />
+                  <Simple value="41" />
+                </Item>
+                <Item>
+                  <Simple value="38" />
+                  <Simple value="42" />
+                </Item>
+                <Item>
+                  <Simple value="132" />
+                  <Simple value="43" />
+                </Item>
+                <Item>
+                  <Simple value="137" />
+                  <Simple value="44" />
+                </Item>
+                <Item>
+                  <Simple value="89" />
+                  <Simple value="45" />
+                </Item>
+                <Item>
+                  <Simple value="84" />
+                  <Simple value="46" />
+                </Item>
+                <Item>
+                  <Simple value="126" />
+                  <Simple value="47" />
+                </Item>
+                <Item>
+                  <Simple value="155" />
+                  <Simple value="48" />
+                </Item>
+                <Item>
+                  <Simple value="143" />
+                  <Simple value="49" />
+                </Item>
+                <Item>
+                  <Simple value="73" />
+                  <Simple value="50" />
+                </Item>
+                <Item>
+                  <Simple value="14" />
+                  <Simple value="51" />
+                </Item>
+                <Item>
+                  <Simple value="124" />
+                  <Simple value="52" />
+                </Item>
+                <Item>
+                  <Simple value="106" />
+                  <Simple value="53" />
+                </Item>
+                <Item>
+                  <Simple value="32" />
+                  <Simple value="54" />
+                </Item>
+                <Item>
+                  <Simple value="6" />
+                  <Simple value="55" />
+                </Item>
+                <Item>
+                  <Simple value="36" />
+                  <Simple value="56" />
+                </Item>
+                <Item>
+                  <Simple value="122" />
+                  <Simple value="57" />
+                </Item>
+                <Item>
+                  <Simple value="52" />
+                  <Simple value="58" />
+                </Item>
+                <Item>
+                  <Simple value="149" />
+                  <Simple value="59" />
+                </Item>
+                <Item>
+                  <Simple value="72" />
+                  <Simple value="60" />
+                </Item>
+                <Item>
+                  <Simple value="48" />
+                  <Simple value="61" />
+                </Item>
+                <Item>
+                  <Simple value="154" />
+                  <Simple value="62" />
+                </Item>
+                <Item>
+                  <Simple value="18" />
+                  <Simple value="63" />
+                </Item>
+                <Item>
+                  <Simple value="82" />
+                  <Simple value="64" />
+                </Item>
+                <Item>
+                  <Simple value="119" />
+                  <Simple value="65" />
+                </Item>
+                <Item>
+                  <Simple value="76" />
+                  <Simple value="66" />
+                </Item>
+                <Item>
+                  <Simple value="69" />
+                  <Simple value="67" />
+                </Item>
+                <Item>
+                  <Simple value="27" />
+                  <Simple value="68" />
+                </Item>
+                <Item>
+                  <Simple value="78" />
+                  <Simple value="69" />
+                </Item>
+                <Item>
+                  <Simple value="115" />
+                  <Simple value="70" />
+                </Item>
+                <Item>
+                  <Simple value="68" />
+                  <Simple value="71" />
+                </Item>
+                <Item>
+                  <Simple value="147" />
+                  <Simple value="72" />
+                </Item>
+                <Item>
+                  <Simple value="121" />
+                  <Simple value="73" />
+                </Item>
+                <Item>
+                  <Simple value="110" />
+                  <Simple value="74" />
+                </Item>
+                <Item>
+                  <Simple value="54" />
+                  <Simple value="75" />
+                </Item>
+                <Item>
+                  <Simple value="107" />
+                  <Simple value="76" />
+                </Item>
+                <Item>
+                  <Simple value="41" />
+                  <Simple value="77" />
+                </Item>
+                <Item>
+                  <Simple value="135" />
+                  <Simple value="78" />
+                </Item>
+                <Item>
+                  <Simple value="77" />
+                  <Simple value="79" />
+                </Item>
+                <Item>
+                  <Simple value="92" />
+                  <Simple value="80" />
+                </Item>
+                <Item>
+                  <Simple value="103" />
+                  <Simple value="81" />
+                </Item>
+                <Item>
+                  <Simple value="57" />
+                  <Simple value="82" />
+                </Item>
+                <Item>
+                  <Simple value="51" />
+                  <Simple value="83" />
+                </Item>
+                <Item>
+                  <Simple value="8" />
+                  <Simple value="84" />
+                </Item>
+                <Item>
+                  <Simple value="10" />
+                  <Simple value="85" />
+                </Item>
+                <Item>
+                  <Simple value="123" />
+                  <Simple value="86" />
+                </Item>
+                <Item>
+                  <Simple value="85" />
+                  <Simple value="87" />
+                </Item>
+                <Item>
+                  <Simple value="59" />
+                  <Simple value="88" />
+                </Item>
+                <Item>
+                  <Simple value="13" />
+                  <Simple value="89" />
+                </Item>
+                <Item>
+                  <Simple value="90" />
+                  <Simple value="90" />
+                </Item>
+                <Item>
+                  <Simple value="97" />
+                  <Simple value="91" />
+                </Item>
+                <Item>
+                  <Simple value="145" />
+                  <Simple value="92" />
+                </Item>
+                <Item>
+                  <Simple value="111" />
+                  <Simple value="93" />
+                </Item>
+                <Item>
+                  <Simple value="127" />
+                  <Simple value="94" />
+                </Item>
+                <Item>
+                  <Simple value="125" />
+                  <Simple value="95" />
+                </Item>
+                <Item>
+                  <Simple value="33" />
+                  <Simple value="96" />
+                </Item>
+                <Item>
+                  <Simple value="88" />
+                  <Simple value="97" />
+                </Item>
+                <Item>
+                  <Simple value="2" />
+                  <Simple value="98" />
+                </Item>
+                <Item>
+                  <Simple value="35" />
+                  <Simple value="99" />
+                </Item>
+              </Items>
+            </Dictionary>
+          </Properties>
+        </Complex>
+      </Items>
+    </Collection>
+    <Dictionary name="digPointDict">
+      <Items />
+    </Dictionary>
+    <Collection name="availableDigPointInfoDict">
+      <Items />
+    </Collection>
+    <Collection name="initializedDigPoints">
+      <Items />
+    </Collection>
+    <Collection name="nestPartInfoDict">
+      <Items />
+    </Collection>
+    <Collection name="knownCornCobs">
+      <Items />
+    </Collection>
+    <Dictionary name="pheromones">
+      <Items />
+    </Dictionary>
+  </Properties>
+</Complex>

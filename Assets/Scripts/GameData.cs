@@ -340,7 +340,6 @@ public class GameData
         public TaskInfo objective { get; set; } //This was task, but since it didnt serialize the task's enum and shit properly
         public serializableVector3 pos { get; set; }
         public serializableQuaternion orientation { get; set; }
-        public bool isHolding { get; set; }
         public int Counter { get; set; }
         public int Energy { get; set; }
 
@@ -357,8 +356,6 @@ public class GameData
             info.orientation = new(queen.transform.rotation);
             info.Counter = queen.Counter;
             info.Energy = queen.Energy;
-
-            info.isHolding = queen.IsHolding();
 
             return info;
         }

@@ -208,7 +208,7 @@ public static class Nest
 
     public static BehaviourTreeStatus GetNestTask(CubePaths.CubeSurface antSurface, int antId, ref Task objective)
     {
-        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "dig", "dig", "corn", "corn", "lounge", "explore"};
+        List<string> checkOrder = new List<string> { "dig", "corn", "cob", "corn", "cob", "dig", "corn", "corn", "lounge", "explore"};
         Shuffle(checkOrder);
 
         while (checkOrder.Count > 0)
@@ -243,10 +243,13 @@ public static class Nest
                     }
                     break;
                 case "lounge":
-                    if (GetNestChillTask(antSurface, antId, ref objective))
+                    if (NumAntsWithTask(TaskType.Wait) < Ant.antDictionary.Count * 0.2f)
                     {
-                        //Debug.Log("Got a chill task")
-                        return BehaviourTreeStatus.Success;
+                        if (GetNestChillTask(antSurface, antId, ref objective))
+                        {
+                            //Debug.Log("Got a chill task")
+                            return BehaviourTreeStatus.Success;
+                        }
                     }
                     break;
                 case "explore":

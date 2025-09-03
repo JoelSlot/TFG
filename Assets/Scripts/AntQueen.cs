@@ -86,14 +86,14 @@ public class AntQueen : MonoBehaviour
                         .Do("Either walk, eat, give birth or chill", t => GetQueenChamberTask(antSurface, ref objective))
                     .End()
 
-                    .Sequence("If not in chamber, go there or do other stuff.")
+                    .Sequence("If not in chamber and one exists, go there.")
                         .Condition("Exit if there isn't a queen chamber", t => Nest.HasDugNestPart(NestPart.NestPartType.QueenChamber))
                         .Do("Set task to go to queen chamber", t => { objective = Task.GoToNestPartTask(antSurface, Nest.GetFirstDugNestPartIndex(NestPart.NestPartType.QueenChamber)); return BehaviourTreeStatus.Success; })
                     .End()
 
                     .Do("Get nearby dig task", t => SenseDigTask())
                     .Condition("Get a task from the nest", t => Nest.GetNestDigTask(antSurface, -2, ref objective))
-                    .Do("Did not find anything to do", t => { /*Debug.Log("Didnt find stuff to do as queen");*/ return BehaviourTreeStatus.Success; })
+                    .Do("Did not find anything to do", t => { /*Debug.Log("Didnt find stuff to do as queen");*/ return BehaviourTreeStatus.Failure; })
 
                 .End()
                 .Selector("Do tasks")
